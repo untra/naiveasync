@@ -1,9 +1,9 @@
 {
-  "name": "@untra/naivetable",
+  "name": "@untra/naiveasync",
   "version": "0.1.9",
-  "description": "Dumb Simple Naive React Array<T> Table",
-  "main": "./dist/NaiveTable.js",
-  "types": "./dist/NaiveTable.d.ts",
+  "description": "An Opinionated and Painless React promise wrapper",
+  "main": "./dist/NaiveAsync.js",
+  "types": "./dist/NaiveAsync.d.ts",
   "author": {
     "name": "Samuel Volin",
     "email": "sam@untra.io",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/untra/naivetable"
+    "url": "https://github.com/untra/naiveasync"
   },
   "scripts": {
     "postversion": "git push && git push --tags",
@@ -39,7 +39,10 @@
   "license": "MIT",
   "dependencies": {
     "react": "^16.8.0",
-    "react-dom": "^16.8.0"
+    "react-dom": "^16.8.0",
+    "react-redux": "^7.1.0",
+    "rxjs": "6.5.3",
+    "uuid": "^3.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
@@ -55,7 +58,6 @@
     "@types/react-dom": "^16.8.4",
     "@types/react-highlight": "0.12.1",
     "@types/react-router-dom": "4.3.3",
-    "@untra/naivetable": "0.1.8",
     "babel-loader": "^8.0.5",
     "chai": "^4.2.0",
     "css-loader": "^0.28.11",
