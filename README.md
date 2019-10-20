@@ -1,67 +1,41 @@
-# 🍱 NaiveTable
-## a dumb, simple, naive [React](https://reactjs.org/) `Array<T>` data table component
+# 🔁 NaiveAsync
+## an opinionated and painless [React](https://reactjs.org/) promise wrapper
 
-**NaiveTable** is a straightforward React `^16.8.5` functional module that can be used to quickly render a table from an array of objects.
+**NaiveAsync** is a straightforward React `^16.8.5` functional module that can be used to quickly turn an asynchronous operation into a well-managed react component centered around that asynchronous operation.
 
-It turns a JSON array of objects (typescript type `Array<T>` of `type DataObject = { [index: string]: any;}`) into a `<span>` table.
+It turns a promise into a state object to render child components with, and a call function to invoke the promise, with a few abstractions to manage it reasonably well.
+
+Shamelessly built with inspiration from [stately](https://github.com/hiebj/stately)
 
 ## Usage
 
-### Just feed it consistent `Array<T>` of data
+### A little bit of boilerplate...
+```tsx
+import * as ReactDOM from "react-dom";
+import { Provider } from "react-redux";
+import { applyMiddleware, createStore } from "redux";
+import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer } from '@untra/naiveasync'
+// the naiveAsyncReducer maintains the redux state
+// the naiveAsyncMiddleware employs rxjs observables to fulfill promises
+const store = createStore(naiveAsyncReducer, applyMiddleware(naiveAsyncMiddleware))
 
-```ts
-const data = [
-    { a: 'alex', b: 12, c: 82.56 },
-    { a: 'brock', b: 17, c: 93.33 },
-    { a: 'charlie', b: 16, c: 48.65 }
-]
-...
-// if you need a rendered table of data RIGHT NOW
-// NaiveTable just infers the headers 'a', 'b', and 'c'
-// this is the most straightforward way to use NaiveTable
-<NaiveTable data={data} />
-```
+// supply the created store into your redux provider
+// use the <NaiveAsync>(state, call) => react component and callback
+// to render your asynchronous state with ease and splendor
+// render as you see fit
+ReactDOM.render(
+<Provider store={store}>
+    <NaiveAsync operation={asyncOperation}>(state, call) =>
+        (<div>
+            <h2>state: {JSON.stringify(state, null, 2)}</h2>
+            <button onClick={() => call({ foo: 'bar' })}>
+            <p>call</p>
+            </button>
+        </div>)
+    </NaiveAsync>
+</Provider>
+)
 
-### Provide headers for more granular control
-
-```ts
-const headers = [
-    // change the rendered header text with the 'label' parameter
-    { label: 'name', dataKey: 'a' },
-    // individually style each header cell with the 'style' parameter
-    { label: 'age', dataKey: 'b', style: { backgroundColor: "pink" } },
-    // provide a 'render' function to control how dataCells render for the column
-    { label: 'grade status', dataKey: 'c', render: (val: number) => <h2>{
-        `${val > 50 ? 'passing' : 'failing'} the class`
-    }</h2> },
-    // use the 'dataKey' to control the input to the render function
-    // provide an empty string to instead call render with the entire dataObject provided
-    { label: 'assessment', dataKey: '', render: (val : any) => <h4>{
-        `${val.a} is ${val.c > 90 ? 'really' : ''} ${val.c > 50 ? 'smart' : 'dumb'}`
-    }</h4> },
-    // you can have more headers than keys in your dataObjects, btw ;)
-    // you can also control the 'width' of the column (pass in 'fr' , defaults to 'auto')
-    { label: 'comment', dataKey: '', render: () => 'I like you', width: '4fr' }
-]
-...
-// if you want to specifically define the header rendering of the table
-<NaiveTable data={data} headers={headers} />
-// if you want an index count column before rendering your headers
-<NaiveTable data={data} headers={headers} includeIndex={true} />
-```
-
-### Style the table, and make it easily fit into your app
-
-```ts
-const tableStyle : React.CSSProperties = { ... }
-const cellStyle  : React.CSSProperties = { ... }
-...
-// each header cell can be styled individually
-<NaiveTable data={data} headers={headers} />
-// provide css styles for the entire wrapping table
-<NaiveTable data={data} tableStyle={tableStyle} />
-// provide css styles for all cells in the table
-<NaiveTable data={data} cellStyle={cellStyle} />
 ```
 
 ## Design
