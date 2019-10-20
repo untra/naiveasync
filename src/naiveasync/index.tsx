@@ -1,0 +1,74 @@
+import { useEffect, useState } from 'react'
+import React = require('react')
+import uuid = require('uuid')
+import { AsyncableState, AsyncGenerator } from './actions'
+import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, createControllableContext } from './controllable'
+
+export type NaiveAsyncState<D, P> = AsyncableState<D, P>
+
+export const naiveAsyncReducer = asyncableReducer
+
+export const naiveAsyncMiddleware = asyncableMiddleware
+
+const AsyncControllable = createControllableContext(asyncableReducer, asyncableMiddleware)
+
+type NaiveAsyncComponentChildren<Data, Params> = (state: AsyncableState<Data, Params>, call: (params: Params) => void) => React.ReactElement
+
+interface NaiveAsyncComponentProps<Data, Params extends object> {
+    operation: AsyncGenerator<Data, Params>
+    autoParams?: Params
+    children: NaiveAsyncComponentChildren<Data, Params>
+}
+
+interface LifecycleAsyncProps<Data, Params> {
+    params?: Params
+    state: AsyncableState<Data, Params>
+    call: (params: Params) => void
+    destroy: () => void
+    children: NaiveAsyncComponentChildren<Data, Params>
+}
+
+
+const AsyncLifecycle: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params>(
+    props: LifecycleAsyncProps<Data, Params>
+) => {
+    const { call, params, children, state, destroy } = props
+    // this useEffect will
+    // (if props.params is truthy)
+    // invoke call with params whenever params change
+    // and when the component is disposed of it should destroy itself
+    useEffect(() => {
+        if (params) {
+            call(params)
+        }
+        // destroy is called when the component unmounts
+        return destroy
+    }, []);
+    return children(state, call)
+}
+
+export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncComponentProps<Data, Params>, id: string = uuid()): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> {
+    const { operation, children, autoParams } = props
+    const [state, setState] = useState({
+        params: autoParams,
+        asyncLifeCycle: asyncableLifecycle(operation)
+    });
+    const { params, asyncLifeCycle } = state
+    const { selector, call, destroy } = asyncLifeCycle
+    const invoke = (params: Params) => {
+        setState({ ...state, params })
+    }
+    return (<AsyncControllable>{
+        (reduxState, dispatch) => <AsyncLifecycle
+            params={params}
+            state={selector(reduxState)}
+            call={(params: object) => {
+                invoke(params as Params)
+                dispatch(call(params as Params))
+            }}
+            destroy={() => {
+                dispatch(destroy({}))
+            }}
+        >{children}</AsyncLifecycle>
+    }</AsyncControllable>)
+}
