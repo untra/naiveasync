@@ -40,7 +40,7 @@ ReactDOM.render(
 
 ## Design
 
-NaiveTable uses react 16.8.5 and hooks to create a straightforward functional JSX.Element react component.
+NaiveAsync uses react 16.8.5 and hooks to create an asynchronous experience you could take home to your mother.
 
 Despite not being written with classes, I kept the [**SOLID principles**](https://en.wikipedia.org/wiki/SOLID) in mind while designing this package:
 
@@ -55,15 +55,6 @@ _Interface Segregation:_ Inputs to the function are minimized to tolerate a bare
 _Dependency Inversion:_ Concrete details such as `data` and `headers` are input into higher-level abstractions.
 
 ## Limitations
-
-* _It's super dumb._ NaiveTable will render data naively (duh) by using a series of nested divs, and as such is not the most effective solution with large amounts of data. While NaiveTable will render more than a thousand rows with ease, more than a hundred and I would recommend a more dynamic table solution with virtual scroll. Similarly, I would not recommend this table for the following needs in a table:
-  * sorting on multiple columns
-  * rendering a large number of rows
-  * dynamic 'fetched' data aka virtual scrolling
-
-* _It wants consistency._ NaiveTable likes structured  `Array<T>` of `{ [index: string]: any;}` data shapes. While this should be most use cases, this means unstructured data may not be render consistently.
-
-* _It will reasonably assume what you meant._ NaiveTable's creator has made some assumptions about what you want the component to behave like, such as default rendering `any` data values into `<p></p>` tags, defaulting column widths to `auto`, etc. It is not magic, just trying its best to please.
 
 # Copyright
 Copyright (c) Samuel Volin 2019. License: MIT

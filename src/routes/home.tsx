@@ -5,7 +5,6 @@ import Highlight from "react-highlight";
 import { Link } from "react-router-dom";
 import packageJSON from '../../package.json'
 import wwords from "../content/home-content.json";
-import { DataObj, NaiveTable } from "../NaiveTable";
 const words: { [index: string]: { [index: string]: string } } = wwords
 
 type SupportedLangs = keyof typeof words;
@@ -95,7 +94,6 @@ const data = [${JSON.stringify(randomData[0], null, 2)}, ...];
 // ${W("h0b")}
 <NaiveTable data={data} />`}
           </Highlight>
-          <NaiveTable data={randomData} />
         </div>
       </div>
     );
