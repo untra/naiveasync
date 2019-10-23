@@ -11,13 +11,12 @@ import llanowarDataJSON from "../content/fixtures/llanowar.json";
 import nameDataJSON from "../content/fixtures/nameData.json";
 import styledHeadersJSON from "../content/fixtures/styledHeaders.json";
 import varietyofDataTypesDataJSON from "../content/fixtures/varietyOfTypesData.json";
-import { DataObj, NaiveTable, TableConfigHeader } from "../NaiveTable";
 
-// Hi friend 👋 thanks for reading my naivetable tests!
+// Hi friend 👋 thanks for reading my naiveasync tests!
 // maybe you're on this github page?
 
 const thisGithubPage =
-  "https://github.com/untra/naivetable/blob/master/src/routes/test.tsx";
+  "https://github.com/untra/naiveasync/blob/master/src/routes/test.tsx";
 
 // If you are, then I want to know you are a talented and skilled engineer,
 // and it would certainly be a pleasure to shake your hand one day,
@@ -28,39 +27,39 @@ const thatCypressPage = "https://dashboard.cypress.io/#/projects/wrytfx/runs";
 
 // redefine the data fixtures to accomodate prefered typings
 
-const llanowarData: DataObj[] = llanowarDataJSON;
+// const llanowarData: DataObj[] = llanowarDataJSON;
 
-const varietyofDataTypesData: DataObj[] = varietyofDataTypesDataJSON;
+// const varietyofDataTypesData: DataObj[] = varietyofDataTypesDataJSON;
 
-const styledHeaders: TableConfigHeader[] = styledHeadersJSON;
+// const styledHeaders: TableConfigHeader[] = styledHeadersJSON;
 
-const nameData: DataObj[] = nameDataJSON;
+// const nameData: DataObj[] = nameDataJSON;
 
 // the secret sauce to display no headers and custom render:
 // use css and `dsiplay: none` for the header style
-const mtgHeaders: TableConfigHeader[] = [{
-  label: "",
-  dataKey: "",
-  style: { display: 'none' },
-  render: (val: any) => {
-    const  { local_image, name } = val
-    return (<img width={250} height={345} alt={name} src={local_image} />)
-  }
-}, {
-  label: "",
-  dataKey: "",
-  style: { display: 'none' },
-  render: (val: any) => {
-    const { name, mana_cost, type_line, oracle_text, power, toughness, flavor_text } = val
-    return (<div>
-      <h4>{name} {mana_cost}</h4>
-      <p>{type_line}</p>
-      <p>{oracle_text}</p>
-      <p style={{fontStyle: 'italic'}}>{flavor_text}</p>
-      <strong>{power}/{toughness}</strong>
-    </div>)
-  }
-}]
+// const mtgHeaders: TableConfigHeader[] = [{
+//   label: "",
+//   dataKey: "",
+//   style: { display: 'none' },
+//   render: (val: any) => {
+//     const  { local_image, name } = val
+//     return (<img width={250} height={345} alt={name} src={local_image} />)
+//   }
+// }, {
+//   label: "",
+//   dataKey: "",
+//   style: { display: 'none' },
+//   render: (val: any) => {
+//     const { name, mana_cost, type_line, oracle_text, power, toughness, flavor_text } = val
+//     return (<div>
+//       <h4>{name} {mana_cost}</h4>
+//       <p>{type_line}</p>
+//       <p>{oracle_text}</p>
+//       <p style={{fontStyle: 'italic'}}>{flavor_text}</p>
+//       <strong>{power}/{toughness}</strong>
+//     </div>)
+//   }
+// }]
 
 // complex headers with custom rendering
 export const nameHeaders = [
@@ -104,11 +103,11 @@ export default class Test extends React.Component {
       <div className="wrapper">
         <h1>
           <span role="img" aria-label="Bento">
-            🍱
+          🔁
           </span>{" "}
-          NaiveTable
+          NaiveAsync
         </h1>
-        <h2>Cypress Tests and React Hooks demo</h2>
+        <h2>Cypress Tests and demonstration</h2>
         <h3>
           View this page and tests at <a href={thisGithubPage}>Github.com</a>
         </h3>
@@ -133,37 +132,6 @@ export default class Test extends React.Component {
           #1 It should be able to render a variety of different javascript data
           types
         </h4>
-        <NaiveTable className={"test1"} data={varietyofDataTypesData} />
-        <h4>#2 It should be able to render an index left adjacent of the data</h4>
-        <NaiveTable className={"test2"} data={nameData} includeIndex={true} />
-        <h4>#3 It should be able to render a table with custom headers</h4>
-        <NaiveTable className={"test3"} data={nameData} headers={nameHeaders} />
-        <h4>#4 It should be able to render individual styling on each header</h4>
-        <NaiveTable
-          className={"test4"}
-          data={nameData}
-          headers={styledHeaders}
-        />
-        <h4>#5 It should be able to render individual styling for the table</h4>
-        {"TODO"}
-        <h4>#6 It should be able to render individual styling for each cell</h4>
-        {"TODO"}
-        <h4>#7 It should be able to display sortable columns</h4>
-        {"TODO"}
-        <h4>#8 It should display sorted column data sorted correctly</h4>
-        <NaiveTable className={"test8"} data={flatDataJSON} headers={[
-          { label: 'a', dataKey: 'a', sort: true },
-          { label: 'b', dataKey: 'b', sort: "asc" },
-          { label: 'c', dataKey: 'c' }
-        ]} />
-        <h4>#9 It should be able to render empty data</h4>
-        <NaiveTable className={"test9"} data={[]} />
-        <h4>#10 It should be able to render a data of one</h4>
-        <NaiveTable className={"test10"} data={[{ of: "one" }]} />
-        <h4>#11 You don't have to render any headers at</h4>
-        <NaiveTable className={"test11"} data={nameData} headers={false} />
-        <h4>#12 You can render a Magic The Gathering card</h4>
-        <NaiveTable className={"test11"} data={llanowarData} headers={mtgHeaders} />
       </div>
     );
   }

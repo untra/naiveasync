@@ -2,9 +2,9 @@ import * as React from 'react'
 import { Action, Dispatch, Middleware, Reducer } from 'redux'
 import { empty, Observable, Subject } from "rxjs"
 import { filter, first, mergeMap } from "rxjs/operators"
-import uuid = require('uuid')
-import { KeyedCache } from './keyedcache'
+import uuid from 'uuid'
 import { AnyAction, AsyncableSlice, AsyncableState, AsyncableSymbol, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncGenerator, initialAsyncableState, isAsyncAction } from './actions'
+import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import React = require('react')
-import uuid = require('uuid')
+// tslint:disable-next-line: no-duplicate-imports
+import React from 'react'
+import uuid from 'uuid'
 import { AsyncableState, AsyncGenerator } from './actions'
 import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, createControllableContext } from './controllable'
 

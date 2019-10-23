@@ -1,18 +1,18 @@
 import { Reducer } from 'redux'
 import { AnyAction, AsyncableState, AsyncableSymbol, initialAsyncableState, isAsyncAction } from './actions'
 
-const callReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state = initialAsyncableState, action) =>
+const callReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state: AsyncableState<any, any> = initialAsyncableState, action: AnyAction) =>
   isAsyncAction(action) && action[AsyncableSymbol].phase === 'call'
-    ? {
-      ...state,
-      status: 'inflight',
-      params: action.payload,
-      data: null,
-      error: '',
-    }
-    : state
+  ? {
+    ...state,
+    status: 'inflight',
+    params: action.payload,
+    data: null,
+    error: '',
+  }
+  : state
 
-const dataReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state = initialAsyncableState, action) =>
+const dataReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state: AsyncableState<any, any> = initialAsyncableState, action: AnyAction) =>
   isAsyncAction(action) && action[AsyncableSymbol].phase === 'data'
     ? {
       ...state,
@@ -21,7 +21,7 @@ const dataReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state = initi
     }
     : state
 
-const errorReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state = initialAsyncableState, action) => {
+const errorReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state: AsyncableState<any, any> = initialAsyncableState, action: AnyAction) => {
   if (isAsyncAction(action) && action[AsyncableSymbol].phase === 'error') {
     const isError = (a: Error | any): a is Error => a instanceof Error
     const error: string = isError(action.payload) ? action.payload.message :
@@ -36,7 +36,7 @@ const errorReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state = init
   return state
 }
 
-const doneReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state = initialAsyncableState, action) =>
+const doneReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state: AsyncableState<any, any> = initialAsyncableState, action: AnyAction) =>
   isAsyncAction(action) && action[AsyncableSymbol].phase === 'done'
     ? {
       ...state,
@@ -45,12 +45,12 @@ const doneReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state = initi
     }
     : state
 
-const resetReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state = initialAsyncableState, action) =>
+const resetReducer: Reducer<AsyncableState<any, any>, AnyAction> = (state: AsyncableState<any, any> = initialAsyncableState, action: AnyAction) =>
   isAsyncAction(action) && action[AsyncableSymbol].phase === 'reset' ? initialAsyncableState : state
 
 export const chain = <S>(firstReducer: Reducer<S>, ...reducers: Array<Reducer<S>>): Reducer<S> => (
-  state,
-  action,
+  state: any,
+  action: any,
 ) =>
   reducers.reduce(
     (accumulatedState, nextReducer) => nextReducer(accumulatedState, action),
