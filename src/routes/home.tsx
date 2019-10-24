@@ -42,6 +42,14 @@ export default class Home extends React.Component<HomeScreenProps> {
       <div className="page-content">
         <div className="wrapper">
           <h1><span role="img" aria-label="Bento">🔁</span> NaiveAsync</h1>
+          <h2>an opinionated and painless <a href="https://reactjs.org/">React</a> promise wrapper</h2>
+          <h3>
+              v{version} -{" "}
+              <Link to="/test">Tests</Link>-{" "}
+              <a href="https://github.com/untra/naiveasync">Github</a> -{" "}
+              <a href="https://www.npmjs.com/package/@untra/naiveasync">NPM</a> -{" "}
+              <a href="https://dashboard.cypress.io/#/projects/wrytfx/runs">Cypress</a>
+            </h3>
         </div>
       </div>
     );

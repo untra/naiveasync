@@ -1,6 +1,6 @@
 {
-  "short_name": "NaiveTable",
-  "name": "Dumb Simple Naive React `Array<T>` Table",
+  "short_name": "NaiveAsync",
+  "name": "An opinionated and painless React promise wrapper",
   "icons": [
     {
       "src": "favicon.ico",
