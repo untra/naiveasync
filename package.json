@@ -1,6 +1,6 @@
 {
   "name": "@untra/naiveasync",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "An Opinionated and Painless React promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
@@ -30,6 +30,7 @@
     "deploy": "./node_modules/.bin/gh-pages -d ./build",
     "predeploy": "yarn build:site",
     "watch": "./node_modules/.bin/webpack-dev-server dist/index.js",
+    "serve:watch": "./node_modules/.bin/webpack-dev-server --config webpack.config.js --mode development",
     "cypress:test": "./node_modules/.bin/cypress run --record ",
     "cypress:run": "./node_modules/.bin/cypress run",
     "cypress:open": "./node_modules/.bin/cypress open",
@@ -38,7 +39,6 @@
   "license": "MIT",
   "dependencies": {
     "react": "^16.8.0",
-    "react-dom": "^16.8.0",
     "redux": "^4.0.4",
     "rxjs": "6.5.3",
     "uuid": "^3.2.1"
@@ -54,6 +54,7 @@
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.18",
     "@types/react": "^16.8.17",
+    "@types/react-redux": "^7.1.5",
     "@types/react-dom": "^16.8.4",
     "@types/react-highlight": "0.12.1",
     "@types/react-router-dom": "4.3.3",
@@ -67,6 +68,8 @@
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "^3.2.0",
     "mocha": "^5.2.0",
+    "react-dom": "^16.8.0",
+    "react-redux": "^7.1.1",
     "react-highlight": "0.12.0",
     "react-router-dom": "5.0.1",
     "react-scripts": "3.0.1",
@@ -75,7 +78,9 @@
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.5.3",
     "webpack": "^4.38.0",
-    "webpack-cli": "3.3.6"
+    "webpack-cli": "^3.3.6",
+    "webpack-dev-server": "^3.8.1",
+    "webpack-node-externals": "^1.7.2"
   },
   "browserslist": {
     "production": [
