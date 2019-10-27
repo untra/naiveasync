@@ -7,7 +7,7 @@ import Highlight from "react-highlight";
 import { Link } from "react-router-dom";
 import packageJSON from '../../package.json'
 import wwords from "../content/home-content.json";
-import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer, NaiveAsyncState } from "../naiveasync/index.js";
+import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer, NaiveAsyncState } from "../naiveasync/index";
 import { createStore, applyMiddleware } from "redux";
 
 interface DataValue {
