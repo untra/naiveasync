@@ -11,6 +11,13 @@ import llanowarDataJSON from "../content/fixtures/llanowar.json";
 import nameDataJSON from "../content/fixtures/nameData.json";
 import styledHeadersJSON from "../content/fixtures/styledHeaders.json";
 import varietyofDataTypesDataJSON from "../content/fixtures/varietyOfTypesData.json";
+import { NaiveAsync } from "../naiveasync"
+
+
+const autoParamsOp = (params : {}) => {
+  console.log('autoParams op invoked')
+  return Promise.resolve(`✅ with params ${JSON.stringify(params)}`)
+}
 
 // Hi friend 👋 thanks for reading my naiveasync tests!
 // maybe you're on this github page?
@@ -129,9 +136,24 @@ export default class Test extends React.Component {
           </li>
         </ul>
         <h4>
-          #1 It should be able to render a variety of different javascript data
-          types
+          #1 It should be invoked automatically when autoParams are specified...
         </h4>
+        <NaiveAsync operation={autoParamsOp} autoParams={{}} >{(state) => (<div>
+          <p>status: {JSON.stringify(state.status)}</p>
+          <p>params: {JSON.stringify(state.params)}</p>
+          <p>error: {JSON.stringify(state.error)}</p>
+          <p>data: {JSON.stringify(state.data)}</p>
+      </div>)}</NaiveAsync>
+      <h4>
+          #2 It can be invoked when the call cb is invoked
+        </h4>
+        <NaiveAsync operation={autoParamsOp} >{(state, call) => (<div>
+          <p>status: {JSON.stringify(state.status)}</p>
+          <p>params: {JSON.stringify(state.params)}</p>
+          <p>error: {JSON.stringify(state.error)}</p>
+          <p>data: {JSON.stringify(state.data)}</p>
+          <button onClick={() => call({})} >call</button>
+      </div>)}</NaiveAsync>
       </div>
     );
   }
