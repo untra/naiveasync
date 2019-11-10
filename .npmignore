@@ -2,6 +2,7 @@ images/
 site/
 docs/
 src/
+build/
 coverage/
 .github/
 .vscode/
