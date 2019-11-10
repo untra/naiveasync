@@ -20,7 +20,7 @@ interface ControllableProps<State> {
   children: ControllableChildren<State>
 }
 
-export type Controllable<State> = React.ComponentType<ControllableProps<State>>
+export type Controllerable<State> = React.ComponentType<ControllableProps<State>>
 
 export interface AsyncLifecycle<Data, Params extends object> {
   /** The identifier of the async state that owns this */
@@ -160,7 +160,7 @@ export const asyncableLifecycle = <Data, Params extends object>(
 export function createControllableContext<State extends AsyncableSlice>(
   reducer: Reducer<State>,
   middleware: Middleware
-): Controllable<State> {
+): Controllerable<State> {
 
   class Controllable extends React.Component<ControllableProps<State>, State> {
     constructor(props: ControllableProps<State>) {

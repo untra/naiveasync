@@ -13,7 +13,7 @@ export const naiveAsyncMiddleware = asyncableMiddleware
 
 const AsyncControllable = createControllableContext(asyncableReducer, asyncableMiddleware)
 
-type NaiveAsyncComponentChildren<Data, Params> = (state: AsyncableState<Data, Params>, call: (params: Params) => void) => React.ReactElement
+type NaiveAsyncComponentChildren<Data, Params> = (state: AsyncableState<Data, Params>, call: (params: Params) => void) => JSX.Element
 
 interface NaiveAsyncComponentProps<Data, Params extends object> {
     operation: AsyncGenerator<Data, Params>
