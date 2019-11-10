@@ -1,5 +1,5 @@
-const AsyncableEagle = '🦅'
-export const AsyncableSymbol = Symbol(AsyncableEagle)
+const AsyncableEmoji = '🔁'
+export const AsyncableSymbol = Symbol(AsyncableEmoji)
 
 export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset'
 
@@ -116,7 +116,7 @@ export type AsyncActionCreator<Payload> = (payload: Payload) => {
 export const asyncActionCreatorFactory = <Data, Params>(
   name: string,
 ) => <Payload>(phase: AsyncPhase): AsyncActionCreator<Payload> => {
-  const type = `${AsyncableEagle}/${name}/${phase}`
+  const type = `${AsyncableEmoji}/${name}/${phase}`
   const meta = { name, phase }
   const guard = asyncActionMatcher(undefined, phase)
   const match = (action: Action<Payload>): action is AsyncAction<Payload> =>
