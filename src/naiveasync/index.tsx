@@ -11,8 +11,6 @@ export const naiveAsyncReducer = asyncableReducer
 
 export const naiveAsyncMiddleware = asyncableMiddleware
 
-const AsyncControllable = createControllableContext(asyncableReducer, asyncableMiddleware)
-
 type NaiveAsyncComponentChildren<Data, Params> = (state: AsyncableState<Data, Params>, call: (params: Params) => void) => JSX.Element
 
 interface NaiveAsyncComponentProps<Data, Params extends object> {
@@ -48,7 +46,7 @@ const AsyncLifecycle: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params
     return children(state, call)
 }
 
-export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncComponentProps<Data, Params>, id: string = uuid()): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> {
+export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncComponentProps<Data, Params>): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> {
     const { operation, children, autoParams } = props
     const [state, setState] = useState({
         params: autoParams,
@@ -59,6 +57,7 @@ export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncCompone
     const invoke = (params: Params) => {
         setState({ ...state, params })
     }
+    const AsyncControllable = createControllableContext(asyncableReducer, asyncableMiddleware)
     return (<AsyncControllable>{
         (reduxState, dispatch) => <AsyncLifecycle
             params={params}

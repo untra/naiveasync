@@ -14,9 +14,16 @@ import varietyofDataTypesDataJSON from "../content/fixtures/varietyOfTypesData.j
 import { NaiveAsync } from "../naiveasync"
 
 
-const autoParamsOp = (params : {}) => {
+const slowResolve = <T extends any>(val : T) : Promise<T> => new Promise((resolve) => {
+  const timeMS = Math.random() * 4000
+  setTimeout(() => resolve(val), timeMS)
+})
+
+const autoParamsOp = (params: {}) => {
   return Promise.resolve(`✅ with params ${JSON.stringify(params)}`)
 }
+
+const autoResolve = (params: {}) => slowResolve('✅')
 
 // Hi friend 👋 thanks for reading my naiveasync tests!
 // maybe you're on this github page?
@@ -109,7 +116,7 @@ export default class Test extends React.Component {
       <div className="wrapper">
         <h1>
           <span role="img" aria-label="Bento">
-          🔁
+            🔁
           </span>{" "}
           NaiveAsync
         </h1>
@@ -142,8 +149,8 @@ export default class Test extends React.Component {
           <p>params: {JSON.stringify(state.params)}</p>
           <p>error: {JSON.stringify(state.error)}</p>
           <p>data: {JSON.stringify(state.data)}</p>
-      </div>)}</NaiveAsync>
-      <h4>
+        </div>)}</NaiveAsync>
+        <h4>
           #2 It can be invoked when the call cb is invoked
         </h4>
         <NaiveAsync operation={autoParamsOp} >{(state, call) => (<div>
@@ -152,7 +159,19 @@ export default class Test extends React.Component {
           <p>error: {JSON.stringify(state.error)}</p>
           <p>data: {JSON.stringify(state.data)}</p>
           <button onClick={() => call({})} >call</button>
-      </div>)}</NaiveAsync>
+        </div>)}</NaiveAsync>
+        <h4>
+          #3 Multiple autoParamed operations should execute
+        </h4>
+        <NaiveAsync operation={autoResolve} autoParams={{}} >{(state) => (<div>
+          <p>{state.data}</p>
+        </div>)}</NaiveAsync>
+        <NaiveAsync operation={autoResolve} autoParams={{}} >{(state) => (<div>
+          <p>{state.data}</p>
+        </div>)}</NaiveAsync>
+        <NaiveAsync operation={autoResolve} autoParams={{}} >{(state) => (<div>
+          <p>{state.data}</p>
+        </div>)}</NaiveAsync>
       </div>
     );
   }

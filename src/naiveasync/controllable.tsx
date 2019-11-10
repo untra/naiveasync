@@ -173,6 +173,11 @@ export function createControllableContext<State extends AsyncableSlice>(
       })(this.dispatch)
     }
 
+    public componentWillUnmount = () => {
+      // tslint:disable-next-line: no-empty
+      this.setState = () => {}
+    }
+
     public dispatch: Dispatch<AnyAction> = <A extends Action>(action: A) => {
       this.setState(reducer(this.state, action))
       return action
