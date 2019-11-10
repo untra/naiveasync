@@ -15,7 +15,6 @@ import { NaiveAsync } from "../naiveasync"
 
 
 const autoParamsOp = (params : {}) => {
-  console.log('autoParams op invoked')
   return Promise.resolve(`✅ with params ${JSON.stringify(params)}`)
 }
 
