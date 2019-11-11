@@ -18,7 +18,7 @@
     "prepublishOnly": "npm run ci",
     "preversion": "npm run ci",
     "test": "mocha --reporter spec",
-    "build": "rm -f dist/index.html && cp src/index.html dist/index.html && tsc -p ./tsconfig.json",
+    "build": "rm -f dist/index.html && cp src/index.html dist/index.html && tsc -p ./build.tsconfig.json",
     "build:watch": "npm run build && tsc -p ./tsconfig.json --watch",
     "build:site": "./node_modules/.bin/react-scripts build",
     "lint": "tslint --project \"./tsconfig.json\"",
