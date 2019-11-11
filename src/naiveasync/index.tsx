@@ -46,18 +46,27 @@ const AsyncLifecycle: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params
     return children(state, call)
 }
 
+/**
+ * the NaiveAsync tag accepts an operation and autoParams object of initial parameters to pass in
+ *
+ * @export
+ * @template Data
+ * @template Params
+ * @param {NaiveAsyncComponentProps<Data, Params>} props
+ * @returns {React.ReactElement<NaiveAsyncComponentProps<Data, Params>>}
+ */
 export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncComponentProps<Data, Params>): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> {
     const { operation, children, autoParams } = props
     const [state, setState] = useState({
         params: autoParams,
-        asyncLifeCycle: asyncableLifecycle(operation)
+        asyncLifeCycle: asyncableLifecycle(operation),
+        AsyncControllable: createControllableContext(asyncableReducer, asyncableMiddleware)
     });
-    const { params, asyncLifeCycle } = state
+    const { params, asyncLifeCycle, AsyncControllable } = state
     const { selector, call, destroy } = asyncLifeCycle
     const invoke = (params: Params) => {
         setState({ ...state, params })
     }
-    const AsyncControllable = createControllableContext(asyncableReducer, asyncableMiddleware)
     return (<AsyncControllable>{
         (reduxState, dispatch) => <AsyncLifecycle
             params={params}

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Action, Dispatch, Middleware, Reducer } from 'redux'
+import { Action, Dispatch, Middleware, Reducer, createStore, applyMiddleware } from 'redux'
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
@@ -8,6 +8,8 @@ import { AnyAction, AsyncableSlice, AsyncableState, AsyncableSymbol, AsyncAction
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
+import { Provider } from 'react-redux'
+import { naiveAsyncReducer, naiveAsyncMiddleware } from '.'
 
 const cache = new KeyedCache<AsyncLifecycle<any, any>>()
 
@@ -162,6 +164,8 @@ export function createControllableContext<State extends AsyncableSlice>(
   middleware: Middleware
 ): Controllerable<State> {
 
+  const store = createStore(reducer, applyMiddleware(middleware))
+
   class Controllable extends React.Component<ControllableProps<State>, State> {
     constructor(props: ControllableProps<State>) {
       super(props)
@@ -184,7 +188,7 @@ export function createControllableContext<State extends AsyncableSlice>(
     }
 
     public render() {
-      return this.props.children(this.state, this.dispatch)
+      return <Provider store={store}>{this.props.children(this.state, this.dispatch)}</Provider>
     }
   }
 
