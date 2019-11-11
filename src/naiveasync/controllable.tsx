@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { Action, Dispatch, Middleware, Reducer, createStore, applyMiddleware } from 'redux'
+import { Provider } from 'react-redux'
+import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } from 'redux'
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
@@ -8,8 +9,6 @@ import { AnyAction, AsyncableSlice, AsyncableState, AsyncableSymbol, AsyncAction
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
-import { Provider } from 'react-redux'
-import { naiveAsyncReducer, naiveAsyncMiddleware } from '.'
 
 const cache = new KeyedCache<AsyncLifecycle<any, any>>()
 
