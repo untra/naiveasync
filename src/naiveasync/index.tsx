@@ -41,7 +41,7 @@ const AsyncLifecycle: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params
         }
         // destroy is called when the component unmounts
         return destroy
-    });
+    }, []);
     return children(state, call)
 }
 
