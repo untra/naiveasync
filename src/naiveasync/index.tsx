@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 // tslint:disable-next-line: no-duplicate-imports
 import React from 'react'
-import uuid from 'uuid'
 import { AsyncableState, AsyncGenerator } from './actions'
 import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, createControllableContext } from './controllable'
 
@@ -42,7 +41,7 @@ const AsyncLifecycle: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params
         }
         // destroy is called when the component unmounts
         return destroy
-    }, []);
+    });
     return children(state, call)
 }
 
@@ -60,7 +59,7 @@ export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncCompone
     const [state, setState] = useState({
         params: autoParams,
         asyncLifeCycle: asyncableLifecycle(operation),
-        AsyncControllable: createControllableContext(asyncableReducer, asyncableMiddleware)
+        AsyncControllable: createControllableContext(asyncableReducer, asyncableMiddleware),
     });
     const { params, asyncLifeCycle, AsyncControllable } = state
     const { selector, call, destroy } = asyncLifeCycle

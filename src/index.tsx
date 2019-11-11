@@ -1,7 +1,6 @@
 /* tslint:disable */
 import ReactDOM from "react-dom";
 import routes from './routes'
-import React from "react";
 // the naiveAsyncReducer maintains the redux state
 // the naiveAsyncMiddleware employs rxjs observables to fulfill promises
 // const store = createStore(naiveAsyncReducer, applyMiddleware(naiveAsyncMiddleware))

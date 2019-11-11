@@ -1,14 +1,12 @@
 /* tslint:disable */
 import React from "react";
-import { Provider } from "react-redux";
 // tslint:disable-next-line: no-implicit-dependencies
-import Highlight from "react-highlight";
+// import Highlight from "react-highlight";
 // tslint:disable-next-line: no-implicit-dependencies
 import { Link } from "react-router-dom";
 import packageJSON from '../../package.json'
 import wwords from "../content/home-content.json";
-import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer, NaiveAsyncState } from "../naiveasync/index";
-import { createStore, applyMiddleware } from "redux";
+import { NaiveAsync, NaiveAsyncState } from "../naiveasync/index";
 
 interface DataValue {
   value: string
@@ -19,9 +17,6 @@ interface ParamsValue {
 }
 
 const words: { [index: string]: { [index: string]: string } } = wwords
-
-const store = createStore(naiveAsyncReducer, applyMiddleware(naiveAsyncMiddleware))
-
 
 type SupportedLangs = keyof typeof words;
 const version = packageJSON.version
@@ -74,6 +69,7 @@ export default class Home extends React.Component<HomeScreenProps> {
     super(props);
     const rand = Math.floor(Math.random() * this.randomFilenames.length)
     this.randomFilename = this.randomFilenames[rand] || this.randomFilename
+    // eslint-disable-next-line
     const { lang } = props;
   }
 
@@ -81,6 +77,7 @@ export default class Home extends React.Component<HomeScreenProps> {
     // this is the word render function
     // it will display the text content in the given language or in english
     // the red X means there is missing text content
+    // eslint-disable-next-line
     const W = (input: string) => {
       const display = words[DEFAULT_LANG][input] || "";
       return `${display}` || "❌";

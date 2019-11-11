@@ -30,7 +30,7 @@
     "deploy": "./node_modules/.bin/gh-pages -d ./build",
     "predeploy": "npm run build:site",
     "watch": "./node_modules/.bin/webpack-dev-server dist/index.js",
-    "serve:watch": "./node_modules/.bin/webpack-dev-server --config webpack.config.js --mode development",
+    "serve:watch": "./node_modules/.bin/webpack --config webpack.config.js --mode development",
     "cypress:test": "./node_modules/.bin/cypress run --record ",
     "cypress:run": "./node_modules/.bin/cypress run",
     "cypress:open": "./node_modules/.bin/cypress open",

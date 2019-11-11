@@ -6,11 +6,6 @@
  * tslint:disable-next-line: no-implicit-dependencies
  */
 import React from "react";
-import flatDataJSON from "../content/fixtures/flat.json"
-import llanowarDataJSON from "../content/fixtures/llanowar.json";
-import nameDataJSON from "../content/fixtures/nameData.json";
-import styledHeadersJSON from "../content/fixtures/styledHeaders.json";
-import varietyofDataTypesDataJSON from "../content/fixtures/varietyOfTypesData.json";
 import { NaiveAsync } from "../naiveasync"
 
 
