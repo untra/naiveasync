@@ -1,6 +1,8 @@
 # 🔁 NaiveAsync
 ## an opinionated and painless [React](https://reactjs.org/) promise wrapper
 
+[npm package](https://www.npmjs.com/package/@untra/naiveasync)
+
 **NaiveAsync** is a straightforward React `^16.8.5` functional module that can be used to quickly turn an asynchronous operation into a well-managed react component centered around that asynchronous operation.
 
 It turns a promise into a state object to render child components with, and a call function to invoke the promise, with a few abstractions to manage it reasonably well.
