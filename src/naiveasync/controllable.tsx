@@ -137,7 +137,6 @@ export const asyncableLifecycle = <Data, Params extends object>(
   operation: AsyncGenerator<Data, Params>,
   id: string
 ): AsyncLifecycle<Data, Params> => {
-  console.log(id)
   const existing = id && cache.get(id)
   if (existing) {
     return existing
