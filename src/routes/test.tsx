@@ -6,8 +6,23 @@
  * tslint:disable-next-line: no-implicit-dependencies
  */
 import React from "react";
-import { NaiveAsync } from "../naiveasync"
+import { NaiveAsync, NaiveAsyncState } from "../naiveasync"
 
+
+const emojiView = (state: NaiveAsyncState<any,{}> ) => (<p>{
+  state.status === 'inflight' ? '💬'
+  : state.error ? '💥'
+  : state.data ? '✔️'
+  : '❌'
+} {`${state.data}`} {`${state.status}`} {`${state.error}`} </p>)
+
+// eslint-disable-next-line
+const callableView = (state: NaiveAsyncState<any,{}>, call : ({}) => any ) => (<button onClick={call}>{
+  state.status === 'inflight' ? '💬'
+  : state.error ? '💥'
+  : state.data ? '✔️'
+  : '❌'
+} {`${state.status}`} </button>)
 
 const slowResolve = <T extends any>(val : T) : Promise<T> => new Promise((resolve) => {
   const timeMS = Math.random() * 4000
@@ -105,6 +120,14 @@ export const nameHeaders = [
   }
 ];
 
+const timeoutResolve = <T extends any>(resolveTo: any, timeout = 4000) : Promise<T> => new Promise((res) => {
+  setTimeout(() => res(resolveTo), timeout)
+})
+
+const timeoutReject = <T extends any>(rejectTo: any, timeout = 4000) => new Promise((_, rej) => {
+  setTimeout(() => rej(rejectTo), timeout)
+})
+
 export default class Test extends React.Component {
   public render() {
     return (
@@ -139,7 +162,7 @@ export default class Test extends React.Component {
         <h4>
           #1 It should be invoked automatically when autoParams are specified...
         </h4>
-        <NaiveAsync operation={autoParamsOp} autoParams={{}} >{(state) => (<div>
+        <NaiveAsync id="NA1" operation={autoParamsOp} autoParams={{}} >{(state) => (<div>
           <p>status: {JSON.stringify(state.status)}</p>
           <p>params: {JSON.stringify(state.params)}</p>
           <p>error: {JSON.stringify(state.error)}</p>
@@ -148,7 +171,7 @@ export default class Test extends React.Component {
         <h4>
           #2 It can be invoked when the call cb is invoked
         </h4>
-        <NaiveAsync operation={autoParamsOp} >{(state, call) => (<div>
+        <NaiveAsync id="NA2" operation={autoParamsOp} >{(state, call) => (<div>
           <p>status: {JSON.stringify(state.status)}</p>
           <p>params: {JSON.stringify(state.params)}</p>
           <p>error: {JSON.stringify(state.error)}</p>
@@ -158,16 +181,33 @@ export default class Test extends React.Component {
         <h4>
           #3 Multiple autoParamed operations should execute
         </h4>
-        <NaiveAsync operation={autoResolve} autoParams={{}} >{(state) => (<div>
-          <p>{state.data}</p>
+        <NaiveAsync id="NA3a" operation={autoResolve} autoParams={{}} >{(state) => (<div>
+          <p>{state.data || '💬'}</p>
         </div>)}</NaiveAsync>
-        <NaiveAsync operation={autoResolve} autoParams={{}} >{(state) => (<div>
-          <p>{state.data}</p>
+        <NaiveAsync id="NA3b" operation={autoResolve} autoParams={{}} >{(state) => (<div>
+          <p>{state.data || '💬'}</p>
         </div>)}</NaiveAsync>
-        <NaiveAsync operation={autoResolve} autoParams={{}} >{(state) => (<div>
-          <p>{state.data}</p>
+        <NaiveAsync id="NA3c" operation={autoResolve} autoParams={{}} >{(state) => (<div>
+          <p>{state.data || '💬'}</p>
         </div>)}</NaiveAsync>
-      </div>
+        <h4>
+          #4 a circus of promises
+        </h4>
+        <NaiveAsync id="NA4a" operation={() => Promise.resolve(true)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA4b" operation={() => Promise.resolve(false)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA4c" operation={() => Promise.reject('boom')} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA4d" operation={() => Promise.reject(new Error('kaboom!'))} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA4e" operation={() => timeoutResolve(true)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA4f" operation={() => timeoutResolve(false)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA4g" operation={() => timeoutReject('slow boom') as Promise<boolean>} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA4h" operation={() => timeoutReject(new Error('slow kaboom!')) as Promise<boolean>} autoParams={{}}>{emojiView}</NaiveAsync>
+        <h4>
+          #5 callable promises
+        </h4>
+        <NaiveAsync id="NA5a" operation={() => Promise.resolve(true)}>{callableView}</NaiveAsync>
+        <NaiveAsync id="NA5b" operation={() => timeoutResolve(true)}>{callableView}</NaiveAsync>
+        <NaiveAsync id="NA5c" operation={() => slowResolve(true)}>{callableView}</NaiveAsync>
+        </div>
     );
   }
 }
