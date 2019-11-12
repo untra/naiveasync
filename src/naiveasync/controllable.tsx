@@ -4,7 +4,6 @@ import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } f
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import uuid from 'uuid'
 import { AnyAction, AsyncableSlice, AsyncableState, AsyncableSymbol, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncGenerator, initialAsyncableState, isAsyncAction } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
@@ -135,9 +134,10 @@ export const asyncableMiddleware: Middleware = store => {
 
 
 export const asyncableLifecycle = <Data, Params extends object>(
-  operation: AsyncGenerator<Data, Params>
+  operation: AsyncGenerator<Data, Params>,
+  id: string
 ): AsyncLifecycle<Data, Params> => {
-  const id = operation.name ? operation.name : uuid.v4()
+  console.log(id)
   const existing = id && cache.get(id)
   if (existing) {
     return existing

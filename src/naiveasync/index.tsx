@@ -13,6 +13,7 @@ export const naiveAsyncMiddleware = asyncableMiddleware
 type NaiveAsyncComponentChildren<Data, Params> = (state: AsyncableState<Data, Params>, call: (params: Params) => void) => JSX.Element
 
 interface NaiveAsyncComponentProps<Data, Params extends object> {
+    id: string
     operation: AsyncGenerator<Data, Params>
     autoParams?: Params
     children: NaiveAsyncComponentChildren<Data, Params>
@@ -41,6 +42,7 @@ const AsyncLifecycle: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params
         }
         // destroy is called when the component unmounts
         return destroy
+        // eslint-disable-next-line
     }, []);
     return children(state, call)
 }
@@ -55,10 +57,10 @@ const AsyncLifecycle: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params
  * @returns {React.ReactElement<NaiveAsyncComponentProps<Data, Params>>}
  */
 export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncComponentProps<Data, Params>): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> {
-    const { operation, children, autoParams } = props
+    const { operation, children, autoParams, id } = props
     const [state, setState] = useState({
         params: autoParams,
-        asyncLifeCycle: asyncableLifecycle(operation),
+        asyncLifeCycle: asyncableLifecycle(operation, id),
         AsyncControllable: createControllableContext(asyncableReducer, asyncableMiddleware),
     });
     const { params, asyncLifeCycle, AsyncControllable } = state

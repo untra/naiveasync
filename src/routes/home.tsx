@@ -95,7 +95,7 @@ export default class Home extends React.Component<HomeScreenProps> {
             <a href="https://www.npmjs.com/package/@untra/naiveasync">NPM</a> -{" "}
             <a href="https://dashboard.cypress.io/#/projects/wrytfx/runs">Cypress</a>
           </h3>
-          <NaiveAsync operation={asyncOperation}>{ asyncableView }</NaiveAsync>
+          <NaiveAsync id="asyncOp" operation={asyncOperation}>{ asyncableView }</NaiveAsync>
         </div>
       </div>
     );
