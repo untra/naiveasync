@@ -1,6 +1,6 @@
 {
   "name": "@untra/naiveasync",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "An Opinionated and Painless React promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
