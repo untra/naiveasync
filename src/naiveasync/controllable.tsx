@@ -1,4 +1,5 @@
 import * as React from 'react'
+// tslint:disable-next-line: no-implicit-dependencies
 import { Provider } from 'react-redux'
 import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } from 'redux'
 import { empty, Observable, Subject } from "rxjs"
