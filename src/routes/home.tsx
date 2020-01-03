@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import packageJSON from '../../package.json'
 import wwords from "../content/home-content.json";
 import { NaiveAsync, NaiveAsyncState } from "../naiveasync/index";
+import Highlight from "react-highlight";
 
 interface DataValue {
   value: string
@@ -63,14 +64,8 @@ const asyncableView = (state: NaiveAsyncState<DataValue, ParamsValue>, call: (pa
 
 
 export default class Home extends React.Component<HomeScreenProps> {
-  private readonly randomFilenames = ['copy', 'new-hot-startup', 'foobarbaz', 'blockchainz', 'stuff', 'wack-wack-wack', '1']
-  private randomFilename = this.randomFilenames[0]
   constructor(props: HomeScreenProps) {
     super(props);
-    const rand = Math.floor(Math.random() * this.randomFilenames.length)
-    this.randomFilename = this.randomFilenames[rand] || this.randomFilename
-    // eslint-disable-next-line
-    const { lang } = props;
   }
 
   public render() {
@@ -96,6 +91,25 @@ export default class Home extends React.Component<HomeScreenProps> {
             <a href="https://dashboard.cypress.io/#/projects/wrytfx/runs">Cypress</a>
           </h3>
           <NaiveAsync id="asyncOp" operation={asyncOperation}>{ asyncableView }</NaiveAsync>
+          <p>NaiveAsync is a straightforward React Component with its own internal redux store and rxjs observable reducer.</p>
+          <p>It uses these to provide a reasonable rendering abstraction around an async process, defined from a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</a> object.</p>
+          <p>Child Components rendered in a NaiveAsync component have access to a <code>state</code> and a <code>call</code> function.</p>
+          <p>NaiveAsync takes three arguments:</p>
+          <ul>
+            <li><strong>operation:</strong><code>{`(params) => Promise`}</code> the operation takes in params and returns a promise</li>
+            <li><strong>id:</strong><code>{`string`}</code> optional string identifier under which the component redux state is stored. If not provided, it will use the function name. Not providing an identifier or reusing identifiers across NaiveAsync Components can cause bugs.</li>
+            <li><strong>autoParams:</strong><code>{`Params`}</code> optional params object that, if provided, will be used to invoke the operation on component mount.</li>
+          </ul>
+          <Highlight className="tsx">{
+            `// react-app-async.tsx
+import React from "react";
+import { NaiveAsync } from "@untra/naiveasync";
+// NaiveAsync builds its own standard set of reducers and redux store
+// designed to provide a
+// or perhaps written more terseley
+// <NaiveAsync id="asyncOp" operation={asyncOperation}>{ asyncableView }</NaiveAsync>
+`}
+          </Highlight>
         </div>
       </div>
     );

@@ -7,7 +7,7 @@ import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, createContro
 export type NaiveAsyncState<D, P> = AsyncableState<D, P>
 
 export const naiveAsyncReducer = asyncableReducer
-
+export const naiveAsyncableLifecycle = asyncableLifecycle
 export const naiveAsyncMiddleware = asyncableMiddleware
 
 type NaiveAsyncComponentChildren<Data, Params> = (state: AsyncableState<Data, Params>, call: (params: Params) => void) => JSX.Element
@@ -46,6 +46,21 @@ const AsyncLifecycle: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params
     }, []);
     return children(state, call)
 }
+
+// type ControllableChildren<State> = (
+//     state: State,
+//     dispatch: <A extends AnyAction>(action: A) => void,
+//   ) => React.ReactNode
+
+// interface ControllableProps<State> = (
+//     children: ControllableChildren<State>
+// ) =>
+
+// const ControllableWrapper : React.ReactElement = (props: ControllableProps) => {
+//     store = useState
+
+//     return (<div></div>)
+// }
 
 /**
  * the NaiveAsync tag accepts an operation and autoParams object of initial parameters to pass in

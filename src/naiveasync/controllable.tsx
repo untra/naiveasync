@@ -186,6 +186,7 @@ export function createControllableContext<State extends AsyncableSlice>(
     }
 
     public render() {
+      // 💥 TODO: this is so incorrect and inefficient, bad sam! bad code
       return <Provider store={store}>{this.props.children(this.state, this.dispatch)}</Provider>
     }
   }

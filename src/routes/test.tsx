@@ -128,6 +128,10 @@ const timeoutReject = <T extends any>(rejectTo: any, timeout = 4000) => new Prom
   setTimeout(() => rej(rejectTo), timeout)
 })
 
+const namedFunction = function namedFunction(){
+  return timeoutResolve(true)
+}
+
 export default class Test extends React.Component {
   public render() {
     return (
@@ -207,7 +211,26 @@ export default class Test extends React.Component {
         <NaiveAsync id="NA5a" operation={() => Promise.resolve(true)}>{callableView}</NaiveAsync>
         <NaiveAsync id="NA5b" operation={() => timeoutResolve(true)}>{callableView}</NaiveAsync>
         <NaiveAsync id="NA5c" operation={() => slowResolve(true)}>{callableView}</NaiveAsync>
+        <h4>
+          #6 very small timeouts
+        </h4>
+        <NaiveAsync id="NA6a" operation={() => timeoutResolve(true, 1)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA6b" operation={() => timeoutResolve(true, 2)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA6c" operation={() => timeoutResolve(true, 3)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA6d" operation={() => timeoutResolve(true, 4)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA6e" operation={() => timeoutResolve(true, 5)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA6f" operation={() => timeoutResolve(true, 6)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA6g" operation={() => timeoutResolve(true, 7)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <NaiveAsync id="NA6h" operation={() => timeoutResolve(true, 8)} autoParams={{}}>{emojiView}</NaiveAsync>
+        <h4>
+          #7 shared id experiment
+        </h4>
+        <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
+        <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
+        <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
+
         </div>
+
     );
   }
 }

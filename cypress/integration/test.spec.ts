@@ -5,7 +5,7 @@ import flatDataJSON from '../../src/content/fixtures/flat.json'
 import nameDataJSON from '../../src/content/fixtures/nameData.json'
 import styledHeadersJSON from '../../src/content/fixtures/styledHeaders.json'
 import varietyOfDataTypesJSON from '../../src/content/fixtures/varietyOfTypesData.json'
-import { DataObj, TableConfigHeader } from '../../src/NaiveTable'
+// import { DataObj, TableConfigHeader } from '../../src/NaiveTable'
 import { nameHeaders } from '../../src/routes/test'
 
 const varietyofDataTypesData: DataObj[] = varietyOfDataTypesJSON
