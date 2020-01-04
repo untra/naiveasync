@@ -5,7 +5,7 @@ import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } f
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncGenerator, initialAsyncableState, isAsyncAction } from './actions'
+import { AnyAction, AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncGenerator, initialAsyncableState, isAsyncAction, Gettable, isGettable } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
@@ -135,6 +135,17 @@ export const asyncableMiddleware: Middleware = store => {
   return middleware(store)
 }
 
+const selectFunction = (id: string) => (state: AsyncableSlice | Gettable) => {
+  if (isGettable(state)) {
+    const getState = state.get(AsyncableEmoji)
+    if (getState) {
+      return getState[id] || initialAsyncableState
+    }
+    // TODO: log a warning, return better if this is encountered
+    return initialAsyncableState
+  }
+  return state[AsyncableEmoji][id] || initialAsyncableState
+}
 
 export const asyncableLifecycle = <Data, Params extends object>(
   operation: AsyncGenerator<Data, Params>,
@@ -148,7 +159,7 @@ export const asyncableLifecycle = <Data, Params extends object>(
   const lifecycle: AsyncLifecycle<Data, Params> = {
     id,
     operation,
-    selector: (state: AsyncableSlice) => state[AsyncableEmoji][id] || initialAsyncableState,
+    selector: selectFunction(id),
     call: factory<Params>('call'),
     destroy: factory<{}>('destroy'),
     data: factory<Data>('data'),

@@ -139,6 +139,14 @@ export interface AsyncableSlice {
   [AsyncableEmoji]: { [key: string]: AsyncableState<any, any> }
 }
 
+export interface Gettable {
+  get: (a: any) => any
+}
+
+export const isGettable = (x: any): x is Gettable  => {
+  return "get" in x && typeof x.get === "function" ;
+}
+
 
 export type AsyncableStateStatus = '' | 'inflight' | 'error' | 'done'
 
