@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 // tslint:disable-next-line: no-duplicate-imports
 import React from 'react'
 import { AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncGenerator } from './actions'
-import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, AsyncLifecycle as AsyncManaged, createControllableContext } from './controllable'
+import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, AsyncLifecycle, createControllableContext } from './controllable'
 
 type NaiveAsyncComponentChildren<Data, Params> = (state: AsyncableState<Data, Params>, call: (params: Params) => void) => JSX.Element
 
@@ -66,7 +66,7 @@ export type NaiveAsyncState<D, P> = AsyncableState<D, P>
 export type NaiveAsyncSlice = AsyncableSlice
 
 /** The managed async lifecycle object of a given NaiveAsyncFunction */
-export type NaiveAsyncLifecycle<D, P> = AsyncManaged<D, P>
+export type NaiveAsyncLifecycle<D, P> = AsyncLifecycle<D, P>
 
 /** 🔁 if you're into the whole brevity thing */
 export const naiveAsyncEmoji = AsyncableEmoji
