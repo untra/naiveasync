@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 // tslint:disable-next-line: no-duplicate-imports
 import React from 'react'
 import { AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncGenerator } from './actions'
-import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, AsyncLifecycle, createControllableContext } from './controllable'
+import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, AsyncLifecycle as AsyncManaged, createControllableContext } from './controllable'
 
 type NaiveAsyncComponentChildren<Data, Params> = (state: AsyncableState<Data, Params>, call: (params: Params) => void) => JSX.Element
 
@@ -22,7 +22,7 @@ interface LifecycleAsyncProps<Data, Params> {
 }
 
 
-const AsyncLifecycle: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params>(
+const AsyncManaged: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params>(
     props: LifecycleAsyncProps<Data, Params>
 ) => {
     const { call, params, children, state, destroy } = props
@@ -66,7 +66,7 @@ export type NaiveAsyncState<D, P> = AsyncableState<D, P>
 export type NaiveAsyncSlice = AsyncableSlice
 
 /** The managed async lifecycle object of a given NaiveAsyncFunction */
-export type NaiveAsyncLifecycle<D, P> = AsyncLifecycle<D, P>
+export type NaiveAsyncLifecycle<D, P> = AsyncManaged<D, P>
 
 /** 🔁 if you're into the whole brevity thing */
 export const naiveAsyncEmoji = AsyncableEmoji
@@ -102,7 +102,7 @@ export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncCompone
         setState({ ...state, params })
     }
     return (<AsyncControllable>{
-        (reduxState, dispatch) => <AsyncLifecycle
+        (reduxState, dispatch) => <AsyncManaged
             params={params}
             state={selector(reduxState)}
             call={(params: object) => {
@@ -112,6 +112,6 @@ export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncCompone
             destroy={() => {
                 dispatch(destroy({}))
             }}
-        >{children}</AsyncLifecycle>
+        >{children}</AsyncManaged>
     }</AsyncControllable>)
 }
