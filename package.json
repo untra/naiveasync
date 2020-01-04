@@ -1,6 +1,6 @@
 {
   "name": "@untra/naiveasync",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "An Opinionated and Painless React promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
@@ -15,7 +15,8 @@
   },
   "scripts": {
     "postversion": "git push && git push --tags",
-    "prepublishOnly": "npm run ci",
+    "prepublishOnly": "npm run ci && npm run defs",
+    "postpublish": "npm run deploy",
     "preversion": "npm run ci",
     "test": "mocha --reporter spec",
     "build": "rm -f dist/index.html && cp src/index.html dist/index.html && tsc -p ./build.tsconfig.json",
