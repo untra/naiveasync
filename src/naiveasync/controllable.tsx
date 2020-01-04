@@ -30,7 +30,7 @@ export interface AsyncLifecycle<Data, Params> {
   readonly operation: AsyncGenerator<Data, Params>
   /** Returns the `AsyncState` instance owned by this manager. */
   readonly selector: (
-    state: AsyncableSlice,
+    state: AsyncableSlice | Gettable,
   ) => AsyncableState<Data, Params>
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. */
   readonly call: AsyncActionCreator<Params>
