@@ -1,5 +1,4 @@
-const AsyncableEmoji = '🔁'
-export const AsyncableSymbol = Symbol(AsyncableEmoji)
+export const AsyncableEmoji = '🔁'
 
 export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset'
 
@@ -41,7 +40,7 @@ export interface AnyAction {
 export interface AsyncAction<Payload> extends Action<Payload> {
   readonly type: string
   readonly payload: Payload
-  readonly [AsyncableSymbol]: AsyncMeta
+  readonly [AsyncableEmoji]: AsyncMeta
 }
 
 /**
@@ -50,14 +49,14 @@ export interface AsyncAction<Payload> extends Action<Payload> {
  * @returns {action is AsyncAction<any>}
  */
 export const isAsyncAction = (action: AnyAction): action is AsyncAction<any> =>
-  AsyncableSymbol in action
+AsyncableEmoji in action
 
 const asyncActionMatchesPhase = (action: AsyncAction<any>, phase?: AsyncPhase) => {
-  return !!(!phase || action[AsyncableSymbol].phase === phase)
+  return !!(!phase || action[AsyncableEmoji].phase === phase)
 }
 
 const asyncActionMatchesOperation = (action: AsyncAction<any>, operation?: AsyncGenerator<any, any>) => {
-  return (!operation || (operation.name && operation.name === action[AsyncableSymbol].name))
+  return (!operation || (operation.name && operation.name === action[AsyncableEmoji].name))
 }
 
 /**
@@ -120,13 +119,13 @@ export const asyncActionCreatorFactory = <Data, Params>(
   const meta = { name, phase }
   const guard = asyncActionMatcher(undefined, phase)
   const match = (action: Action<Payload>): action is AsyncAction<Payload> =>
-    guard(action) && action[AsyncableSymbol].name === name
+    guard(action) && action[AsyncableEmoji].name === name
   const actionCreator: AsyncActionCreator<Payload> = (payload: Payload) => ({
     type,
     meta,
     match,
     payload,
-    [AsyncableSymbol]: meta
+    [AsyncableEmoji]: meta
   })
   return actionCreator
 }
@@ -137,7 +136,7 @@ export const asyncActionCreatorFactory = <Data, Params>(
  * @interface AsyncableSlice
  */
 export interface AsyncableSlice {
-  [AsyncableSymbol]: { [key: string]: AsyncableState<any, any> }
+  [AsyncableEmoji]: { [key: string]: AsyncableState<any, any> }
 }
 
 

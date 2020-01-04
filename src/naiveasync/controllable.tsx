@@ -5,7 +5,7 @@ import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } f
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncableSlice, AsyncableState, AsyncableSymbol, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncGenerator, initialAsyncableState, isAsyncAction } from './actions'
+import { AnyAction, AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncGenerator, initialAsyncableState, isAsyncAction } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
@@ -23,7 +23,7 @@ interface ControllableProps<State> {
 
 export type Controllerable<State> = React.ComponentType<ControllableProps<State>>
 
-export interface AsyncLifecycle<Data, Params extends object> {
+export interface AsyncLifecycle<Data, Params> {
   /** The identifier of the async state that owns this */
   readonly id: string
   /** The asynchronous operation */
@@ -50,19 +50,21 @@ export interface AsyncLifecycle<Data, Params extends object> {
   readonly reset: AsyncActionCreator<{}>
 }
 
-export const initialAsyncableSlice = { [AsyncableSymbol]: {} }
+export const initialAsyncableSlice = { [AsyncableEmoji]: {} }
+
+
 export const asyncableReducer: Reducer<AsyncableSlice> = (state = initialAsyncableSlice, action: AnyAction) => {
   // only process managed actions
   if (isAsyncAction(action)) {
-    const name = action[AsyncableSymbol].name
-    const currentState = state[AsyncableSymbol] || initialAsyncableSlice
-    const nextState = { ...state, [AsyncableSymbol]: { ...currentState } }
+    const name = action[AsyncableEmoji].name
+    const currentState = state[AsyncableEmoji] || initialAsyncableSlice
+    const nextState = { ...state, [AsyncableEmoji]: { ...currentState } }
     // aside from the destroy action,
-    if (action[AsyncableSymbol].phase === 'destroy') {
-      delete nextState[AsyncableSymbol][name]
+    if (action[AsyncableEmoji].phase === 'destroy') {
+      delete nextState[AsyncableEmoji][name]
       cache.remove(name)
     } else {
-      nextState[AsyncableSymbol][name] = asyncStateReducer(nextState[AsyncableSymbol][name], action)
+      nextState[AsyncableEmoji][name] = asyncStateReducer(nextState[AsyncableEmoji][name], action)
     }
     return nextState
   }
@@ -108,7 +110,7 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
 const AsyncableEpic = (action$: Observable<Action<any>>): Observable<Action> => {
   const asyncableMatcher = asyncActionMatcher(undefined, 'call')
   const mergeMapAction = (action: AsyncAction<any>) => {
-    const actionAsyncLifecycle = cache.get(action[AsyncableSymbol].name)
+    const actionAsyncLifecycle = cache.get(action[AsyncableEmoji].name)
     if (!actionAsyncLifecycle) {
       return empty()
     } else {
@@ -146,7 +148,7 @@ export const asyncableLifecycle = <Data, Params extends object>(
   const lifecycle: AsyncLifecycle<Data, Params> = {
     id,
     operation,
-    selector: (state: AsyncableSlice) => state[AsyncableSymbol][id] || initialAsyncableState,
+    selector: (state: AsyncableSlice) => state[AsyncableEmoji][id] || initialAsyncableState,
     call: factory<Params>('call'),
     destroy: factory<{}>('destroy'),
     data: factory<Data>('data'),

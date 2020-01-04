@@ -1,14 +1,8 @@
 import { useEffect, useState } from 'react'
 // tslint:disable-next-line: no-duplicate-imports
 import React from 'react'
-import { AsyncableState, AsyncGenerator } from './actions'
-import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, createControllableContext } from './controllable'
-
-export type NaiveAsyncState<D, P> = AsyncableState<D, P>
-
-export const naiveAsyncReducer = asyncableReducer
-export const naiveAsyncableLifecycle = asyncableLifecycle
-export const naiveAsyncMiddleware = asyncableMiddleware
+import { AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncGenerator } from './actions'
+import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, AsyncLifecycle, createControllableContext } from './controllable'
 
 type NaiveAsyncComponentChildren<Data, Params> = (state: AsyncableState<Data, Params>, call: (params: Params) => void) => JSX.Element
 
@@ -61,6 +55,30 @@ const AsyncLifecycle: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params
 
 //     return (<div></div>)
 // }
+
+/** a function that takes a singular params object P, returning a Promise<D> */
+export type NaiveAsyncFunction<D, P> = AsyncGenerator<D, P>
+
+/** The state of a NaiveAsyncFunction, encompassing status, params, error, data */
+export type NaiveAsyncState<D, P> = AsyncableState<D, P>
+
+/** The redux store type that is accepted as input to an NaiveAsyncLifecycle selector  */
+export type NaiveAsyncSlice = AsyncableSlice
+
+/** The managed async lifecycle object of a given NaiveAsyncFunction */
+export type NaiveAsyncLifecycle<D, P> = AsyncLifecycle<D, P>
+
+/** 🔁 if you're into the whole brevity thing */
+export const naiveAsyncEmoji = AsyncableEmoji
+
+/** a reducer to plug into your redux combineReducers */
+export const naiveAsyncReducer = asyncableReducer
+
+/** middleware to plug into your redux combineMiddleware */
+export const naiveAsyncMiddleware = asyncableMiddleware
+
+/** wraps a NaiveAsyncFunction and a unique identifier to provide a redux store managed lifecycle  */
+export const naiveAsyncLifecycle = asyncableLifecycle
 
 /**
  * the NaiveAsync tag accepts an operation and autoParams object of initial parameters to pass in
