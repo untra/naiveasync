@@ -5,7 +5,7 @@ import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } f
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncGenerator, initialAsyncableState, isAsyncAction, Gettable, isGettable } from './actions'
+import { AnyAction, AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncGenerator, Gettable, initialAsyncableState, isAsyncAction, isGettable } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
@@ -191,7 +191,7 @@ export function createControllableContext<State extends AsyncableSlice>(
 
     public componentWillUnmount = () => {
       // tslint:disable-next-line: no-empty
-      this.setState = () => {}
+      this.setState = () => { }
     }
 
     public dispatch: Dispatch<AnyAction> = <A extends Action>(action: A) => {
