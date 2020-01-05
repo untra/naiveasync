@@ -57,7 +57,7 @@ export const asyncableReducer: Reducer<AsyncableSlice> = (state = initialAsyncab
   // only process managed actions
   if (isAsyncAction(action)) {
     const name = action[AsyncableEmoji].name
-    const currentState = state[AsyncableEmoji] || initialAsyncableSlice
+    const currentState = state[AsyncableEmoji] || {}
     const nextState = { ...state, [AsyncableEmoji]: { ...currentState } }
     // aside from the destroy action,
     if (action[AsyncableEmoji].phase === 'destroy') {
