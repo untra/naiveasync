@@ -87,7 +87,7 @@ const $fromStore = <S, A extends Action>(store: StoreLike<S, A>): SubjectLike<S,
     state$.next(store.getState())
   })
   return {
-    subscribe: state$.subscribe.bind(state$),
+    subscribe: state$.subscribe.bind(state$) as any,
     next: (action: A) => { store.dispatch(action) }
   }
 }

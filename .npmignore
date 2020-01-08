@@ -12,8 +12,8 @@ cypress/
 .babelrc
 .env
 .eslintrc
-.travis.yml
-build.tsconfig.json
+.travis.yaml
+*.tsconfig.json
 cypress.json
 package-lock.json
 tslint.json
