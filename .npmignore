@@ -19,3 +19,8 @@ package-lock.json
 tslint.json
 typedoc.json
 webpack.*
+
+# ignore certain dist files
+dist/src/content
+dist/src/routes/
+dist/src/index.*

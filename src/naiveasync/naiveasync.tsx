@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { NaiveAsyncFunction, NaiveAsyncState } from './actions'
-import { asyncableMiddleware, asyncableReducer, createControllableContext, naiveAsyncLifecycle } from './controllable'
+import { createControllableContext, naiveAsyncLifecycle, naiveAsyncMiddleware, naiveAsyncReducer } from './controllable'
 
 export type NaiveAsyncComponentChildren<Data, Params> = (state: NaiveAsyncState<Data, Params>, call: (params: Params) => void) => JSX.Element
 
@@ -53,7 +53,7 @@ export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncCompone
     const [state, setState] = useState({
         params: autoParams,
         asyncLifeCycle: naiveAsyncLifecycle(operation, id),
-        AsyncControllable: createControllableContext(asyncableReducer, asyncableMiddleware),
+        AsyncControllable: createControllableContext(naiveAsyncReducer, naiveAsyncMiddleware),
     });
     const { params, asyncLifeCycle, AsyncControllable } = state
     const { selector, call, destroy } = asyncLifeCycle

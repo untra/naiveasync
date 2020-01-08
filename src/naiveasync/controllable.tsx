@@ -30,7 +30,7 @@ export interface AsyncLifecycle<Data, Params> {
   readonly operation: NaiveAsyncFunction<Data, Params>
   /** Returns the `AsyncState` instance owned by this manager. */
   readonly selector: (
-    state: NaiveAsyncSlice | Gettable,
+    state: NaiveAsyncSlice,
   ) => NaiveAsyncState<Data, Params>
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. */
   readonly call: AsyncActionCreator<Params>
@@ -54,7 +54,7 @@ export interface AsyncLifecycle<Data, Params> {
 export const naiveAsyncInitialSlice = { [naiveAsyncEmoji]: {} }
 
 /** a reducer to plug into your redux combineReducers */
-export const asyncableReducer: Reducer<NaiveAsyncSlice> = (state = naiveAsyncInitialSlice, action: AnyAction) => {
+export const naiveAsyncReducer: Reducer<NaiveAsyncSlice> = (state = naiveAsyncInitialSlice, action: AnyAction) => {
   // only process managed actions
   if (isAsyncAction(action)) {
     const name = action[naiveAsyncEmoji].name
@@ -73,7 +73,7 @@ export const asyncableReducer: Reducer<NaiveAsyncSlice> = (state = naiveAsyncIni
 }
 
 export const combinedAsyncableReducer: Reducer<{[index: string]: any}> = (state = {}, action: AnyAction) => {
-  return asyncableReducer(state as NaiveAsyncSlice,action)[naiveAsyncEmoji]
+  return naiveAsyncReducer(state as NaiveAsyncSlice,action)[naiveAsyncEmoji]
 }
 
 function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object): Observable<Action<any>> {
@@ -133,23 +133,25 @@ const AsyncableEpic = (action$: Observable<Action<any>>): Observable<Action> => 
  * @param {*} store
  * @returns
  */
-export const asyncableMiddleware: Middleware = store => {
+export const naiveAsyncMiddleware: Middleware = store => {
   const action$: Subject<Action> = new Subject()
   const middleware = $toMiddleware(action$)
   AsyncableEpic(action$).subscribe(store.dispatch)
   return middleware(store)
 }
 
-const selectFunction = (id: string) => (state: NaiveAsyncSlice | Gettable) => {
-  if (isGettable(state)) {
-    const getState = state.get(naiveAsyncEmoji)
-    if (getState) {
-      return getState[id] || naiveAsyncInitialState
-    }
-    // TODO: log a warning, return better if this is encountered
-    return naiveAsyncInitialState
-  }
-  return state[naiveAsyncEmoji][id] || naiveAsyncInitialState
+const selectFunction = (id: string) => (state: NaiveAsyncSlice) => {
+  // if (isGettable(state)) {
+  //   const getState = state.get(naiveAsyncEmoji)
+  //   if (getState) {
+  //     return getState[id] || naiveAsyncInitialState
+  //   }
+  //   // TODO: log a warning, return better if this is encountered
+  //   return naiveAsyncInitialState
+  // }
+  const substate = state[naiveAsyncEmoji]
+  return naiveAsyncEmoji in substate ? state[naiveAsyncEmoji][id]
+  : (substate[id] || naiveAsyncInitialState)
 }
 
 /**
