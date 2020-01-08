@@ -52,7 +52,6 @@ export interface AsyncLifecycle<Data, Params> {
 
 export const initialAsyncableSlice = { [AsyncableEmoji]: {} }
 
-
 export const asyncableReducer: Reducer<AsyncableSlice> = (state = initialAsyncableSlice, action: AnyAction) => {
   // only process managed actions
   if (isAsyncAction(action)) {
@@ -69,6 +68,10 @@ export const asyncableReducer: Reducer<AsyncableSlice> = (state = initialAsyncab
     return nextState
   }
   return state
+}
+
+export const combinedAsyncableReducer: Reducer<{[index: string]: any}> = (state = {}, action: AnyAction) => {
+  return asyncableReducer(state as AsyncableSlice,action)[AsyncableEmoji]
 }
 
 function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object): Observable<Action<any>> {
