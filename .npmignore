@@ -7,4 +7,15 @@ coverage/
 .github/
 .vscode/
 *.tgz
+public/
 cypress/
+.babelrc
+.env
+.eslintrc
+.travis.yml
+build.tsconfig.json
+cypress.json
+package-lock.json
+tslint.json
+typedoc.json
+webpack.*

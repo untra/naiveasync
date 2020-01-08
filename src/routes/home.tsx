@@ -82,7 +82,7 @@ export default class Home extends React.Component<HomeScreenProps> {
       <div className="page-content">
         <div className="wrapper">
           <h1><span role="img" aria-label="Bento">🔁</span> NaiveAsync</h1>
-          <h2>an opinionated and painless <a href="https://reactjs.org/">React</a> promise wrapper</h2>
+          <h2>an opinionated and painless <a href="https://reactjs.org/">React</a> n <a href="https://redux.js.org/">Redux</a> promise wrapper</h2>
           <h3>
             v{version} -{" "}
             <Link to="/test">Tests</Link>-{" "}

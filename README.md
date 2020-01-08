@@ -1,7 +1,5 @@
 # 🔁 NaiveAsync
-## an opinionated and painless [React](https://reactjs.org/) promise wrapper
-
-
+## an opinionated and painless [React](https://reactjs.org/) n [Redux](https://redux.js.org/) promise wrapper
 
 [npm package](https://www.npmjs.com/package/@untra/naiveasync)
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 // tslint:disable-next-line: no-duplicate-imports
 import React from 'react'
-import { AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncGenerator } from './actions'
-import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, AsyncLifecycle, createControllableContext } from './controllable'
+import { AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncGenerator, initialAsyncableState } from './actions'
+import { asyncableLifecycle, asyncableMiddleware, asyncableReducer, AsyncLifecycle, createControllableContext, initialAsyncableSlice } from './controllable'
 
 type NaiveAsyncComponentChildren<Data, Params> = (state: AsyncableState<Data, Params>, call: (params: Params) => void) => JSX.Element
 
@@ -41,21 +41,6 @@ const AsyncManaged: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params>(
     return children(state, call)
 }
 
-// type ControllableChildren<State> = (
-//     state: State,
-//     dispatch: <A extends AnyAction>(action: A) => void,
-//   ) => React.ReactNode
-
-// interface ControllableProps<State> = (
-//     children: ControllableChildren<State>
-// ) =>
-
-// const ControllableWrapper : React.ReactElement = (props: ControllableProps) => {
-//     store = useState
-
-//     return (<div></div>)
-// }
-
 /** a function that takes a singular params object P, returning a Promise<D> */
 export type NaiveAsyncFunction<D, P> = AsyncGenerator<D, P>
 
@@ -68,7 +53,7 @@ export type NaiveAsyncSlice = AsyncableSlice
 /** The managed async lifecycle object of a given NaiveAsyncFunction */
 export type NaiveAsyncLifecycle<D, P> = AsyncLifecycle<D, P>
 
-/** 🔁 if you're into the whole brevity thing */
+/** 🔁  */
 export const naiveAsyncEmoji = AsyncableEmoji
 
 /** a reducer to plug into your redux combineReducers */
@@ -79,6 +64,12 @@ export const naiveAsyncMiddleware = asyncableMiddleware
 
 /** wraps a NaiveAsyncFunction and a unique identifier to provide a redux store managed lifecycle  */
 export const naiveAsyncLifecycle = asyncableLifecycle
+
+/** the initial state of a naiveasync operation */
+export const naiveAsyncInitialState = initialAsyncableState
+
+/** the initial slice state for use in a redux store */
+export const naiveAsyncInitialSlice = initialAsyncableSlice
 
 /**
  * the NaiveAsync tag accepts an operation and autoParams object of initial parameters to pass in

@@ -1,6 +1,6 @@
 {
   "short_name": "NaiveAsync",
-  "name": "An opinionated and painless React promise wrapper",
+  "name": "An opinionated and painless React & Redux promise wrapper",
   "icons": [
     {
       "src": "favicon.ico",
