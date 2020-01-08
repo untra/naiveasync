@@ -1,5 +1,7 @@
-export const AsyncableEmoji = '🔁'
+/** 🔁  */
+export const naiveAsyncEmoji = '🔁'
 
+/** the phase state of the naiveAsync lifecycle */
 export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset'
 
 interface AsyncMeta {
@@ -7,7 +9,8 @@ interface AsyncMeta {
   readonly phase: AsyncPhase
 }
 
-export type AsyncGenerator<Data, Params> = (params: Params) => Promise<Data>
+/** a function that takes a singular params object P, returning a Promise<D> */
+export type NaiveAsyncFunction<Data, Params> = (params: Params) => Promise<Data>
 
 /**
  * A typical redux action, templating a payload
@@ -40,7 +43,7 @@ export interface AnyAction {
 export interface AsyncAction<Payload> extends Action<Payload> {
   readonly type: string
   readonly payload: Payload
-  readonly [AsyncableEmoji]: AsyncMeta
+  readonly [naiveAsyncEmoji]: AsyncMeta
 }
 
 /**
@@ -49,14 +52,14 @@ export interface AsyncAction<Payload> extends Action<Payload> {
  * @returns {action is AsyncAction<any>}
  */
 export const isAsyncAction = (action: AnyAction): action is AsyncAction<any> =>
-AsyncableEmoji in action
+naiveAsyncEmoji in action
 
 const asyncActionMatchesPhase = (action: AsyncAction<any>, phase?: AsyncPhase) => {
-  return !!(!phase || action[AsyncableEmoji].phase === phase)
+  return !!(!phase || action[naiveAsyncEmoji].phase === phase)
 }
 
-const asyncActionMatchesOperation = (action: AsyncAction<any>, operation?: AsyncGenerator<any, any>) => {
-  return (!operation || (operation.name && operation.name === action[AsyncableEmoji].name))
+const asyncActionMatchesOperation = (action: AsyncAction<any>, operation?: NaiveAsyncFunction<any, any>) => {
+  return (!operation || (operation.name && operation.name === action[naiveAsyncEmoji].name))
 }
 
 /**
@@ -64,34 +67,34 @@ const asyncActionMatchesOperation = (action: AsyncAction<any>, operation?: Async
  * @export
  * @template Data
  * @template Params
- * @param {(AsyncGenerator<Data, Params> | undefined)} operation
+ * @param {(NaiveAsyncFunction<Data, Params> | undefined)} operation
  * @param {AsyncPhase | undefined} phase
  * @returns {(action: AnyAction) => action is AsyncAction<any>}
  */
 export function asyncActionMatcher<Data extends any, Params extends object>(
-  operation: AsyncGenerator<Data, Params> | undefined,
+  operation: NaiveAsyncFunction<Data, Params> | undefined,
   phase: 'call',
 ): (action: AnyAction) => action is AsyncAction<Params>
 
 export function asyncActionMatcher<Data, Params extends object>(
-  operation: AsyncGenerator<Data, Params> | undefined,
+  operation: NaiveAsyncFunction<Data, Params> | undefined,
   phase: 'data',
 ): (action: AnyAction) => action is AsyncAction<Data>
 
 export function asyncActionMatcher<Data, Params extends object>(
-  operation: AsyncGenerator<Data, Params> | undefined,
+  operation: NaiveAsyncFunction<Data, Params> | undefined,
   phase: 'error',
 ): (action: AnyAction) => action is AsyncAction<string>
 export function asyncActionMatcher<Data, Params extends object>(
-  operation: AsyncGenerator<Data, Params> | undefined,
+  operation: NaiveAsyncFunction<Data, Params> | undefined,
   phase: 'reset',
 ): (action: AnyAction) => action is AsyncAction<{}>
 export function asyncActionMatcher<Data, Params>(
-  operation?: AsyncGenerator<Data, Params>,
+  operation?: NaiveAsyncFunction<Data, Params>,
   phase?: AsyncPhase,
 ): (action: AnyAction) => action is AsyncAction<Params>
 export function asyncActionMatcher<Data, Params>(
-  operation?: AsyncGenerator<Data, Params>,
+  operation?: NaiveAsyncFunction<Data, Params>,
   phase?: AsyncPhase,
 ) {
   return (action: AnyAction) =>
@@ -115,17 +118,17 @@ export type AsyncActionCreator<Payload> = (payload: Payload) => {
 export const asyncActionCreatorFactory = <Data, Params>(
   name: string,
 ) => <Payload>(phase: AsyncPhase): AsyncActionCreator<Payload> => {
-  const type = `${AsyncableEmoji}/${name}/${phase}`
+  const type = `${naiveAsyncEmoji}/${name}/${phase}`
   const meta = { name, phase }
   const guard = asyncActionMatcher(undefined, phase)
   const match = (action: Action<Payload>): action is AsyncAction<Payload> =>
-    guard(action) && action[AsyncableEmoji].name === name
+    guard(action) && action[naiveAsyncEmoji].name === name
   const actionCreator: AsyncActionCreator<Payload> = (payload: Payload) => ({
     type,
     meta,
     match,
     payload,
-    [AsyncableEmoji]: meta
+    [naiveAsyncEmoji]: meta
   })
   return actionCreator
 }
@@ -135,8 +138,8 @@ export const asyncActionCreatorFactory = <Data, Params>(
  * @export
  * @interface AsyncableSlice
  */
-export interface AsyncableSlice {
-  [AsyncableEmoji]: { [key: string]: AsyncableState<any, any> }
+export interface NaiveAsyncSlice {
+  [naiveAsyncEmoji]: { [key: string]: NaiveAsyncState<any, any> }
 }
 
 export interface Gettable {
@@ -150,13 +153,15 @@ export const isGettable = (x: any): x is Gettable  => {
 
 export type AsyncableStateStatus = '' | 'inflight' | 'error' | 'done'
 
-export interface InitialAsyncableState {
+/** the initial state of a naiveasync operation */
+export interface InitialNAsyncState {
   status: ''
   error: ''
   params: {}
   data: null
 }
 
+/** the inflight state of a naiveasync operation */
 interface InflightNAsyncState<Data, Params> {
   status: 'inflight'
   error: '' | string
@@ -164,6 +169,7 @@ interface InflightNAsyncState<Data, Params> {
   data: null | Data
 }
 
+/** the error state of a naiveasync operation */
 interface ErrorNAsyncState<Data, Params> {
   status: 'error'
   error: '' | string
@@ -171,6 +177,7 @@ interface ErrorNAsyncState<Data, Params> {
   data: null | Data
 }
 
+/** the done state of a naiveasync operation */
 interface DoneNAsyncState<Data, Params> {
   status: 'done'
   error: ''
@@ -178,17 +185,17 @@ interface DoneNAsyncState<Data, Params> {
   data: Data
 }
 
-export type AsyncableState<Data, Params> =
-  | InitialAsyncableState
+/** The state of a NaiveAsyncFunction, encompassing status, params, error, data */
+export type NaiveAsyncState<Data, Params> =
+  | InitialNAsyncState
   | InflightNAsyncState<Data, Params>
   | ErrorNAsyncState<Data, Params>
   | DoneNAsyncState<Data, Params>
 
-
-
-export const initialAsyncableState = Object.freeze({
+/** the initial state of a naiveasync operation */
+export const naiveAsyncInitialState = Object.freeze({
   status: '',
   error: '',
   params: {},
   data: null,
-}) as InitialAsyncableState
+}) as InitialNAsyncState

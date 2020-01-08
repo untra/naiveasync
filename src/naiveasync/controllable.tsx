@@ -5,7 +5,7 @@ import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } f
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncableEmoji, AsyncableSlice, AsyncableState, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncGenerator, Gettable, initialAsyncableState, isAsyncAction, isGettable } from './actions'
+import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, Gettable, isAsyncAction, isGettable, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
@@ -27,11 +27,11 @@ export interface AsyncLifecycle<Data, Params> {
   /** The identifier of the async state that owns this */
   readonly id: string
   /** The asynchronous operation */
-  readonly operation: AsyncGenerator<Data, Params>
+  readonly operation: NaiveAsyncFunction<Data, Params>
   /** Returns the `AsyncState` instance owned by this manager. */
   readonly selector: (
-    state: AsyncableSlice | Gettable,
-  ) => AsyncableState<Data, Params>
+    state: NaiveAsyncSlice | Gettable,
+  ) => NaiveAsyncState<Data, Params>
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. */
   readonly call: AsyncActionCreator<Params>
   /**
@@ -50,20 +50,22 @@ export interface AsyncLifecycle<Data, Params> {
   readonly reset: AsyncActionCreator<{}>
 }
 
-export const initialAsyncableSlice = { [AsyncableEmoji]: {} }
+/** the initial slice state for use in a redux store */
+export const naiveAsyncInitialSlice = { [naiveAsyncEmoji]: {} }
 
-export const asyncableReducer: Reducer<AsyncableSlice> = (state = initialAsyncableSlice, action: AnyAction) => {
+/** a reducer to plug into your redux combineReducers */
+export const asyncableReducer: Reducer<NaiveAsyncSlice> = (state = naiveAsyncInitialSlice, action: AnyAction) => {
   // only process managed actions
   if (isAsyncAction(action)) {
-    const name = action[AsyncableEmoji].name
-    const currentState = state[AsyncableEmoji] || {}
-    const nextState = { ...state, [AsyncableEmoji]: { ...currentState } }
+    const name = action[naiveAsyncEmoji].name
+    const currentState = state[naiveAsyncEmoji] || {}
+    const nextState = { ...state, [naiveAsyncEmoji]: { ...currentState } }
     // aside from the destroy action,
-    if (action[AsyncableEmoji].phase === 'destroy') {
-      delete nextState[AsyncableEmoji][name]
+    if (action[naiveAsyncEmoji].phase === 'destroy') {
+      delete nextState[naiveAsyncEmoji][name]
       cache.remove(name)
     } else {
-      nextState[AsyncableEmoji][name] = asyncStateReducer(nextState[AsyncableEmoji][name], action)
+      nextState[naiveAsyncEmoji][name] = asyncStateReducer(nextState[naiveAsyncEmoji][name], action)
     }
     return nextState
   }
@@ -71,7 +73,7 @@ export const asyncableReducer: Reducer<AsyncableSlice> = (state = initialAsyncab
 }
 
 export const combinedAsyncableReducer: Reducer<{[index: string]: any}> = (state = {}, action: AnyAction) => {
-  return asyncableReducer(state as AsyncableSlice,action)[AsyncableEmoji]
+  return asyncableReducer(state as NaiveAsyncSlice,action)[naiveAsyncEmoji]
 }
 
 function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object): Observable<Action<any>> {
@@ -113,7 +115,7 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
 const AsyncableEpic = (action$: Observable<Action<any>>): Observable<Action> => {
   const asyncableMatcher = asyncActionMatcher(undefined, 'call')
   const mergeMapAction = (action: AsyncAction<any>) => {
-    const actionAsyncLifecycle = cache.get(action[AsyncableEmoji].name)
+    const actionAsyncLifecycle = cache.get(action[naiveAsyncEmoji].name)
     if (!actionAsyncLifecycle) {
       return empty()
     } else {
@@ -138,20 +140,29 @@ export const asyncableMiddleware: Middleware = store => {
   return middleware(store)
 }
 
-const selectFunction = (id: string) => (state: AsyncableSlice | Gettable) => {
+const selectFunction = (id: string) => (state: NaiveAsyncSlice | Gettable) => {
   if (isGettable(state)) {
-    const getState = state.get(AsyncableEmoji)
+    const getState = state.get(naiveAsyncEmoji)
     if (getState) {
-      return getState[id] || initialAsyncableState
+      return getState[id] || naiveAsyncInitialState
     }
     // TODO: log a warning, return better if this is encountered
-    return initialAsyncableState
+    return naiveAsyncInitialState
   }
-  return state[AsyncableEmoji][id] || initialAsyncableState
+  return state[naiveAsyncEmoji][id] || naiveAsyncInitialState
 }
 
-export const asyncableLifecycle = <Data, Params extends object>(
-  operation: AsyncGenerator<Data, Params>,
+/**
+ * wraps a NaiveAsyncFunction and a unique identifier to provide a redux store managed lifecycle
+ * that manages the given async operation
+ * @template Data
+ * @template Params
+ * @param {NaiveAsyncFunction<Data, Params>} operation
+ * @param {string} id
+ * @returns {AsyncLifecycle<Data, Params>}
+ */
+export const naiveAsyncLifecycle = <Data, Params extends object>(
+  operation: NaiveAsyncFunction<Data, Params>,
   id: string
 ): AsyncLifecycle<Data, Params> => {
   const existing = id && cache.get(id)
@@ -174,7 +185,7 @@ export const asyncableLifecycle = <Data, Params extends object>(
   return lifecycle
 }
 
-export function createControllableContext<State extends AsyncableSlice>(
+export function createControllableContext<State extends NaiveAsyncSlice>(
   reducer: Reducer<State>,
   middleware: Middleware
 ): Controllerable<State> {

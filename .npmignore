@@ -13,7 +13,7 @@ cypress/
 .env
 .eslintrc
 .travis.yaml
-*.tsconfig.json
+*tsconfig.json
 cypress.json
 package-lock.json
 tslint.json

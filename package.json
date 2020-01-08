@@ -25,7 +25,7 @@
     "build:site": "./node_modules/.bin/react-scripts build",
     "lint": "tslint --project \"./build.tsconfig.json\"",
     "docs": "typedoc --out docs/docs src",
-    "defs": "tsc --declaration --outDir dist/ --emitDeclarationOnly",
+    "defs": "tsc -p build.tsconfig.json --declaration --outDir dist/ --emitDeclarationOnly",
     "ci": "npm run build && npm run lint",
     "ci2": "npm run lint && npm run build && npm run cover",
     "start": "npm run build && ./node_modules/.bin/react-scripts start",
