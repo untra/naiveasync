@@ -150,7 +150,6 @@ export const isGettable = (x: any): x is Gettable  => {
   return "get" in x && typeof x.get === "function" ;
 }
 
-
 export type AsyncableStateStatus = '' | 'inflight' | 'error' | 'done'
 
 /** the initial state of a naiveasync operation */

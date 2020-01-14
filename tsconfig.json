@@ -16,14 +16,15 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
-    "isolatedModules": false,
+    "isolatedModules": true,
     "allowJs": true,
     "noEmit": true
   },
   "include": [
-    "src/**/*"
+    "src/site/*", "src/index.tsx"
   ],
   "exclude": [
+    "src/naiveasync/*",
     "**/*.js.*"
   ],
   "compileOnSave": true

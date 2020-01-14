@@ -42,19 +42,22 @@ ReactDOM.render(
 
 NaiveAsync uses react 16.8.5 and hooks to create an asynchronous experience you could take home to your mother.
 
-Promises are a powerful tool in javascript, and a wrapper to abstract its most common uses into a simple react component that _just works._
+Promises are a powerful tool in javascript, and a wrapper to abstract its most common uses into a simple react component that _just works_ is the goal here.
 
-<!-- Despite not being written with classes, I kept the [**SOLID principles**](https://en.wikipedia.org/wiki/SOLID) in mind while designing this package:
+Some Terminology:
+* an `AsyncOperation<D,P>` is a function that takes `(P)` and returns a `Promise<D>`
+* an `naiveasyncstate` is a pojo of type
+```ts
+{
+  status: '' | 'inflight' | 'error' | 'done'
+  error: string
+  params: <P extends {}>
+  data: null|D
+}
+```
 
-_Single Responsibility:_ This package does one thing, and does it well.
+### NaiveAsync
 
-_Open / Close :_ The rendering and behavior of NaiveTable columns can be extended, and the code is open source.
-
-_Liskov Substitution:_ By rendering arbitrary `DataObjects`, and accepting anonymous functions to return their `JSX.Elements` allow for "subtype" correctness.
-
-_Interface Segregation:_ Inputs to the function are minimized to tolerate a bare-minimum, and accept only more features as desired.
-
-_Dependency Inversion:_ Concrete details such as `data` and `headers` are input into higher-level abstractions. -->
 
 ## Limitations
 

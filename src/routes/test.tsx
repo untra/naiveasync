@@ -5,26 +5,27 @@
  * ---
  * tslint:disable-next-line: no-implicit-dependencies
  */
+import { NaiveAsync, NaiveAsyncState } from "@untra/naiveasync"
 import React from "react";
-import { NaiveAsync, NaiveAsyncState } from "../naiveasync"
+import * as packagejson from '../../package.json'
 
 
-const emojiView = (state: NaiveAsyncState<any,{}> ) => (<p>{
+const emojiView = (state: NaiveAsyncState<any, {}>) => (<p>{
   state.status === 'inflight' ? '💬'
-  : state.error ? '💥'
-  : state.data ? '✔️'
-  : '❌'
+    : state.error ? '💥'
+      : state.data ? '✔️'
+        : '❌'
 } {`${state.data}`} {`${state.status}`} {`${state.error}`} </p>)
 
 // eslint-disable-next-line
-const callableView = (state: NaiveAsyncState<any,{}>, call : ({}) => any ) => (<button onClick={call}>{
+const callableView = (state: NaiveAsyncState<any, {}>, call: ({ }) => any) => (<button onClick={call}>{
   state.status === 'inflight' ? '💬'
-  : state.error ? '💥'
-  : state.data ? '✔️'
-  : '❌'
+    : state.error ? '💥'
+      : state.data ? '✔️'
+        : '❌'
 } {`${state.status}`} </button>)
 
-const slowResolve = <T extends any>(val : T) : Promise<T> => new Promise((resolve) => {
+const slowResolve = <T extends any>(val: T): Promise<T> => new Promise((resolve) => {
   const timeMS = Math.random() * 4000
   setTimeout(() => resolve(val), timeMS)
 })
@@ -120,7 +121,7 @@ export const nameHeaders = [
   }
 ];
 
-const timeoutResolve = <T extends any>(resolveTo: any, timeout = 4000) : Promise<T> => new Promise((res) => {
+const timeoutResolve = <T extends any>(resolveTo: any, timeout = 4000): Promise<T> => new Promise((res) => {
   setTimeout(() => res(resolveTo), timeout)
 })
 
@@ -128,7 +129,7 @@ const timeoutReject = <T extends any>(rejectTo: any, timeout = 4000) => new Prom
   setTimeout(() => rej(rejectTo), timeout)
 })
 
-const namedFunction = function namedFunction(){
+const namedFunction = function namedFunction() {
   return timeoutResolve(true)
 }
 
@@ -147,7 +148,9 @@ export default class Test extends React.Component {
           View this page and tests at <a href={thisGithubPage}>Github.com</a>
         </h3>
         <h3>
-          View the test results at <a href={thatCypressPage}>Cypress.io</a></h3>
+          View the test results at <a href={thatCypressPage}>Cypress.io</a>
+        </h3>
+        <h4>{packagejson.version}</h4>
         <p>
           This page is a demonstration of the NaiveTable component used in a
           variety of ways:
@@ -155,18 +158,18 @@ export default class Test extends React.Component {
         <ul>
           <li>It is the selection and input to a variety of cypress tests.</li>
           <li>
-            View the chrome console to see statistics and reports of how the
-            examples render.
-          </li>
-          <li>
             This is also a demonstration of the power of react-hooks, a
             functional and clean approach to writing react components.
           </li>
+          <li>
+            View the chrome console to see statistics and reports of how the
+            examples render. (coming soon)
+        </li>
         </ul>
         <h4>
           #1 It should be invoked automatically when autoParams are specified...
         </h4>
-        <NaiveAsync id="NA1" operation={autoParamsOp} autoParams={{}} >{(state) => (<div>
+        <NaiveAsync id="NA1" operation={autoParamsOp} autoParams={{}} >{(state: any) => (<div>
           <p>status: {JSON.stringify(state.status)}</p>
           <p>params: {JSON.stringify(state.params)}</p>
           <p>error: {JSON.stringify(state.error)}</p>
@@ -185,13 +188,13 @@ export default class Test extends React.Component {
         <h4>
           #3 Multiple autoParamed operations should execute
         </h4>
-        <NaiveAsync id="NA3a" operation={autoResolve} autoParams={{}} >{(state) => (<div>
+        <NaiveAsync id="NA3a" operation={autoResolve} autoParams={{}} >{(state: any) => (<div>
           <p>{state.data || '💬'}</p>
         </div>)}</NaiveAsync>
-        <NaiveAsync id="NA3b" operation={autoResolve} autoParams={{}} >{(state) => (<div>
+        <NaiveAsync id="NA3b" operation={autoResolve} autoParams={{}} >{(state: any) => (<div>
           <p>{state.data || '💬'}</p>
         </div>)}</NaiveAsync>
-        <NaiveAsync id="NA3c" operation={autoResolve} autoParams={{}} >{(state) => (<div>
+        <NaiveAsync id="NA3c" operation={autoResolve} autoParams={{}} >{(state: any) => (<div>
           <p>{state.data || '💬'}</p>
         </div>)}</NaiveAsync>
         <h4>
@@ -229,7 +232,7 @@ export default class Test extends React.Component {
         <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
         <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
 
-        </div>
+      </div>
 
     );
   }

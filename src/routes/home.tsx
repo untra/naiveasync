@@ -6,7 +6,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import packageJSON from '../../package.json'
 import wwords from "../content/home-content.json";
-import { NaiveAsync, NaiveAsyncState } from "../naiveasync/index";
+import { NaiveAsync, NaiveAsyncState, naiveAsyncInitialState } from "@untra/naiveasync";
 import Highlight from "react-highlight";
 
 interface DataValue {
@@ -22,6 +22,32 @@ const words: { [index: string]: { [index: string]: string } } = wwords
 type SupportedLangs = keyof typeof words;
 const version = packageJSON.version
 
+const exampleInit = naiveAsyncInitialState
+const exampleInflight = {
+  ...exampleInit,
+  "status": "inflight",
+  "params": {
+    "user": "admin",
+    "password": "hunter2"
+  },
+}
+const exampleError = {
+  ...exampleInflight,
+  "status": "error",
+  "error": "kaboom typerror",
+}
+const exampleDone = {
+  ...exampleInflight,
+  "status": "done",
+  "data": { "evil-secrets": "..." },
+}
+const examples = [
+  exampleInit,
+  exampleInflight,
+  exampleError,
+  exampleDone
+]
+const pickedExample = examples[(Math.floor(4*Math.random()))]
 
 
 // const randomData = blamDataRows(["foo", "bar", "baz"], 5);
@@ -61,6 +87,8 @@ const asyncableView = (state: NaiveAsyncState<DataValue, ParamsValue>, call: (pa
     <p>baz</p>
   </button>
 </div>)
+
+const lifecycleflowimage = "naiveasync.untra.io/images/lifecycleflow.png"
 
 
 export default class Home extends React.Component<HomeScreenProps> {
@@ -105,13 +133,32 @@ export default class Home extends React.Component<HomeScreenProps> {
 import React from "react";
 import { NaiveAsync } from "@untra/naiveasync";
 // NaiveAsync builds its own standard set of reducers and redux store
-// designed to provide a
 // or perhaps written more terseley
-// <NaiveAsync id="asyncOp" operation={asyncOperation}>{ asyncableView }</NaiveAsync>
+<NaiveAsync id="asyncOp" operation={asyncOperation}>{ asyncableView }</NaiveAsync>
 `}
           </Highlight>
         </div>
-      </div>
+        <h2>naiveAsyncLifecycle(asyncOperation, id)</h2>
+        <img alt={"the naiveasync lifecycle"} src={lifecycleflowimage} />
+        <p>the core asyncOperation lifecycle management comes from <code>{`naiveAsyncLifecycle`}</code>. This is available as its own function and can be used for fine-grained control in react components.</p>
+        <Highlight className="tsx">{
+          `// react-app-async.tsx
+import React from "react";
+import { naiveAsyncLifecycle } from "@untra/naiveasync";
+// remember, the asyncOperation is a function that takes params and returns a Promise
+const asyncOperation : () => Promise<any> = () => fetch("api.example.com/users")
+// The naiveasyncLifecycle(...) function wraps the asyncOperation and a string identifier
+const asyncLifecycle = naiveasyncLifecycle(asyncOperation, "ASYNC_OP_NAME")
+// the asyncLifecycle exposes a selector that will return the current state of the operation:
+{
+  "status": "${pickedExample.status}",
+  "params": ${JSON.stringify(pickedExample.params)},
+  "error": "${pickedExample.error}",
+  "data": ${JSON.stringify(pickedExample.data)},
+}
+`}
+        </Highlight>
+        </div>
     );
   }
 }
