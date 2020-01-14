@@ -18,10 +18,10 @@
     "moduleResolution": "node",
     "isolatedModules": true,
     "allowJs": true,
-    "noEmit": true
+    "noEmit": true,
   },
   "include": [
-    "src/site/*", "src/index.tsx"
+    "src/*"
   ],
   "exclude": [
     "src/naiveasync/*",

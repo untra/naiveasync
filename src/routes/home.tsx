@@ -88,7 +88,7 @@ const asyncableView = (state: NaiveAsyncState<DataValue, ParamsValue>, call: (pa
   </button>
 </div>)
 
-const lifecycleflowimage = "naiveasync.untra.io/images/lifecycleflow.png"
+const lifecycleflowimage = "https://naiveasync.untra.io/images/lifecycleflow.png"
 
 
 export default class Home extends React.Component<HomeScreenProps> {
