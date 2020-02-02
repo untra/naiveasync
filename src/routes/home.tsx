@@ -47,7 +47,7 @@ const examples = [
   exampleError,
   exampleDone
 ]
-const pickedExample = examples[(Math.floor(4*Math.random()))]
+const pickedExample = examples[(Math.floor(4 * Math.random()))]
 
 
 // const randomData = blamDataRows(["foo", "bar", "baz"], 5);
@@ -88,7 +88,7 @@ const asyncableView = (state: NaiveAsyncState<DataValue, ParamsValue>, call: (pa
   </button>
 </div>)
 
-const lifecycleflowimage = "https://naiveasync.untra.io/images/lifecycleflow.png"
+const lifecycleflowimage = "https://naiveasync.untra.io/images/naiveasync-flow.png"
 
 
 export default class Home extends React.Component<HomeScreenProps> {
@@ -118,7 +118,7 @@ export default class Home extends React.Component<HomeScreenProps> {
             <a href="https://www.npmjs.com/package/@untra/naiveasync">NPM</a> -{" "}
             <a href="https://dashboard.cypress.io/#/projects/wrytfx/runs">Cypress</a>
           </h3>
-          <NaiveAsync id="asyncOp" operation={asyncOperation}>{ asyncableView }</NaiveAsync>
+          <NaiveAsync id="asyncOp" operation={asyncOperation}>{asyncableView}</NaiveAsync>
           <p>NaiveAsync is a straightforward React Component with its own internal redux store and rxjs observable reducer.</p>
           <p>It uses these to provide a reasonable rendering abstraction around an async process, defined from a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</a> object.</p>
           <p>Child Components rendered in a NaiveAsync component have access to a <code>state</code> and a <code>call</code> function.</p>
@@ -137,12 +137,12 @@ import { NaiveAsync } from "@untra/naiveasync";
 <NaiveAsync id="asyncOp" operation={asyncOperation}>{ asyncableView }</NaiveAsync>
 `}
           </Highlight>
-        </div>
-        <h2>naiveAsyncLifecycle(asyncOperation, id)</h2>
-        <img alt={"the naiveasync lifecycle"} src={lifecycleflowimage} />
-        <p>the core asyncOperation lifecycle management comes from <code>{`naiveAsyncLifecycle`}</code>. This is available as its own function and can be used for fine-grained control in react components.</p>
-        <Highlight className="tsx">{
-          `// react-app-async.tsx
+
+          <h2>naiveAsyncLifecycle(asyncOperation, id)</h2>
+          <img alt={"the naiveasync lifecycle"} src={lifecycleflowimage} />
+          <p>the core asyncOperation lifecycle management comes from <code>{`naiveAsyncLifecycle`}</code>. This is available as its own function and can be used for fine-grained control in react components.</p>
+          <Highlight className="tsx">{
+            `// react-app-async.tsx
 import React from "react";
 import { naiveAsyncLifecycle } from "@untra/naiveasync";
 // remember, the asyncOperation is a function that takes params and returns a Promise
@@ -157,8 +157,9 @@ const asyncLifecycle = naiveasyncLifecycle(asyncOperation, "ASYNC_OP_NAME")
   "data": ${JSON.stringify(pickedExample.data)},
 }
 `}
-        </Highlight>
+          </Highlight>
         </div>
+      </div>
     );
   }
 }

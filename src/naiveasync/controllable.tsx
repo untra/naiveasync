@@ -72,8 +72,8 @@ export const naiveAsyncReducer: Reducer<NaiveAsyncSlice> = (state = naiveAsyncIn
   return state
 }
 
-export const combinedAsyncableReducer: Reducer<{[index: string]: any}> = (state = {}, action: AnyAction) => {
-  return naiveAsyncReducer(state as NaiveAsyncSlice,action)[naiveAsyncEmoji]
+export const combinedAsyncableReducer: Reducer<{ [index: string]: any }> = (state = {}, action: AnyAction) => {
+  return naiveAsyncReducer(state as NaiveAsyncSlice, action)[naiveAsyncEmoji]
 }
 
 function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object): Observable<Action<any>> {
@@ -141,17 +141,14 @@ export const naiveAsyncMiddleware: Middleware = store => {
 }
 
 const selectFunction = (id: string) => (state: NaiveAsyncSlice) => {
-  // if (isGettable(state)) {
-  //   const getState = state.get(naiveAsyncEmoji)
-  //   if (getState) {
-  //     return getState[id] || naiveAsyncInitialState
-  //   }
-  //   // TODO: log a warning, return better if this is encountered
-  //   return naiveAsyncInitialState
-  // }
   const substate = state[naiveAsyncEmoji]
-  return naiveAsyncEmoji in substate ? state[naiveAsyncEmoji][id]
-  : (substate[id] || naiveAsyncInitialState)
+  if (substate) {
+    if (naiveAsyncEmoji in substate) {
+      return (substate[naiveAsyncEmoji][id] || naiveAsyncInitialState)
+    }
+    return (substate[id] || naiveAsyncInitialState)
+  }
+  return (state[id] || naiveAsyncInitialState)
 }
 
 /**
