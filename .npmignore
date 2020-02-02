@@ -11,7 +11,7 @@ public/
 cypress/
 .babelrc
 .env
-.eslintrc
+.eslintrc.json
 .travis.yaml
 *tsconfig.json
 cypress.json
@@ -19,7 +19,12 @@ package-lock.json
 tslint.json
 typedoc.json
 webpack.*
+node_modules
 
 # ignore certain dist files
-# dist/src/content/
-# dist/src/routes/
+dist/src/content/
+dist/src/routes/
+dist/src/index.js
+
+# not this one
+!dist/src/naiveasync
