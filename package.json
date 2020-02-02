@@ -1,6 +1,6 @@
 {
   "name": "@untra/naiveasync",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "description": "An Opinionated and Painless React & Redux promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
@@ -48,7 +48,6 @@
     "uuid": "^3.2.1"
   },
   "devDependencies": {
-    "@untra/naiveasync": "0.1.19",
     "@babel/core": "^7.7.7",
     "@babel/preset-react": "^7.7.4",
     "@babel/preset-typescript": "^7.7.7",
@@ -64,6 +63,7 @@
     "@types/react-redux": "^7.1.5",
     "@types/react-router-dom": "4.3.3",
     "@types/uuid": "^3.4.6",
+    "@untra/naiveasync": "0.1.19",
     "babel-loader": "^8.0.5",
     "chai": "^4.2.0",
     "css-loader": "^3.4.0",
