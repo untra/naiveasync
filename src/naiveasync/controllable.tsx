@@ -141,14 +141,14 @@ export const naiveAsyncMiddleware: Middleware = store => {
 }
 
 const selectFunction = (id: string) => (state: NaiveAsyncSlice) => {
-  const substate = state[naiveAsyncEmoji]
+  const substate : any = state[naiveAsyncEmoji]
   if (substate) {
     if (naiveAsyncEmoji in substate) {
       return (substate[naiveAsyncEmoji][id] || naiveAsyncInitialState)
     }
     return (substate[id] || naiveAsyncInitialState)
   }
-  return (state[id] || naiveAsyncInitialState)
+  return naiveAsyncInitialState
 }
 
 /**

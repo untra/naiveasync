@@ -20,11 +20,13 @@ tslint.json
 typedoc.json
 webpack.*
 node_modules
+yarn-error.log
 
 # ignore certain dist files
 dist/src/content/
 dist/src/routes/
 dist/src/index.js
+dist/src/index.d.ts
 
 # not this one
-!dist/src/naiveasync
+# !dist/src/naiveasync
