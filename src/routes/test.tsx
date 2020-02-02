@@ -5,6 +5,7 @@
  * ---
  * tslint:disable-next-line: no-implicit-dependencies
  */
+// tslint:disable-next-line: no-implicit-dependencies
 import { NaiveAsync, NaiveAsyncState } from "@untra/naiveasync"
 import React from "react";
 import * as packagejson from '../../package.json'
