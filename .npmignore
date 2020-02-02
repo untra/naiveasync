@@ -21,6 +21,5 @@ typedoc.json
 webpack.*
 
 # ignore certain dist files
-dist/src/content
-dist/src/routes/
-dist/src/index.*
+# dist/src/content/
+# dist/src/routes/
