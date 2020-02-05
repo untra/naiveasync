@@ -12,6 +12,18 @@ const callReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: Naive
     }
     : state
 
+const syncReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: NaiveAsyncState<any, any> = naiveAsyncInitialState, action: AnyAction) => {
+    if (isAsyncAction(action) && action[naiveAsyncEmoji].phase === 'sync') {
+      const params = state.params
+      return {
+        ...state,
+        status: 'inflight',
+        params,
+      }
+    }
+    return state
+}
+
 const dataReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: NaiveAsyncState<any, any> = naiveAsyncInitialState, action: AnyAction) =>
   isAsyncAction(action) && action[naiveAsyncEmoji].phase === 'data'
     ? {
@@ -58,4 +70,4 @@ export const chain = <S>(firstReducer: Reducer<S>, ...reducers: Array<Reducer<S>
   )
 
 
-export const asyncStateReducer = chain(callReducer, dataReducer, errorReducer, doneReducer, resetReducer)
+export const asyncStateReducer = chain(callReducer, syncReducer, dataReducer, errorReducer, doneReducer, resetReducer)

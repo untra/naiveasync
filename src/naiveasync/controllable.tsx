@@ -5,7 +5,7 @@ import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } f
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, Gettable, isAsyncAction, isGettable, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState } from './actions'
+import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncPhase, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
@@ -32,8 +32,10 @@ export interface AsyncLifecycle<Data, Params> {
   readonly selector: (
     state: NaiveAsyncSlice,
   ) => NaiveAsyncState<Data, Params>
-  /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. */
+  /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. Resets its state when called again */
   readonly call: AsyncActionCreator<Params>
+  /** Action creator that triggers the associated `AsyncOperation` when dispatched, updating params if provided. Does not reset data or error states, making it useful for polling data */
+  readonly sync: AsyncActionCreator<{}>
   /**
    * Removes the `AsyncState` instance owned by this `AsyncLifecycle` from the state tree.
    * Failure to dispatch `destroy` results in a memory leak, as `AsyncState` objects remain in the state tree until they are destroyed, even if they are no longer being used.
@@ -84,27 +86,25 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       error,
       done,
       call,
-      destroy
+      destroy,
+      sync
     } = asyncLifeCycle
     const matchCall = call(payload).match
     const matchDestroy = destroy(payload).match
+    const matchSync = sync(payload).match
     try {
       const subscription = $from(operation(payload)).subscribe(
         nextData => subscriber.next(data(nextData)),
         err => subscriber.next(error(err)),
         () => subscriber.next(done({})),
       )
-      const matchCallOrDestroy = (action: AnyAction) => {
-        if (action.payload === undefined) {
-          return false
-        } else {
-          const { payload } = action
-          const actionPayload = { ...action, payload }
-          return (matchCall(actionPayload) || matchDestroy(actionPayload))
-        }
+      const matchCallOrSyncOrDestroy = (action: AnyAction) => {
+        const { payload } = action
+        const actionPayload = { ...action, payload }
+        return (matchCall(actionPayload) || matchSync(actionPayload) || matchDestroy(actionPayload))
       }
       action$
-        .pipe(filter(matchCallOrDestroy), first())
+        .pipe(filter(matchCallOrSyncOrDestroy), first())
         .subscribe(() => subscription.unsubscribe())
     } catch (err) {
       subscriber.next(error(err))
@@ -112,8 +112,8 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
   })
 }
 
-const AsyncableEpic = (action$: Observable<Action<any>>): Observable<Action> => {
-  const asyncableMatcher = asyncActionMatcher(undefined, 'call')
+const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase : AsyncPhase): Observable<Action> => {
+  const phaseMatcher = asyncActionMatcher(undefined, phase)
   const mergeMapAction = (action: AsyncAction<any>) => {
     const actionAsyncLifecycle = cache.get(action[naiveAsyncEmoji].name)
     if (!actionAsyncLifecycle) {
@@ -123,7 +123,7 @@ const AsyncableEpic = (action$: Observable<Action<any>>): Observable<Action> => 
     }
   }
   return action$.pipe(
-    filter(asyncableMatcher),
+    filter(phaseMatcher),
     mergeMap(mergeMapAction)
   ) as Observable<Action<any>>
 }
@@ -136,7 +136,8 @@ const AsyncableEpic = (action$: Observable<Action<any>>): Observable<Action> => 
 export const naiveAsyncMiddleware: Middleware = store => {
   const action$: Subject<Action> = new Subject()
   const middleware = $toMiddleware(action$)
-  AsyncableEpic(action$).subscribe(store.dispatch)
+  AsyncableEpicOnPhase(action$, 'call').subscribe(store.dispatch)
+  AsyncableEpicOnPhase(action$, 'sync').subscribe(store.dispatch)
   return middleware(store)
 }
 
@@ -174,6 +175,7 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     operation,
     selector: selectFunction(id),
     call: factory<Params>('call'),
+    sync: factory<{}>('sync'),
     destroy: factory<{}>('destroy'),
     data: factory<Data>('data'),
     error: factory<string>('error'),

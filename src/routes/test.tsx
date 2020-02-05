@@ -5,11 +5,16 @@
  * ---
  * tslint:disable-next-line: no-implicit-dependencies
  */
-// tslint:disable-next-line: no-implicit-dependencies
-import { NaiveAsync, NaiveAsyncState } from "@untra/naiveasync"
 import React from "react";
+// tslint:disable-next-line: no-implicit-dependencies
+import { Provider } from "react-redux";
+import { applyMiddleware, createStore } from "redux";
 import * as packagejson from '../../package.json'
+import { NaiveAsyncState } from "../naiveasync/actions"
+import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer } from "../naiveasync/index"
+import RandomNumberSync from './components/RandomNumberSync'
 
+const store = createStore(naiveAsyncReducer, applyMiddleware(naiveAsyncMiddleware))
 
 const emojiView = (state: NaiveAsyncState<any, {}>) => (<p>{
   state.status === 'inflight' ? '💬'
@@ -134,6 +139,9 @@ const namedFunction = function namedFunction() {
   return timeoutResolve(true)
 }
 
+
+
+
 export default class Test extends React.Component {
   public render() {
     return (
@@ -232,6 +240,13 @@ export default class Test extends React.Component {
         <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
         <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
         <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
+        <h4>
+          #8 lifecycle sync
+        </h4>
+        <Provider store={store}>
+          <RandomNumberSync />
+        </Provider>
+
 
       </div>
 

@@ -2,7 +2,7 @@
 export const naiveAsyncEmoji = '🔁'
 
 /** the phase state of the naiveAsync lifecycle */
-export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset'
+export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync'
 
 interface AsyncMeta {
   readonly name: string
@@ -74,6 +74,11 @@ const asyncActionMatchesOperation = (action: AsyncAction<any>, operation?: Naive
 export function asyncActionMatcher<Data extends any, Params extends object>(
   operation: NaiveAsyncFunction<Data, Params> | undefined,
   phase: 'call',
+): (action: AnyAction) => action is AsyncAction<Params>
+
+export function asyncActionMatcher<Data, Params extends object>(
+  operation: NaiveAsyncFunction<Data, Params> | undefined,
+  phase: 'sync',
 ): (action: AnyAction) => action is AsyncAction<Params>
 
 export function asyncActionMatcher<Data, Params extends object>(
