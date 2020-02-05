@@ -25,7 +25,6 @@ type Props = MP & DP
 const RandomNumberSync : React.FC<Props> = ({state, generate }) => {
     const val = state.data
     useEffect(() => {
-      console.log(val)
         generate()
     }, [val, generate])
     const display = `random number: ${val}`
