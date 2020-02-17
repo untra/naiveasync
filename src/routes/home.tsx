@@ -118,13 +118,12 @@ export default class Home extends React.Component<HomeScreenProps> {
             <a href="https://dashboard.cypress.io/#/projects/wrytfx/runs">Cypress</a>
           </h3>
           <NaiveAsync id="asyncOp" operation={asyncOperation}>{asyncableView}</NaiveAsync>
-          <p>NaiveAsync is a straightforward React Component with its own internal redux store and rxjs observable reducer.</p>
-          <p>It uses these to provide a reasonable rendering abstraction around an async process, defined from a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</a> object.</p>
+          <p>NaiveAsync is a React Component that wraps a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</a> and exposes an abstraction to invoke the promise and access it with a straightforward abstraction.</p>
           <p>Child Components rendered in a NaiveAsync component have access to a <code>state</code> and a <code>call</code> function.</p>
           <p>NaiveAsync takes three arguments:</p>
           <ul>
             <li><strong>operation:</strong><code>{`(params) => Promise`}</code> the operation takes in params and returns a promise</li>
-            <li><strong>id:</strong><code>{`string`}</code> optional string identifier under which the component redux state is stored. If not provided, it will use the function name. Not providing an identifier or reusing identifiers across NaiveAsync Components can cause bugs.</li>
+            <li><strong>id:</strong><code>{`string`}</code> optional string identifier under which the component redux state is stored. If not provided, it will use the function name.</li>
             <li><strong>autoParams:</strong><code>{`Params`}</code> optional params object that, if provided, will be used to invoke the operation on component mount.</li>
           </ul>
           <Highlight className="tsx">{
@@ -139,15 +138,34 @@ import { NaiveAsync } from "@untra/naiveasync";
 
           <h2>naiveAsyncLifecycle(asyncOperation, id)</h2>
           <img alt={"the naiveasync lifecycle"} src={lifecycleflowimage} />
-          <p>the core asyncOperation lifecycle management comes from <code>{`naiveAsyncLifecycle`}</code>. This is available as its own function and can be used for fine-grained control in react components.</p>
+          <p>the core of the async lifecycle management comes from <code>{`naiveAsyncLifecycle`}</code>.
+          This is available as its own function and can be used for fine-grained control in react components.</p>
+          <code>{`const asyncLifecycle : AsyncLifecycle<Data,Params> = naiveAsyncLifecycle(function asyncoperation(params : Params) => {
+            const data : Data = {};
+            return data;
+          })`}</code>
+
+          <p>the <code><i>{`asyncLifecycle<Data,Params>`}</i></code> object exposes the following:</p>
+          <ul>
+          <li><code><strong>id : string</strong></code> the provided id used as the unique state identifer for the <code>selector</code> to identify the <code>AsyncState</code> in the redux store. Its optional; if not provided, the <code>Operation.name</code> is used.</li>
+          <li><code><strong>operation : AsyncOperation</strong></code> the provided function, </li>
+          <li><code><strong>selector(state : ReduxState) : AsyncState</strong></code> this is a redux state selector against the redux state, for use in <code>mapStateToProps</code>. Returns the `AsyncState` instance owned by this manager.</li>
+          <li><code><strong>.call(params : Params)</strong></code> Action creator that triggers the associated <code>AsyncOperation</code> when dispatched, passing <code>params</code> into the operation. Resets its state when called again.</li>
+          <li><code><strong>.sync({})</strong></code> Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last remaining params. Does not reset data or error states, making it useful for polling operations.</li>
+          <li><code><strong>.reset({})</strong></code> Action dispatched internally when the associated `AsyncOperation` is reset to it's initial State.</li>
+          <li><code><strong>.data(data : Data)</strong></code>Action dispatched internally when the associated `AsyncOperation` emits data.</li>
+          <li><code><strong>.error(error : string)</strong></code>Action dispatched internally when the associated `AsyncOperation` emits an error (rejects) or throws an exception. The error will to be coerced to a string.</li>
+          <li>and finally <code><strong>.destroy({})</strong></code> which removes the <code>AsyncState</code> instance owned by this lifecycle from the state tree. <code>AsyncState</code> objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom. This can become a memory leak if left unchecked. For React components, a good practice is to dispatch the <code>.destroy({})</code> action in the component's <code>componentWillUnmount</code> method, or with a <code>useEffect</code> cleanup.</li>
+          </ul>
+          <p></p>
           <Highlight className="tsx">{
             `// react-app-async.tsx
 import React from "react";
 import { naiveAsyncLifecycle } from "@untra/naiveasync";
 // remember, the asyncOperation is a function that takes params and returns a Promise
-const asyncOperation : () => Promise<any> = () => fetch("api.example.com/users")
+const asyncoperation : () => Promise<any> = () => fetch("api.example.com/users")
 // The naiveasyncLifecycle(...) function wraps the asyncOperation and a string identifier
-const asyncLifecycle = naiveasyncLifecycle(asyncOperation, "ASYNC_OP_NAME")
+const asyncLifecycle = naiveasyncLifecycle(asyncoperation, "ASYNC_OP_NAME")
 // the asyncLifecycle exposes a selector that will return the current state of the operation:
 {
   "status": "${pickedExample.status}",

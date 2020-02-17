@@ -3,7 +3,6 @@
  * MIT License
  * Made with 💙 by @untra
  * ---
- * tslint:disable-next-line: no-implicit-dependencies
  */
 import React from "react";
 // tslint:disable-next-line: no-implicit-dependencies
@@ -55,77 +54,7 @@ const thisGithubPage =
 // While you're here you may also want to check out that cypress page:
 const thatCypressPage = "https://dashboard.cypress.io/#/projects/wrytfx/runs";
 
-// redefine the data fixtures to accomodate prefered typings
 
-// const llanowarData: DataObj[] = llanowarDataJSON;
-
-// const varietyofDataTypesData: DataObj[] = varietyofDataTypesDataJSON;
-
-// const styledHeaders: TableConfigHeader[] = styledHeadersJSON;
-
-// const nameData: DataObj[] = nameDataJSON;
-
-// the secret sauce to display no headers and custom render:
-// use css and `dsiplay: none` for the header style
-// const mtgHeaders: TableConfigHeader[] = [{
-//   label: "",
-//   dataKey: "",
-//   style: { display: 'none' },
-//   render: (val: any) => {
-//     const  { local_image, name } = val
-//     return (<img width={250} height={345} alt={name} src={local_image} />)
-//   }
-// }, {
-//   label: "",
-//   dataKey: "",
-//   style: { display: 'none' },
-//   render: (val: any) => {
-//     const { name, mana_cost, type_line, oracle_text, power, toughness, flavor_text } = val
-//     return (<div>
-//       <h4>{name} {mana_cost}</h4>
-//       <p>{type_line}</p>
-//       <p>{oracle_text}</p>
-//       <p style={{fontStyle: 'italic'}}>{flavor_text}</p>
-//       <strong>{power}/{toughness}</strong>
-//     </div>)
-//   }
-// }]
-
-// complex headers with custom rendering
-export const nameHeaders = [
-  // change the rendered header text with the 'label' parameter
-  { label: "name", dataKey: "a" },
-  // individually style each header cell with the 'style' parameter
-  { label: "age", dataKey: "b", style: { backgroundColor: "pink" } },
-  // provide a 'render' function to control how dataCells render for the column
-  {
-    label: "grade status",
-    dataKey: "c",
-    render: (val: number) => (
-      <h2>{`${val > 50 ? "✅passing" : "❌failing"} the class: ${val}`}</h2>
-    )
-  },
-  // use the 'dataKey' to control the input to the render function
-  // provide an empty string to instead call render with the entire dataObject provided
-  {
-    label: "assessment",
-    dataKey: "",
-    render: (val: any) => (
-      <h4>{`${JSON.stringify(val.a)} is ${val.c > 90 ? "really" : ""} ${
-        val.c > 50 ? "smart" : "dumb"
-        }`}</h4>
-    )
-  },
-  // you can have more headers than keys in your dataObjects, btw ;)
-  // you can also control the 'width' of the column (pass in 'fr' , defaults to 'auto')
-  {
-    label: "comment",
-    dataKey: "",
-    render: () =>
-      "Lorem Ipsum this is the same comment rendered over and over again why won't @LILBTHEBASEDGOD tweet about about me?",
-    width: "4fr"
-  }
-];
 
 const timeoutResolve = <T extends any>(resolveTo: any, timeout = 4000): Promise<T> => new Promise((res) => {
   setTimeout(() => res(resolveTo), timeout)
@@ -138,7 +67,6 @@ const timeoutReject = <T extends any>(rejectTo: any, timeout = 4000) => new Prom
 const namedFunction = function namedFunction() {
   return timeoutResolve(true)
 }
-
 
 
 

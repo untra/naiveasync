@@ -34,12 +34,16 @@ export interface AsyncLifecycle<Data, Params> {
   ) => NaiveAsyncState<Data, Params>
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. Resets its state when called again */
   readonly call: AsyncActionCreator<Params>
-  /** Action creator that triggers the associated `AsyncOperation` when dispatched, updating params if provided. Does not reset data or error states, making it useful for polling data */
+  /** Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last remaining params. Does not reset data or error states, making it useful for polling data. */
   readonly sync: AsyncActionCreator<{}>
   /**
    * Removes the `AsyncState` instance owned by this `AsyncLifecycle` from the state tree.
-   * Failure to dispatch `destroy` results in a memory leak, as `AsyncState` objects remain in the state tree until they are destroyed, even if they are no longer being used.
-   * For React components, a good practice is to dispatch the `destroy` action in the component's `componentWillUnmount` hook.
+   * `AsyncState` objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom.
+   * For React components, a good practice is to dispatch the `destroy` action in the component's `componentWillUnmount` method, or with
+   * useEffect(() => {
+   *   lifecycle.call({})
+   *   return () => lifecycle.destroy({})
+   * })
    */
   readonly destroy: AsyncActionCreator<{}>
   /** Action dispatched internally when the associated `AsyncOperation` emits data. */
