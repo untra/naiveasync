@@ -131,8 +131,13 @@ export default class Home extends React.Component<HomeScreenProps> {
 import React from "react";
 import { NaiveAsync } from "@untra/naiveasync";
 // NaiveAsync builds its own standard set of reducers and redux store
-// or perhaps written more terseley
-<NaiveAsync id="asyncOp" operation={asyncOperation}>{ asyncableView }</NaiveAsync>
+<NaiveAsync id="asyncoperation" operation={AsyncOperation}>{(state, call) => (<div>
+  <p>status: {JSON.stringify(state.status)}</p>
+  <p>params: {JSON.stringify(state.params)}</p>
+  <p>error: {JSON.stringify(state.error)}</p>
+  <p>data: {JSON.stringify(state.data)}</p>
+  <button onClick={() => call({})} >call</button>
+</div>)}</NaiveAsync>
 `}
           </Highlight>
 

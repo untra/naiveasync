@@ -1,7 +1,9 @@
 # 🔁 NaiveAsync
 ## an opinionated and painless [React](https://reactjs.org/) n [Redux](https://redux.js.org/) promise wrapper
 
-[npm package](https://www.npmjs.com/package/@untra/naiveasync)
+* [homepage](https://naiveasync.untra.io/)
+* [tests](https://naiveasync.untra.io/#/test)
+* [npm package](https://www.npmjs.com/package/@untra/naiveasync)
 
 **NaiveAsync** is a straightforward React `^16.8.5` functional module that can be used to quickly turn an asynchronous operation into a well-managed react component centered around that asynchronous operation.
 
@@ -46,7 +48,7 @@ Promises are a powerful tool in javascript, and a wrapper to abstract its most c
 
 Some Terminology:
 * an `AsyncOperation<D,P>` is a function that takes `(P)` and returns a `Promise<D>`
-* an `naiveasyncstate` is a pojo of type
+* an `naiveasyncstate` is an object of type
 ```ts
 {
   status: '' | 'inflight' | 'error' | 'done'
