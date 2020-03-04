@@ -24,6 +24,47 @@ const syncReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: Naive
     return state
 }
 
+const durationReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: NaiveAsyncState<any, any> = naiveAsyncInitialState, action: AnyAction) => {
+  if (isAsyncAction(action) && action[naiveAsyncEmoji].phase === 'duration') {
+    return {
+      ...state,
+      duration: action.payload
+    }
+  }
+  return state
+}
+
+const recordReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: NaiveAsyncState<any, any> = naiveAsyncInitialState, action: AnyAction) => {
+  if (isAsyncAction(action) && action[naiveAsyncEmoji].phase === 'duration') {
+    return {
+      ...state,
+      duration: action.payload ? 0 : undefined
+    }
+  }
+  return state
+}
+
+const clearReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: NaiveAsyncState<any, any> = naiveAsyncInitialState, action: AnyAction) => {
+  if (isAsyncAction(action) && action[naiveAsyncEmoji].phase === 'clear') {
+    return {
+      ...state,
+      interval: undefined,
+      duration: undefined
+    }
+  }
+  return state
+}
+
+const syncIntervalReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: NaiveAsyncState<any, any> = naiveAsyncInitialState, action: AnyAction) => {
+  if (isAsyncAction(action) && action[naiveAsyncEmoji].phase === 'syncInterval') {
+    return {
+      ...state,
+      interval: action.payload
+    }
+  }
+  return state
+}
+
 const dataReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: NaiveAsyncState<any, any> = naiveAsyncInitialState, action: AnyAction) =>
   isAsyncAction(action) && action[naiveAsyncEmoji].phase === 'data'
     ? {
@@ -70,4 +111,4 @@ export const chain = <S>(firstReducer: Reducer<S>, ...reducers: Array<Reducer<S>
   )
 
 
-export const asyncStateReducer = chain(callReducer, syncReducer, dataReducer, errorReducer, doneReducer, resetReducer)
+export const asyncStateReducer = chain(callReducer, syncReducer, dataReducer, errorReducer, doneReducer, resetReducer, clearReducer, syncIntervalReducer, recordReducer, durationReducer)

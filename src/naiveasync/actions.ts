@@ -2,7 +2,7 @@
 export const naiveAsyncEmoji = '🔁'
 
 /** the phase state of the naiveAsync lifecycle */
-export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync'
+export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync' | 'syncInterval' | 'syncTimeout' | 'clear' | 'duration' | 'record'
 
 interface AsyncMeta {
   readonly name: string
@@ -90,14 +90,27 @@ export function asyncActionMatcher<Data, Params extends object>(
   operation: NaiveAsyncFunction<Data, Params> | undefined,
   phase: 'error',
 ): (action: AnyAction) => action is AsyncAction<string>
+
 export function asyncActionMatcher<Data, Params extends object>(
   operation: NaiveAsyncFunction<Data, Params> | undefined,
-  phase: 'reset',
-): (action: AnyAction) => action is AsyncAction<{}>
+  phase: 'reset' | 'clear',
+): (action: AnyAction) => action is AsyncAction<undefined>
+
+export function asyncActionMatcher<Data, Params extends object>(
+  operation: NaiveAsyncFunction<Data, Params> | undefined,
+  phase: 'syncTimeout' | 'syncInterval',
+): (action: AnyAction) => action is AsyncAction<number>
+
+export function asyncActionMatcher<Data, Params extends object>(
+  operation: NaiveAsyncFunction<Data, Params> | undefined,
+  phase: 'duration',
+): (action: AnyAction) => action is AsyncAction<number|boolean>
+
 export function asyncActionMatcher<Data, Params>(
   operation?: NaiveAsyncFunction<Data, Params>,
   phase?: AsyncPhase,
 ): (action: AnyAction) => action is AsyncAction<Params>
+
 export function asyncActionMatcher<Data, Params>(
   operation?: NaiveAsyncFunction<Data, Params>,
   phase?: AsyncPhase,
@@ -108,7 +121,7 @@ export function asyncActionMatcher<Data, Params>(
     && asyncActionMatchesOperation(action, operation)
 }
 
-export type AsyncActionCreator<Payload> = (payload: Payload) => {
+export type AsyncActionCreator<Payload> = (payload?: Payload) => {
   /** Full type constant for actions created by this function, `eagle/myFunction/call`. */
   readonly type: string
   /** Metadata for the owning this. */
@@ -128,7 +141,7 @@ export const asyncActionCreatorFactory = <Data, Params>(
   const guard = asyncActionMatcher(undefined, phase)
   const match = (action: Action<Payload>): action is AsyncAction<Payload> =>
     guard(action) && action[naiveAsyncEmoji].name === name
-  const actionCreator: AsyncActionCreator<Payload> = (payload: Payload) => ({
+  const actionCreator: AsyncActionCreator<Payload> = (payload?: Payload) => ({
     type,
     meta,
     match,
@@ -163,6 +176,9 @@ export interface InitialNAsyncState {
   error: ''
   params: {}
   data: null
+  interval?: number
+  timeout?: number
+  duration?: number|boolean
 }
 
 /** the inflight state of a naiveasync operation */
@@ -171,6 +187,9 @@ interface InflightNAsyncState<Data, Params> {
   error: '' | string
   params: {} | Params
   data: null | Data
+  interval?: number
+  timeout?: number
+  duration?: number|boolean
 }
 
 /** the error state of a naiveasync operation */
@@ -179,6 +198,9 @@ interface ErrorNAsyncState<Data, Params> {
   error: '' | string
   params: {} | Params
   data: null | Data
+  interval?: number
+  timeout?: number
+  duration?: number|boolean
 }
 
 /** the done state of a naiveasync operation */
@@ -187,6 +209,9 @@ interface DoneNAsyncState<Data, Params> {
   error: ''
   params: {} | Params
   data: Data
+  interval?: number
+  timeout?: number
+  duration?: number|boolean
 }
 
 /** The state of a NaiveAsyncFunction, encompassing status, params, error, data */

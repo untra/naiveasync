@@ -35,7 +35,7 @@ export interface AsyncLifecycle<Data, Params> {
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. Resets its state when called again */
   readonly call: AsyncActionCreator<Params>
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last remaining params. Does not reset data or error states, making it useful for polling data. */
-  readonly sync: AsyncActionCreator<{}>
+  readonly sync: AsyncActionCreator<undefined>
   /**
    * Removes the `AsyncState` instance owned by this `AsyncLifecycle` from the state tree.
    * `AsyncState` objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom.
@@ -45,15 +45,25 @@ export interface AsyncLifecycle<Data, Params> {
    *   return () => lifecycle.destroy({})
    * })
    */
-  readonly destroy: AsyncActionCreator<{}>
+  readonly destroy: AsyncActionCreator<undefined>
   /** Action dispatched internally when the associated `AsyncOperation` emits data. */
   readonly data: AsyncActionCreator<Data>
   /** Action dispatched internally when the associated `AsyncOperation` emits an error (rejects) or throws an exception. */
   readonly error: AsyncActionCreator<string>
   /** Action dispatched internally when the associated `AsyncOperation` completes (resolves, or emits all data in the case of an `Observable` or `AsyncIterable`). */
-  readonly done: AsyncActionCreator<{}>
+  readonly done: AsyncActionCreator<undefined>
   /** Action dispatched internally when the associated `AsyncOperation` is reset to it's initialState */
-  readonly reset: AsyncActionCreator<{}>
+  readonly reset: AsyncActionCreator<undefined>
+  /** syncTimeout will invoke sync after the given timeout */
+  readonly syncTimeout: AsyncActionCreator<number>
+  /** syncInterval will invoke sync every given interval */
+  readonly syncInterval: AsyncActionCreator<number>
+  /** clear will stop any currently assigned intervals or timeout */
+  readonly clear: AsyncActionCreator<undefined>
+  /** action dispatched to record inflight time */
+  readonly record: AsyncActionCreator<boolean>
+  /** action dispatched to inform calls to flight are recorded */
+  readonly duration: AsyncActionCreator<number>
 }
 
 /** the initial slice state for use in a redux store */
@@ -94,13 +104,13 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       sync
     } = asyncLifeCycle
     const matchCall = call(payload).match
-    const matchDestroy = destroy(payload).match
-    const matchSync = sync(payload).match
+    const matchDestroy = destroy().match
+    const matchSync = sync().match
     try {
       const subscription = $from(operation(payload)).subscribe(
         nextData => subscriber.next(data(nextData)),
         err => subscriber.next(error(err)),
-        () => subscriber.next(done({})),
+        () => subscriber.next(done()),
       )
       const matchCallOrSyncOrDestroy = (action: AnyAction) => {
         const { payload } = action
@@ -179,12 +189,17 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     operation,
     selector: selectFunction(id),
     call: factory<Params>('call'),
-    sync: factory<{}>('sync'),
-    destroy: factory<{}>('destroy'),
+    sync: factory<undefined>('sync'),
+    destroy: factory<undefined>('destroy'),
     data: factory<Data>('data'),
     error: factory<string>('error'),
-    done: factory<{}>('done'),
-    reset: factory<{}>('reset'),
+    done: factory<undefined>('done'),
+    reset: factory<undefined>('reset'),
+    syncTimeout: factory<number>('syncTimeout'),
+    syncInterval: factory<number>('syncInterval'),
+    duration: factory<number>('duration'),
+    clear: factory<undefined>('clear'),
+    record: factory<boolean>('record'),
   }
   cache.set(id, lifecycle)
   return lifecycle
