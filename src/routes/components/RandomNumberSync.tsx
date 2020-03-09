@@ -40,7 +40,7 @@ const mapStateToProps = (
 const mapDispatchToProps = (
   dispatch: Dispatch<AnyAction>,
 ): DP => ({
-  generate : () => dispatch(randomNumberLifecycle.sync({}))
+  generate : () => dispatch(randomNumberLifecycle.sync())
 });
 
 export default connect(

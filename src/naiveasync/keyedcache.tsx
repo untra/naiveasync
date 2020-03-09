@@ -13,6 +13,13 @@ export class KeyedCache<T> {
     public set(index: string, data: T) {
         this.cache[index] = data
     }
+    public update(index: string, data: Partial<T>) {
+        const state = this.cache[index]
+        if (state && typeof(data) === "object") {
+            const updated : T = {...state, ...data}
+            this.cache[index] = updated
+        }
+    }
     public remove(index: string) {
         delete this.cache[index]
     }

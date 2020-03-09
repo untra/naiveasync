@@ -1,12 +1,31 @@
+import { asyncActionMatcher } from "./asyncActionMatcher"
+
+// tslint:disable adjacent-overload-signatures
+
 /** 🔁  */
 export const naiveAsyncEmoji = '🔁'
 
 /** the phase state of the naiveAsync lifecycle */
-export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync' | 'syncInterval' | 'syncTimeout' | 'clear' | 'duration' | 'record'
+export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync' | 'syncInterval' | 'syncTimeout' | 'clear' | 'onData' | 'onError' | 'record'
 
-interface AsyncMeta {
+interface AsyncPostmark {
   readonly name: string
   readonly phase: AsyncPhase
+  readonly isMeta: boolean
+}
+
+/** record of lifecycle meta */
+export interface AsyncMeta <Data, Params>{
+  lastcall?: number
+  nextcall?: number
+  interval?: number
+  duration?: number
+  onData?: (data: Data) => void
+  onError?: (err: string) => void
+  record?: boolean
+  expBackoff?: boolean
+  errorCount?: number
+  dataCount?: number
 }
 
 /** a function that takes a singular params object P, returning a Promise<D> */
@@ -43,7 +62,7 @@ export interface AnyAction {
 export interface AsyncAction<Payload> extends Action<Payload> {
   readonly type: string
   readonly payload: Payload
-  readonly [naiveAsyncEmoji]: AsyncMeta
+  readonly [naiveAsyncEmoji]: AsyncPostmark
 }
 
 /**
@@ -54,78 +73,11 @@ export interface AsyncAction<Payload> extends Action<Payload> {
 export const isAsyncAction = (action: AnyAction): action is AsyncAction<any> =>
 naiveAsyncEmoji in action
 
-const asyncActionMatchesPhase = (action: AsyncAction<any>, phase?: AsyncPhase) => {
-  return !!(!phase || action[naiveAsyncEmoji].phase === phase)
-}
-
-const asyncActionMatchesOperation = (action: AsyncAction<any>, operation?: NaiveAsyncFunction<any, any>) => {
-  return (!operation || (operation.name && operation.name === action[naiveAsyncEmoji].name))
-}
-
-/**
- * an action matcher typeguard for a given operation and phase
- * @export
- * @template Data
- * @template Params
- * @param {(NaiveAsyncFunction<Data, Params> | undefined)} operation
- * @param {AsyncPhase | undefined} phase
- * @returns {(action: AnyAction) => action is AsyncAction<any>}
- */
-export function asyncActionMatcher<Data extends any, Params extends object>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
-  phase: 'call',
-): (action: AnyAction) => action is AsyncAction<Params>
-
-export function asyncActionMatcher<Data, Params extends object>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
-  phase: 'sync',
-): (action: AnyAction) => action is AsyncAction<Params>
-
-export function asyncActionMatcher<Data, Params extends object>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
-  phase: 'data',
-): (action: AnyAction) => action is AsyncAction<Data>
-
-export function asyncActionMatcher<Data, Params extends object>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
-  phase: 'error',
-): (action: AnyAction) => action is AsyncAction<string>
-
-export function asyncActionMatcher<Data, Params extends object>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
-  phase: 'reset' | 'clear',
-): (action: AnyAction) => action is AsyncAction<undefined>
-
-export function asyncActionMatcher<Data, Params extends object>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
-  phase: 'syncTimeout' | 'syncInterval',
-): (action: AnyAction) => action is AsyncAction<number>
-
-export function asyncActionMatcher<Data, Params extends object>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
-  phase: 'duration',
-): (action: AnyAction) => action is AsyncAction<number|boolean>
-
-export function asyncActionMatcher<Data, Params>(
-  operation?: NaiveAsyncFunction<Data, Params>,
-  phase?: AsyncPhase,
-): (action: AnyAction) => action is AsyncAction<Params>
-
-export function asyncActionMatcher<Data, Params>(
-  operation?: NaiveAsyncFunction<Data, Params>,
-  phase?: AsyncPhase,
-) {
-  return (action: AnyAction) =>
-    isAsyncAction(action)
-    && asyncActionMatchesPhase(action, phase)
-    && asyncActionMatchesOperation(action, operation)
-}
-
 export type AsyncActionCreator<Payload> = (payload?: Payload) => {
   /** Full type constant for actions created by this function, `eagle/myFunction/call`. */
   readonly type: string
   /** Metadata for the owning this. */
-  readonly meta: AsyncMeta
+  readonly meta: AsyncPostmark
   /**
    * Function that returns true iff the given action matches all properties of this action creator's meta.
    * In practice, this can be used to detect actions dispatched for this specific operation and lifecycle event.
@@ -135,9 +87,10 @@ export type AsyncActionCreator<Payload> = (payload?: Payload) => {
 
 export const asyncActionCreatorFactory = <Data, Params>(
   name: string,
-) => <Payload>(phase: AsyncPhase): AsyncActionCreator<Payload> => {
+) => <Payload>(phase: AsyncPhase, isMetaOp?: boolean): AsyncActionCreator<Payload> => {
   const type = `${naiveAsyncEmoji}/${name}/${phase}`
-  const meta = { name, phase }
+  const isMeta = isMetaOp || false
+  const meta = { name, phase, isMeta }
   const guard = asyncActionMatcher(undefined, phase)
   const match = (action: Action<Payload>): action is AsyncAction<Payload> =>
     guard(action) && action[naiveAsyncEmoji].name === name
@@ -228,3 +181,16 @@ export const naiveAsyncInitialState = Object.freeze({
   params: {},
   data: null,
 }) as InitialNAsyncState
+
+/** the initial state of a naiveasync operation */
+export const initialAsyncMeta = Object.freeze({
+  lastcall: 0,
+  nextcall: 0,
+  interval: 0,
+  duration: 0,
+  record: false,
+  expBackoffError: false,
+  expBackoffData: false,
+  errorCount: 0,
+  dataCount: 0,
+}) as AsyncMeta<any, any>

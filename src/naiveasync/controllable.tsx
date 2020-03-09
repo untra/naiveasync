@@ -5,12 +5,15 @@ import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } f
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncPhase, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState } from './actions'
+import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, AsyncPhase, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, initialAsyncMeta, AsyncMeta } from './actions'
+import { asyncActionMatcher } from "./asyncActionMatcher"
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
 
-const cache = new KeyedCache<AsyncLifecycle<any, any>>()
+const lifecycleCache = new KeyedCache<AsyncLifecycle<any, any>>()
+const metaCache = new KeyedCache<AsyncMeta<any, any>>()
+const timerCache = new KeyedCache<any>()
 
 type ControllableChildren<State> = (
   state: State,
@@ -32,6 +35,8 @@ export interface AsyncLifecycle<Data, Params> {
   readonly selector: (
     state: NaiveAsyncSlice,
   ) => NaiveAsyncState<Data, Params>
+  /** Returns the `AsyncMeta` instance owned by this manager. */
+  readonly meta: () => AsyncMeta<Data, Params>
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. Resets its state when called again */
   readonly call: AsyncActionCreator<Params>
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last remaining params. Does not reset data or error states, making it useful for polling data. */
@@ -62,27 +67,50 @@ export interface AsyncLifecycle<Data, Params> {
   readonly clear: AsyncActionCreator<undefined>
   /** action dispatched to record inflight time */
   readonly record: AsyncActionCreator<boolean>
-  /** action dispatched to inform calls to flight are recorded */
-  readonly duration: AsyncActionCreator<number>
 }
 
 /** the initial slice state for use in a redux store */
 export const naiveAsyncInitialSlice = { [naiveAsyncEmoji]: {} }
+
+const metaReducer = (action: AsyncAction<any>, state: NaiveAsyncSlice) => {
+  const name = action[naiveAsyncEmoji].name
+  const currentState = state[naiveAsyncEmoji] || {}
+  const nextState = { ...state, [naiveAsyncEmoji]: { ...currentState } }
+  if (!action[naiveAsyncEmoji].isMeta) {
+    return nextState
+  }
+  if (action[naiveAsyncEmoji].phase === 'destroy') {
+    delete nextState[naiveAsyncEmoji][name]
+    lifecycleCache.remove(name)
+    metaCache.remove(name)
+  }
+  if (action[naiveAsyncEmoji].phase === 'syncInterval') {
+    const payload : number = action.payload
+    const timer = setInterval(() => "noop", payload)
+    timerCache.set(name, timer)
+  }
+  if (action[naiveAsyncEmoji].phase === 'syncTimeout') {
+    const payload : number = action.payload
+    // TODO: how to dispatch sync?
+    const timer = setTimeout(() => "noop", payload)
+    timerCache.set(name, timer)
+  }
+  if (action[naiveAsyncEmoji].phase === 'clear') {
+    const timer = timerCache.get(name)
+    clearInterval(timer)
+    clearTimeout(timer)
+    timerCache.remove(timer)
+  }
+  return nextState
+}
 
 /** a reducer to plug into your redux combineReducers */
 export const naiveAsyncReducer: Reducer<NaiveAsyncSlice> = (state = naiveAsyncInitialSlice, action: AnyAction) => {
   // only process managed actions
   if (isAsyncAction(action)) {
     const name = action[naiveAsyncEmoji].name
-    const currentState = state[naiveAsyncEmoji] || {}
-    const nextState = { ...state, [naiveAsyncEmoji]: { ...currentState } }
-    // aside from the destroy action,
-    if (action[naiveAsyncEmoji].phase === 'destroy') {
-      delete nextState[naiveAsyncEmoji][name]
-      cache.remove(name)
-    } else {
-      nextState[naiveAsyncEmoji][name] = asyncStateReducer(nextState[naiveAsyncEmoji][name], action)
-    }
+    const nextState = metaReducer(action, state)
+    nextState[naiveAsyncEmoji][name] = asyncStateReducer(nextState[naiveAsyncEmoji][name], action)
     return nextState
   }
   return state
@@ -92,9 +120,12 @@ export const combinedAsyncableReducer: Reducer<{ [index: string]: any }> = (stat
   return naiveAsyncReducer(state as NaiveAsyncSlice, action)[naiveAsyncEmoji]
 }
 
+const noop = () => "noop"
+
 function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object): Observable<Action<any>> {
   return new Observable(subscriber => {
     const {
+      id,
       operation,
       data,
       error,
@@ -103,14 +134,31 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       destroy,
       sync
     } = asyncLifeCycle
+    const meta = metaCache.get(id)
     const matchCall = call(payload).match
     const matchDestroy = destroy().match
     const matchSync = sync().match
+    const onData = meta?.onData || noop
+    const onError = meta?.onError || noop
+    console.log('ddddddddd')
     try {
+      if (meta?.record) {
+        // record the duration
+      }
       const subscription = $from(operation(payload)).subscribe(
-        nextData => subscriber.next(data(nextData)),
-        err => subscriber.next(error(err)),
-        () => subscriber.next(done()),
+        nextData => {
+          onData(nextData)
+          return subscriber.next(data(nextData))
+        },
+        nextErr => {
+          onError(nextErr)
+          return subscriber.next(error(nextErr))
+        },
+        () => {
+
+          return subscriber.next(done())
+        }
+
       )
       const matchCallOrSyncOrDestroy = (action: AnyAction) => {
         const { payload } = action
@@ -120,8 +168,11 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       action$
         .pipe(filter(matchCallOrSyncOrDestroy), first())
         .subscribe(() => subscription.unsubscribe())
+      // match syncInterval
+
     } catch (err) {
-      subscriber.next(error(err))
+      console.error('some error occured', err)
+      // subscriber.next(error(err))
     }
   })
 }
@@ -129,7 +180,7 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
 const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase : AsyncPhase): Observable<Action> => {
   const phaseMatcher = asyncActionMatcher(undefined, phase)
   const mergeMapAction = (action: AsyncAction<any>) => {
-    const actionAsyncLifecycle = cache.get(action[naiveAsyncEmoji].name)
+    const actionAsyncLifecycle = lifecycleCache.get(action[naiveAsyncEmoji].name)
     if (!actionAsyncLifecycle) {
       return empty()
     } else {
@@ -138,7 +189,8 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase : AsyncPha
   }
   return action$.pipe(
     filter(phaseMatcher),
-    mergeMap(mergeMapAction)
+    mergeMap(mergeMapAction),
+
   ) as Observable<Action<any>>
 }
 
@@ -166,6 +218,10 @@ const selectFunction = (id: string) => (state: NaiveAsyncSlice) => {
   return naiveAsyncInitialState
 }
 
+const metaFunction = <Data, Params>(id: string) => () => {
+  return (metaCache.get(id) || initialAsyncMeta) as AsyncMeta<Data, Params>
+}
+
 /**
  * wraps a NaiveAsyncFunction and a unique identifier to provide a redux store managed lifecycle
  * that manages the given async operation
@@ -177,9 +233,10 @@ const selectFunction = (id: string) => (state: NaiveAsyncSlice) => {
  */
 export const naiveAsyncLifecycle = <Data, Params extends object>(
   operation: NaiveAsyncFunction<Data, Params>,
-  id: string
+  id: string,
+  initialmeta?: AsyncMeta<Data,Params>
 ): AsyncLifecycle<Data, Params> => {
-  const existing = id && cache.get(id)
+  const existing = id && lifecycleCache.get(id)
   if (existing) {
     return existing
   }
@@ -187,21 +244,22 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
   const lifecycle: AsyncLifecycle<Data, Params> = {
     id,
     operation,
+    meta: metaFunction<Data, Params>(id),
     selector: selectFunction(id),
     call: factory<Params>('call'),
     sync: factory<undefined>('sync'),
-    destroy: factory<undefined>('destroy'),
+    destroy: factory<undefined>('destroy', true),
     data: factory<Data>('data'),
     error: factory<string>('error'),
     done: factory<undefined>('done'),
     reset: factory<undefined>('reset'),
-    syncTimeout: factory<number>('syncTimeout'),
-    syncInterval: factory<number>('syncInterval'),
-    duration: factory<number>('duration'),
-    clear: factory<undefined>('clear'),
-    record: factory<boolean>('record'),
+    syncTimeout: factory<number>('syncTimeout', true),
+    syncInterval: factory<number>('syncInterval', true),
+    clear: factory<undefined>('clear', true),
+    record: factory<boolean>('record', true),
   }
-  cache.set(id, lifecycle)
+  lifecycleCache.set(id, lifecycle)
+  metaCache.set(id, initialmeta || initialAsyncMeta)
   return lifecycle
 }
 
@@ -235,6 +293,7 @@ export function createControllableContext<State extends NaiveAsyncSlice>(
 
     public render() {
       // 💥 TODO: this is so incorrect and inefficient, bad sam! bad code
+      // TODO: detect if currently in store scope. if so, use that store
       return <Provider store={store}>{this.props.children(this.state, this.dispatch)}</Provider>
     }
   }
