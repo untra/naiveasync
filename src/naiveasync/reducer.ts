@@ -14,7 +14,7 @@ const callReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: Naive
 
 const syncReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: NaiveAsyncState<any, any> = naiveAsyncInitialState, action: AnyAction) => {
     if (isAsyncAction(action) && action[naiveAsyncEmoji].phase === 'sync') {
-      const params = state.params
+      const params = action.payload === undefined ? state.params : action.payload
       return {
         ...state,
         status: 'inflight',

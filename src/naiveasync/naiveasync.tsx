@@ -69,7 +69,7 @@ export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncCompone
                 dispatch(call(params as Params))
             }}
             destroy={() => {
-                dispatch(destroy({}))
+                dispatch(destroy())
             }}
         >{children}</AsyncManaged>
     }</AsyncControllable>)

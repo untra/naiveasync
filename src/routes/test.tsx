@@ -11,7 +11,9 @@ import { applyMiddleware, createStore } from "redux";
 import * as packagejson from '../../package.json'
 import { NaiveAsyncState } from "../naiveasync/actions"
 import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer } from "../naiveasync/index"
+import RandomNumberSelectableSync from './components/RandomNumberSelectableSync'
 import RandomNumberSync from './components/RandomNumberSync'
+
 
 const store = createStore(naiveAsyncReducer, applyMiddleware(naiveAsyncMiddleware))
 
@@ -87,7 +89,7 @@ export default class Test extends React.Component {
         <h3>
           View the test results at <a href={thatCypressPage}>Cypress.io</a>
         </h3>
-        <h4>{packagejson.version}</h4>
+        <h4>version {packagejson.version}</h4>
         <p>
           This page is a demonstration of the NaiveTable component used in a
           variety of ways:
@@ -173,6 +175,12 @@ export default class Test extends React.Component {
         </h4>
         <Provider store={store}>
           <RandomNumberSync />
+        </Provider>
+        <h4>
+          #9 lifecycle sync retains last passed params
+        </h4>
+        <Provider store={store}>
+          <RandomNumberSelectableSync />
         </Provider>
 
 
