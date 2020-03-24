@@ -14,18 +14,27 @@ interface AsyncPostmark {
   readonly isMeta: boolean
 }
 
+export type OnData = <Data>(data: Data) => void
+export type OnError = (error: string) => void
+
 /** record of lifecycle meta */
-export interface AsyncMeta <Data, Params>{
+export interface AsyncMeta<Data, Params> {
+  // the time in ms the AsyncState was inflight
   lastcall?: number
-  nextcall?: number
+  // the assigned interval in ms the call should be sync'd
   interval?: number
+  // the duration of the last call
   duration?: number
+  // callback to invoke when the lifecycle reaches its 'data' phase, and the data error
   onData?: (data: Data) => void
+  // callback to invoke when the lifecycle reaches its 'error' phase, and the string error
   onError?: (err: string) => void
+  // toggle whether Meta stats are recorded
   record?: boolean
-  expBackoff?: boolean
-  errorCount?: number
-  dataCount?: number
+}
+
+export interface ConfigurableAsyncMeta<Data, Params> {
+  interval?: number
 }
 
 /** a function that takes a singular params object P, returning a Promise<D> */
@@ -182,15 +191,14 @@ export const naiveAsyncInitialState = Object.freeze({
   data: null,
 }) as InitialNAsyncState
 
+const noop = () => "noop"
+
 /** the initial state of a naiveasync operation */
 export const initialAsyncMeta = Object.freeze({
   lastcall: 0,
-  nextcall: 0,
   interval: 0,
   duration: 0,
+  onData: noop,
+  onError: noop,
   record: false,
-  expBackoffError: false,
-  expBackoffData: false,
-  errorCount: 0,
-  dataCount: 0,
 }) as AsyncMeta<any, any>

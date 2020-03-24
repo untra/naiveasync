@@ -5,7 +5,7 @@ import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } f
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, AsyncPhase, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, initialAsyncMeta, AsyncMeta } from './actions'
+import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, AsyncMeta, AsyncPhase, initialAsyncMeta, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
 import { asyncActionMatcher } from "./asyncActionMatcher"
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
@@ -40,7 +40,7 @@ export interface AsyncLifecycle<Data, Params> {
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. Resets its state when called again */
   readonly call: AsyncActionCreator<Params>
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last remaining params. Does not reset data or error states, making it useful for polling data. */
-  readonly sync: AsyncActionCreator<undefined>
+  readonly sync: AsyncActionCreator<Params | undefined>
   /**
    * Removes the `AsyncState` instance owned by this `AsyncLifecycle` from the state tree.
    * `AsyncState` objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom.
@@ -63,10 +63,15 @@ export interface AsyncLifecycle<Data, Params> {
   readonly syncTimeout: AsyncActionCreator<number>
   /** syncInterval will invoke sync every given interval */
   readonly syncInterval: AsyncActionCreator<number>
-  /** clear will stop any currently assigned intervals or timeout */
+  /** clear will stop any currently assigned intervals or timeout, and reset the meta */
   readonly clear: AsyncActionCreator<undefined>
-  /** action dispatched to record inflight time */
+  /** Toggle Action that when dispatched will record duration inflight time. Details are available from the meta. */
   readonly record: AsyncActionCreator<boolean>
+  /** defines a callbacsk function that is called whenever the data state is called */
+  readonly onData: AsyncActionCreator<OnData>
+  /** defines a callback function that is called whenever the error state is called */
+  readonly onError: AsyncActionCreator<OnError>
+
 }
 
 /** the initial slice state for use in a redux store */
@@ -101,6 +106,21 @@ const metaReducer = (action: AsyncAction<any>, state: NaiveAsyncSlice) => {
     clearTimeout(timer)
     timerCache.remove(timer)
   }
+  if (action[naiveAsyncEmoji].phase === 'onData') {
+    const onData = action.payload
+    const meta = metaCache.get(name)
+    metaCache.set(name, {...meta, onData})
+  }
+  if (action[naiveAsyncEmoji].phase === 'onError') {
+    const onError = action.payload
+    const meta = metaCache.get(name)
+    metaCache.set(name, {...meta, onError})
+  }
+  if (action[naiveAsyncEmoji].phase === 'record') {
+    const record = action.payload || false
+    const meta = metaCache.get(name)
+    metaCache.set(name, {...meta, record})
+  }
   return nextState
 }
 
@@ -122,6 +142,31 @@ export const combinedAsyncableReducer: Reducer<{ [index: string]: any }> = (stat
 
 const noop = () => "noop"
 
+const recordOperation = (id: string, operation : NaiveAsyncFunction<any, object>) => {
+  const meta = metaCache.get(id)
+  const lastcall = Date.now()
+  metaCache.set(id, {...meta, lastcall, duration: undefined })
+  const recordDuration = () => {
+    const now = Date.now()
+    const meta = metaCache.get(id)
+    const lastcall = meta?.lastcall
+    const duration = lastcall ? (now - lastcall) : undefined
+    metaCache.set(id, {...meta, duration})
+  }
+  const timedOperation = (params : object) => {
+    return operation(params)
+    .then((data) => {
+      recordDuration()
+      return data
+    })
+    .catch((err) => {
+      recordDuration()
+      throw err
+    })
+  }
+  return timedOperation
+}
+
 function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object): Observable<Action<any>> {
   return new Observable(subscriber => {
     const {
@@ -140,12 +185,9 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
     const matchSync = sync().match
     const onData = meta?.onData || noop
     const onError = meta?.onError || noop
-    console.log('ddddddddd')
+    const observable = meta?.record ? recordOperation(id, operation) : operation
     try {
-      if (meta?.record) {
-        // record the duration
-      }
-      const subscription = $from(operation(payload)).subscribe(
+      const subscription = $from(observable(payload)).subscribe(
         nextData => {
           onData(nextData)
           return subscriber.next(data(nextData))
@@ -155,7 +197,6 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
           return subscriber.next(error(nextErr))
         },
         () => {
-
           return subscriber.next(done())
         }
 
@@ -168,9 +209,8 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       action$
         .pipe(filter(matchCallOrSyncOrDestroy), first())
         .subscribe(() => subscription.unsubscribe())
-      // match syncInterval
-
     } catch (err) {
+      // tslint:disable-next-line: no-console
       console.error('some error occured', err)
       // subscriber.next(error(err))
     }
@@ -234,7 +274,6 @@ const metaFunction = <Data, Params>(id: string) => () => {
 export const naiveAsyncLifecycle = <Data, Params extends object>(
   operation: NaiveAsyncFunction<Data, Params>,
   id: string,
-  initialmeta?: AsyncMeta<Data,Params>
 ): AsyncLifecycle<Data, Params> => {
   const existing = id && lifecycleCache.get(id)
   if (existing) {
@@ -247,7 +286,7 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     meta: metaFunction<Data, Params>(id),
     selector: selectFunction(id),
     call: factory<Params>('call'),
-    sync: factory<undefined>('sync'),
+    sync: factory<Params|undefined>('sync'),
     destroy: factory<undefined>('destroy', true),
     data: factory<Data>('data'),
     error: factory<string>('error'),
@@ -257,9 +296,11 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     syncInterval: factory<number>('syncInterval', true),
     clear: factory<undefined>('clear', true),
     record: factory<boolean>('record', true),
+    onData: factory<OnData>('onData', true),
+    onError: factory<OnError>('onError', true),
   }
   lifecycleCache.set(id, lifecycle)
-  metaCache.set(id, initialmeta || initialAsyncMeta)
+  metaCache.set(id, initialAsyncMeta)
   return lifecycle
 }
 

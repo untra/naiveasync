@@ -1,4 +1,4 @@
-import { AnyAction, AsyncAction, AsyncPhase, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction } from "./actions";
+import { AnyAction, AsyncAction, AsyncPhase, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, OnData, OnError } from "./actions";
 
 const asyncActionMatchesPhase = (action: AsyncAction<any>, phase?: AsyncPhase) => {
     return !!(!phase || action[naiveAsyncEmoji].phase === phase)
@@ -7,9 +7,6 @@ const asyncActionMatchesPhase = (action: AsyncAction<any>, phase?: AsyncPhase) =
 const asyncActionMatchesOperation = (action: AsyncAction<any>, operation?: NaiveAsyncFunction<any, any>) => {
     return (!operation || (operation.name && operation.name === action[naiveAsyncEmoji].name))
 }
-
-type OnData = <Data>(data: Data) => void
-type OnError = (error: string) => void
 
 /**
  * an action matcher typeguard for a given operation and phase
