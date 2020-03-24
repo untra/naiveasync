@@ -108,7 +108,7 @@ export function asyncActionMatcher<Data, Params>(
     && asyncActionMatchesOperation(action, operation)
 }
 
-export type AsyncActionCreator<Payload> = (payload: Payload) => {
+export type AsyncActionCreator<Payload> = (payload?: Payload) => {
   /** Full type constant for actions created by this function, `eagle/myFunction/call`. */
   readonly type: string
   /** Metadata for the owning this. */
@@ -128,7 +128,7 @@ export const asyncActionCreatorFactory = <Data, Params>(
   const guard = asyncActionMatcher(undefined, phase)
   const match = (action: Action<Payload>): action is AsyncAction<Payload> =>
     guard(action) && action[naiveAsyncEmoji].name === name
-  const actionCreator: AsyncActionCreator<Payload> = (payload: Payload) => ({
+  const actionCreator: AsyncActionCreator<Payload> = (payload?: Payload) => ({
     type,
     meta,
     match,

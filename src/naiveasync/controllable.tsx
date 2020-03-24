@@ -12,6 +12,8 @@ import { asyncStateReducer } from './reducer'
 
 const cache = new KeyedCache<AsyncLifecycle<any, any>>()
 
+const lastParams = new KeyedCache<any>()
+
 type ControllableChildren<State> = (
   state: State,
   dispatch: <A extends AnyAction>(action: A) => void,
@@ -35,7 +37,7 @@ export interface AsyncLifecycle<Data, Params> {
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. Resets its state when called again */
   readonly call: AsyncActionCreator<Params>
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last remaining params. Does not reset data or error states, making it useful for polling data. */
-  readonly sync: AsyncActionCreator<{}>
+  readonly sync: AsyncActionCreator<Params|undefined>
   /**
    * Removes the `AsyncState` instance owned by this `AsyncLifecycle` from the state tree.
    * `AsyncState` objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom.
@@ -45,15 +47,15 @@ export interface AsyncLifecycle<Data, Params> {
    *   return () => lifecycle.destroy({})
    * })
    */
-  readonly destroy: AsyncActionCreator<{}>
+  readonly destroy: AsyncActionCreator<undefined>
   /** Action dispatched internally when the associated `AsyncOperation` emits data. */
   readonly data: AsyncActionCreator<Data>
   /** Action dispatched internally when the associated `AsyncOperation` emits an error (rejects) or throws an exception. */
   readonly error: AsyncActionCreator<string>
   /** Action dispatched internally when the associated `AsyncOperation` completes (resolves, or emits all data in the case of an `Observable` or `AsyncIterable`). */
-  readonly done: AsyncActionCreator<{}>
+  readonly done: AsyncActionCreator<undefined>
   /** Action dispatched internally when the associated `AsyncOperation` is reset to it's initialState */
-  readonly reset: AsyncActionCreator<{}>
+  readonly reset: AsyncActionCreator<undefined>
 }
 
 /** the initial slice state for use in a redux store */
@@ -70,6 +72,7 @@ export const naiveAsyncReducer: Reducer<NaiveAsyncSlice> = (state = naiveAsyncIn
     if (action[naiveAsyncEmoji].phase === 'destroy') {
       delete nextState[naiveAsyncEmoji][name]
       cache.remove(name)
+      lastParams.remove(name)
     } else {
       nextState[naiveAsyncEmoji][name] = asyncStateReducer(nextState[naiveAsyncEmoji][name], action)
     }
@@ -94,13 +97,13 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       sync
     } = asyncLifeCycle
     const matchCall = call(payload).match
-    const matchDestroy = destroy(payload).match
+    const matchDestroy = destroy().match
     const matchSync = sync(payload).match
     try {
       const subscription = $from(operation(payload)).subscribe(
         nextData => subscriber.next(data(nextData)),
         err => subscriber.next(error(err)),
-        () => subscriber.next(done({})),
+        () => subscriber.next(done()),
       )
       const matchCallOrSyncOrDestroy = (action: AnyAction) => {
         const { payload } = action
@@ -116,14 +119,19 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
   })
 }
 
-const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase : AsyncPhase): Observable<Action> => {
+const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase : AsyncPhase, reuseParams : boolean): Observable<Action> => {
   const phaseMatcher = asyncActionMatcher(undefined, phase)
   const mergeMapAction = (action: AsyncAction<any>) => {
-    const actionAsyncLifecycle = cache.get(action[naiveAsyncEmoji].name)
+    const name = action[naiveAsyncEmoji].name
+    const payload = reuseParams && action.payload === undefined
+    ? lastParams.get(name)
+    : action.payload
+    const actionAsyncLifecycle = cache.get(name)
     if (!actionAsyncLifecycle) {
       return empty()
     } else {
-      return observableFromAsyncLifeCycle(action$, actionAsyncLifecycle, action.payload)
+      lastParams.set(name, payload)
+      return observableFromAsyncLifeCycle(action$, actionAsyncLifecycle, payload)
     }
   }
   return action$.pipe(
@@ -140,8 +148,8 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase : AsyncPha
 export const naiveAsyncMiddleware: Middleware = store => {
   const action$: Subject<Action> = new Subject()
   const middleware = $toMiddleware(action$)
-  AsyncableEpicOnPhase(action$, 'call').subscribe(store.dispatch)
-  AsyncableEpicOnPhase(action$, 'sync').subscribe(store.dispatch)
+  AsyncableEpicOnPhase(action$, 'call', false).subscribe(store.dispatch)
+  AsyncableEpicOnPhase(action$, 'sync', true).subscribe(store.dispatch)
   return middleware(store)
 }
 
@@ -179,12 +187,12 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     operation,
     selector: selectFunction(id),
     call: factory<Params>('call'),
-    sync: factory<{}>('sync'),
-    destroy: factory<{}>('destroy'),
+    sync: factory<Params|undefined>('sync'),
+    destroy: factory<undefined>('destroy'),
     data: factory<Data>('data'),
     error: factory<string>('error'),
-    done: factory<{}>('done'),
-    reset: factory<{}>('reset'),
+    done: factory<undefined>('done'),
+    reset: factory<undefined>('reset'),
   }
   cache.set(id, lifecycle)
   return lifecycle
