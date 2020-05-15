@@ -76,7 +76,7 @@ Some Terminology:
   * timeout number
   * error retry bool
   * data retry bool
-*
+* test support for immutablejs
 * test support as observable / generator
 
 # Copyright
