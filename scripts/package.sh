@@ -6,6 +6,8 @@ ONLY_PUSH_ARTIFACT_PATH="pushes"
 
 echo "building naiveasync"
 npm run build
+npm run ci
+npm run defs
 if ! bd_isdev ; then
   if [[ ! -z ${ARTIFACT_PATH+x} && ${ARTIFACT_PATH} == ${ONLY_PUSH_ARTIFACT_PATH} ]]; then
     if [[ ${APP_ENV} = "prod" ]]; then
