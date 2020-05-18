@@ -1,12 +1,12 @@
 import React from "react";
 // tslint:disable-next-line: no-implicit-dependencies
+import Highlight from "react-highlight";
+// tslint:disable-next-line: no-implicit-dependencies
 import { Link } from "react-router-dom";
 import packageJSON from '../../package.json'
 import wwords from "../content/home-content.json";
 // tslint:disable-next-line: ordered-imports no-implicit-dependencies
-import { NaiveAsync, NaiveAsyncState, naiveAsyncInitialState } from "@untra/naiveasync";
-// tslint:disable-next-line: no-implicit-dependencies
-import Highlight from "react-highlight";
+import { NaiveAsync, naiveAsyncInitialState, NaiveAsyncState } from "../naiveasync";
 
 interface DataValue {
   value: string
