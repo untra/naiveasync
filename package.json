@@ -1,7 +1,6 @@
 {
   "name": "@stackhawk/naiveasync",
   "version": "0.2.0",
-  "private": true,
   "description": "An Opinionated and Painless React & Redux promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
