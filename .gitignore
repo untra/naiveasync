@@ -1,6 +1,7 @@
 node_modules/
 site/build
 untra-naiveasync-*.tgz
+stackhawk-naiveasync-*.tgz
 ssiittee/
 .github/
 .vscode/
@@ -10,3 +11,4 @@ docs/
 build/
 yarn-error.log
 dist/
+.DS_Store

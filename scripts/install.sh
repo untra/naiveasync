@@ -2,5 +2,5 @@
 set -e
 . ./scripts/common.sh
 
-mkdir dist
+mkdir -p dist
 npm install
