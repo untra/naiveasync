@@ -1,6 +1,7 @@
 {
-  "name": "@untra/naiveasync",
-  "version": "0.1.33",
+  "name": "@stackhawk/naiveasync",
+  "version": "0.2.0",
+  "private": true,
   "description": "An Opinionated and Painless React & Redux promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
@@ -62,7 +63,6 @@
     "@types/react-highlight": "0.12.1",
     "@types/react-redux": "^7.1.8",
     "@types/react-router-dom": "4.3.3",
-    "@untra/naiveasync": "0.1.19",
     "babel-loader": "^8.1.0",
     "chai": "^4.2.0",
     "css-loader": "^3.5.3",
