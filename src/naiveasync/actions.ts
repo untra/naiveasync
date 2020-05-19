@@ -1,10 +1,13 @@
+import { Dispatch } from "redux"
+import { KeyedCache } from "./keyedcache"
+
 /** 🔁  */
 export const naiveAsyncEmoji = '🔁'
 
 /** the phase state of the naiveAsync lifecycle */
 export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync'
 
-interface AsyncMeta {
+interface AsyncPostmark {
   readonly name: string
   readonly phase: AsyncPhase
 }
@@ -43,7 +46,7 @@ export interface AnyAction {
 export interface AsyncAction<Payload> extends Action<Payload> {
   readonly type: string
   readonly payload: Payload
-  readonly [naiveAsyncEmoji]: AsyncMeta
+  readonly [naiveAsyncEmoji]: AsyncPostmark
 }
 
 /**
@@ -112,7 +115,7 @@ export type AsyncActionCreator<Payload> = (payload?: Payload) => {
   /** Full type constant for actions created by this function, `eagle/myFunction/call`. */
   readonly type: string
   /** Metadata for the owning this. */
-  readonly meta: AsyncMeta
+  readonly meta: AsyncPostmark
   /**
    * Function that returns true iff the given action matches all properties of this action creator's meta.
    * In practice, this can be used to detect actions dispatched for this specific operation and lifecycle event.
@@ -144,6 +147,7 @@ export const asyncActionCreatorFactory = <Data, Params>(
  * @interface AsyncableSlice
  */
 export interface NaiveAsyncSlice {
+  [naiveAsyncEmoji]: { [key: string]: NaiveAsyncState<any, any> }
   [naiveAsyncEmoji]: { [key: string]: NaiveAsyncState<any, any> }
 }
 
@@ -203,3 +207,36 @@ export const naiveAsyncInitialState = Object.freeze({
   params: {},
   data: null,
 }) as InitialNAsyncState
+
+type OnCb = () => void
+type OnData1<Data> = (data : Data) => void
+type OnData2<Data> = (data : Data, dispatch: Dispatch<AnyAction>) => void
+type OnError1 = (error : string) => void
+type OnError2 = (error : string, dispatch: Dispatch<AnyAction>) => void
+export type OnError = OnCb | OnError1 | OnError2;
+export type OnData<Data> = OnCb | OnData1<Data> | OnData2<Data>;
+
+
+export interface AsyncMeta<Data,Params> {
+  timeout: number,
+  record: number,
+  dataCount: number,
+  errorCount: number,
+  memo?: KeyedCache<Data>,
+  lastParams?: any
+  lastCalled: number,
+  onData?: OnData<Data>,
+  onError?: OnError
+}
+
+export const naiveAsyncInitialMeta = Object.freeze({
+  timeout: NaN,
+  record: NaN,
+  dataCount: 0,
+  errorCount: 0,
+  lastCalled: 0,
+  memo: undefined,
+  onData: () => "noop",
+  onError: () => "noop",
+  lastParams: undefined
+})
