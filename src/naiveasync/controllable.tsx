@@ -95,6 +95,20 @@ export const combinedAsyncableReducer: Reducer<{ [index: string]: any }> = (stat
   return naiveAsyncReducer(state as NaiveAsyncSlice, action)[naiveAsyncEmoji]
 }
 
+const matchCallOrSyncOrDestroy = (asyncLifeCycle: AsyncLifecycle<any, object>) => (action: AnyAction) => {
+  const { payload } = action
+  const {
+    call,
+    destroy,
+    sync
+  } = asyncLifeCycle
+  const matchCall = call(payload).match
+  const matchDestroy = destroy().match
+  const matchSync = sync(payload).match
+  const actionPayload = { ...action, payload }
+  return (matchCall(actionPayload) || matchSync(actionPayload) || matchDestroy(actionPayload))
+}
+
 function resolveObservable(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, value: any): Observable<Action<any>> {
   const {
     data,
@@ -106,7 +120,9 @@ function resolveObservable(action$: Observable<Action<any>>, asyncLifeCycle: Asy
       err => `noop ${err}`,
       () => subscriber.next(done()),
     )
-    action$.subscribe(() => subscription.unsubscribe())
+    action$
+    .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
+    .subscribe(() => subscription.unsubscribe())
   })
 }
 
@@ -117,26 +133,15 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       data,
       error,
       done,
-      call,
-      destroy,
-      sync
     } = asyncLifeCycle
-    const matchCall = call(payload).match
-    const matchDestroy = destroy().match
-    const matchSync = sync(payload).match
     try {
       const subscription = $from(operation(payload)).subscribe(
         nextData => subscriber.next(data(nextData)),
         err => subscriber.next(error(err)),
         () => subscriber.next(done()),
       )
-      const matchCallOrSyncOrDestroy = (action: AnyAction) => {
-        const { payload } = action
-        const actionPayload = { ...action, payload }
-        return (matchCall(actionPayload) || matchSync(actionPayload) || matchDestroy(actionPayload))
-      }
       action$
-        .pipe(filter(matchCallOrSyncOrDestroy), first())
+        .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
         .subscribe(() => subscription.unsubscribe())
     } catch (err) {
       subscriber.next(error(err))
