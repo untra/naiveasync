@@ -11,6 +11,7 @@ import { applyMiddleware, createStore } from "redux";
 import * as packagejson from '../../package.json'
 import { NaiveAsyncState } from "../naiveasync/actions"
 import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer } from "../naiveasync/index"
+import MemoizedSync from './components/memoized'
 import RandomNumberSelectableSync from './components/RandomNumberSelectableSync'
 import RandomNumberSync from './components/RandomNumberSync'
 
@@ -181,6 +182,43 @@ export default class Test extends React.Component {
         </h4>
         <Provider store={store}>
           <RandomNumberSelectableSync />
+        </Provider>
+
+        <h4>
+          #10 test memoized
+        </h4>
+        <Provider store={store}>
+          <MemoizedSync />
+        </Provider>
+
+        <h4>
+          #11 test timeout
+        </h4>
+        <Provider store={store}>
+        </Provider>
+
+        <h4>
+          #12 test onData
+        </h4>
+        <Provider store={store}>
+        </Provider>
+
+        <h4>
+          #13 test onError
+        </h4>
+        <Provider store={store}>
+        </Provider>
+
+        <h4>
+          #14 test meta
+        </h4>
+        <Provider store={store}>
+        </Provider>
+
+        <h4>
+          #15 test chaining
+        </h4>
+        <Provider store={store}>
         </Provider>
 
 

@@ -40,14 +40,13 @@ const RandomNumberSync: React.FC<Props> = ({ state, generate }) => {
   const assignMultiplier = (num: number) => () => setMultiplier(num)
   const display = `multiplier: ${multiplier}x, random number: ${val}`
   const status = `status: ${state.status}`
-  const error = `error: ${state.error}`
   return (<div>
     <button name="0x" value={0} onClick={assignMultiplier(0)}>0x</button>
     <button name="1x" value={1} onClick={assignMultiplier(1)}>1x</button>
     <button name="2x" value={2} onClick={assignMultiplier(2)}>2x</button>
     <button name="3x" value={3} onClick={assignMultiplier(3)}>3x</button>
     <button name="5x" value={5} onClick={assignMultiplier(5)}>5x</button>
-    <button name="5x" value={5} onClick={assignMultiplier(10)}>10x</button>
+    <button name="10x" value={10} onClick={assignMultiplier(10)}>10x</button>
     <p>{display}</p>
     <p>{status}</p>
   </div>)
