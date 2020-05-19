@@ -14,6 +14,7 @@ import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer } from "../naiveasy
 import MemoizedSync from './components/memoized'
 import RandomNumberSelectableSync from './components/RandomNumberSelectableSync'
 import RandomNumberSync from './components/RandomNumberSync'
+import TimeoutSync from './components/timeout'
 
 
 const store = createStore(naiveAsyncReducer, applyMiddleware(naiveAsyncMiddleware))
@@ -195,6 +196,7 @@ export default class Test extends React.Component {
           #11 test timeout
         </h4>
         <Provider store={store}>
+          <TimeoutSync />
         </Provider>
 
         <h4>

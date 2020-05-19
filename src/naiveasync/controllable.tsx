@@ -121,9 +121,19 @@ function resolveObservable(action$: Observable<Action<any>>, asyncLifeCycle: Asy
       () => subscriber.next(done()),
     )
     action$
-    .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
-    .subscribe(() => subscription.unsubscribe())
+      .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
+      .subscribe(() => subscription.unsubscribe())
   })
+}
+
+const operationWithTimeout = (operation: NaiveAsyncFunction<any, any>, payload: object, timeout: number) => {
+  if (isNaN(timeout) || timeout < 0) {
+    return operation(payload)
+  }
+  const timeoutRejectPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(`timeout`), timeout)
+  );
+  return Promise.race([operation(payload), timeoutRejectPromise]);
 }
 
 function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object, timeout: number): Observable<Action<any>> {
@@ -135,7 +145,9 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       done,
     } = asyncLifeCycle
     try {
-      const subscription = $from(operation(payload)).subscribe(
+      const subscription = $from(
+        operationWithTimeout(operation, payload, timeout)
+      ).subscribe(
         nextData => subscriber.next(data(nextData)),
         err => subscriber.next(error(err)),
         () => subscriber.next(done()),
