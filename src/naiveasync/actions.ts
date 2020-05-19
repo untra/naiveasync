@@ -208,6 +208,14 @@ export const naiveAsyncInitialState = Object.freeze({
   data: null,
 }) as InitialNAsyncState
 
+type OnCb = () => void
+type OnData1<Data> = (data : Data) => void
+type OnData2<Data> = (data : Data, dispatch: Dispatch<AnyAction>) => void
+type OnError1 = (error : string) => void
+type OnError2 = (error : string, dispatch: Dispatch<AnyAction>) => void
+export type OnError = OnCb | OnError1 | OnError2;
+export type OnData<Data> = OnCb | OnData1<Data> | OnData2<Data>;
+
 
 export interface AsyncMeta<Data,Params> {
   timeout: number,
@@ -217,8 +225,8 @@ export interface AsyncMeta<Data,Params> {
   memo?: KeyedCache<Data>,
   lastParams?: any
   lastCalled: number,
-  onData?: (data?: Data, dispatch?: Dispatch<AnyAction>) => void,
-  onError?: (data?: Data, dispatch?: Dispatch<AnyAction>) => void
+  onData?: OnData<Data>,
+  onError?: OnError
 }
 
 export const naiveAsyncInitialMeta = Object.freeze({
@@ -228,7 +236,7 @@ export const naiveAsyncInitialMeta = Object.freeze({
   errorCount: 0,
   lastCalled: 0,
   memo: undefined,
-  onData: undefined,
-  onError: undefined,
+  onData: () => "noop",
+  onError: () => "noop",
   lastParams: undefined
 })

@@ -5,7 +5,7 @@ import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } f
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncMeta, AsyncPhase, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState } from './actions'
+import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncMeta, AsyncPhase, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
@@ -24,6 +24,7 @@ interface ControllableProps<State> {
 }
 
 export type Controllerable<State> = React.ComponentType<ControllableProps<State>>
+
 
 export interface AsyncLifecycle<Data, Params> {
   /** The identifier of the async state that owns this */
@@ -61,9 +62,9 @@ export interface AsyncLifecycle<Data, Params> {
   /** Meta toggle to enable a timeout of the propmise, dispatching 'error' timeout if the request takes too long */
   readonly timeout: (timeout: number) => AsyncLifecycle<Data, Params>
   /** Assign a callback function to be called when the 'data' event is dispatched. */
-  readonly onData: (onData: (data?: Data, dispatch?: Dispatch<AnyAction>) => void) => AsyncLifecycle<Data, Params>
+  readonly onData: (onData: OnData<Data>) => AsyncLifecycle<Data, Params>
   /** Assign a callback function to be called when the 'error' event is dispatched. */
-  readonly onError: (onError: (error?: string, dispatch?: Dispatch<AnyAction>) => void) => AsyncLifecycle<Data, Params>
+  readonly onError: (onError: OnError) => AsyncLifecycle<Data, Params>
   /** select the meta object */
   readonly meta: () => AsyncMeta<Data, Params>
 }
@@ -279,18 +280,18 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },
-    onData: (onData: (data?: Data, dispatch?: Dispatch<AnyAction>) => void) => {
-      const meta = { ...metaCache.get(id), onData }
+    onData: (onData: OnData<Data>) => {
+      const meta = { ...metaCache.get(id), ...{onData} }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },
-    onError: (onError: (error?: string, dispatch?: Dispatch<AnyAction>) => void) => {
-      const meta = { ...metaCache.get(id), onError }
+    onError: (onError: OnError) => {
+      const meta = { ...metaCache.get(id), ...{onError} }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },
     timeout: (timeout: number) => {
-      const meta = { ...metaCache.get(id), timeout }
+      const meta = { ...metaCache.get(id), ...{timeout} }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },

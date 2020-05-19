@@ -12,6 +12,8 @@ import * as packagejson from '../../package.json'
 import { NaiveAsyncState } from "../naiveasync/actions"
 import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer } from "../naiveasync/index"
 import MemoizedSync from './components/memoized'
+import OnDataSync from './components/onData'
+import OnErrorSync from './components/onError'
 import RandomNumberSelectableSync from './components/RandomNumberSelectableSync'
 import RandomNumberSync from './components/RandomNumberSync'
 import TimeoutSync from './components/timeout'
@@ -203,27 +205,22 @@ export default class Test extends React.Component {
           #12 test onData
         </h4>
         <Provider store={store}>
+          <OnDataSync />
         </Provider>
 
         <h4>
           #13 test onError
         </h4>
         <Provider store={store}>
+          <OnErrorSync />
         </Provider>
 
         <h4>
           #14 test meta
         </h4>
         <Provider store={store}>
+          <span>todo...</span>
         </Provider>
-
-        <h4>
-          #15 test chaining
-        </h4>
-        <Provider store={store}>
-        </Provider>
-
-
       </div>
 
     );
