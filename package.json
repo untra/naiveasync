@@ -65,7 +65,7 @@
     "babel-loader": "^8.1.0",
     "chai": "^4.2.0",
     "css-loader": "^3.5.3",
-    "cypress": "^4.5.0",
+    "cypress": "^4.11.0",
     "eslint-plugin-react-hooks": "^1.6.1",
     "gh-pages": "^2.2.0",
     "html-loader": "^0.5.5",
