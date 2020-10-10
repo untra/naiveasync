@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import { connect } from "react-redux";
 import { AnyAction, Dispatch } from "redux";
@@ -19,21 +19,17 @@ const slowIconToName = (params: {}) => {
 }
 const debounceLifecycle = naiveAsyncLifecycle(slowIconToName, 'DEBOUNCE_SELECTABLE').debounce(2000)
 
-interface IconParams {
-  icon: "🦅" | "🐅" | "🦓" | "🦒" | "🐘" | "🐊"
-}
-
 interface IconResp {
   icon: string
   name: string
 }
 
 interface MP {
-  state: NaiveAsyncState<IconResp, IconParams>
+  state: NaiveAsyncState<IconResp, {}>
 }
 
 interface DP {
-  select: (params?: IconParams) => void
+  select: (params?: {}) => void
 }
 
 type Props = MP & DP

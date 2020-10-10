@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import { connect } from "react-redux";
 import { AnyAction, Dispatch } from "redux";

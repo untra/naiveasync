@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import { connect } from "react-redux";
 import { AnyAction, Dispatch } from "redux";
@@ -14,14 +14,10 @@ const slowIconToName = (params: {}) => {
   console.log('throttle called!')
   return slowResolve({
     icon: '',
-    name: 'throttle'
+    name: 'THROTTLE'
   })
 }
 const throttleLifecycle = naiveAsyncLifecycle(slowIconToName, 'throttle_SELECTABLE').throttle(2000)
-
-interface IconParams {
-  icon: "🦅" | "🐅" | "🦓" | "🦒" | "🐘" | "🐊"
-}
 
 interface IconResp {
   icon: string
@@ -29,11 +25,11 @@ interface IconResp {
 }
 
 interface MP {
-  state: NaiveAsyncState<IconResp, IconParams>
+  state: NaiveAsyncState<IconResp, {}>
 }
 
 interface DP {
-  select: (params?: IconParams) => void
+  select: (params?: {}) => void
 }
 
 type Props = MP & DP

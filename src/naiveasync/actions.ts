@@ -243,7 +243,6 @@ export const naiveAsyncInitialMeta = Object.freeze({
   memo: undefined,
   onData: () => "noop",
   onError: () => "noop",
-  debounceTimeout: undefined,
   lastParams: undefined,
   debounce: 0,
   throttle: 0,

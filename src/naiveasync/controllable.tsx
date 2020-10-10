@@ -148,6 +148,7 @@ const operationWithTimeout = (operation: NaiveAsyncFunction<any, any>, payload: 
 function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object, meta: AsyncMeta<any, object>): Observable<Action<any>> {
   return new Observable(subscriber => {
     const {
+      id,
       operation,
       data,
       error,
@@ -165,12 +166,14 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
         .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
         .subscribe(() => subscription.unsubscribe())
     } catch (err) {
+      // tslint:disable-next-line: no-console
+      console.warn(`unexpected error calling observable from lifecycle ${id}`, err)
       subscriber.next(error(err))
     }
   })
 }
 
-const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhase, reuseParams: boolean, dispatch: Dispatch<AnyAction>): Observable<Action> => {
+const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhase, reuseParams: boolean): Observable<Action> => {
   const phaseMatcher = asyncActionMatcher(undefined, phase)
   const mergeMapAction = (action: AsyncAction<any>) => {
     const name = action[naiveAsyncEmoji].name
@@ -236,8 +239,8 @@ const responseDispatchOnPhase = (action$: Observable<Action<any>>, phase: AsyncP
 export const naiveAsyncMiddleware: Middleware = store => {
   const action$: Subject<Action> = new Subject()
   const middleware = $toMiddleware(action$)
-  AsyncableEpicOnPhase(action$, 'call', false, store.dispatch).subscribe(store.dispatch)
-  AsyncableEpicOnPhase(action$, 'sync', true, store.dispatch).subscribe(store.dispatch)
+  AsyncableEpicOnPhase(action$, 'call', false).subscribe(store.dispatch)
+  AsyncableEpicOnPhase(action$, 'sync', true).subscribe(store.dispatch)
   responseDispatchOnPhase(action$, 'data', store.dispatch).subscribe(store.dispatch)
   responseDispatchOnPhase(action$, 'error', store.dispatch).subscribe(store.dispatch)
   return middleware(store)
@@ -316,7 +319,7 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     debounce: (debounce: number) => {
       const thisMeta = metaCache.get(id)
       const meta = { ...thisMeta, ...{debounce} }
-      const operation = lodashDebounce(lifecycle.operation, debounce)
+      const operation = lodashDebounce(lifecycle.operation, debounce, {leading: true, trailing: true})
       const updatedLifecycle = {...lifecycle, operation};
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       cache.set(id, updatedLifecycle)

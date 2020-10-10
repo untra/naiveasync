@@ -76,6 +76,7 @@ const $fromAsyncIterable = <Data>(asyncIterable: AsyncIterable<Data>): Observabl
 
 /** Type guard that indicates whether an object has the crucial methods to behave like a Redux Store. */
 export const isStoreLike = (maybeStoreLike: StoreLike<any, any> | any): maybeStoreLike is StoreLike<any, any> =>
+  !!maybeStoreLike &&
   'subscribe' in maybeStoreLike && typeof maybeStoreLike.subscribe === 'function' &&
   'getState' in maybeStoreLike && typeof maybeStoreLike.getState === 'function' &&
   'dispatch' in maybeStoreLike && typeof maybeStoreLike.dispatch === 'function'
@@ -98,7 +99,6 @@ const $fromStore = <S, A extends Action>(store: StoreLike<S, A>): SubjectLike<S,
  * @returns
  */
 export const $from = <Item>(observableInput: ObservableInput<Item>) => {
-  // console.log('is it a promise?', isPromise(observableInput))
   return isStoreLike(observableInput) ? $fromStore(observableInput) :
     isAsyncIterable(observableInput) ? $fromAsyncIterable(observableInput) :
       // isPromise(observableInput) ? $fromPromise(observableInput) :
