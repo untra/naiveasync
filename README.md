@@ -62,18 +62,20 @@ Some Terminology:
 
 * swap placement of P and D, rename the dang thing
 * rename the `AsyncState` type
-* `.timeout()` will stop the async function and error after a specified timeout
+* ~~`.timeout()` will stop the async function and error after a specified timeout~~
 * `.subscribe()` retries the request on a given interval
-* `.onData((data? : D, dispatch? : Dispatch<AnyAction>) => void)` data callback with dispatch function
-* `.onError((error? : string, dispatch? : Dispatch<AnyAction>) => void)` error callback with dispatch
+* ~~`.onData((data? : D, dispatch? : Dispatch<AnyAction>) => void)` data callback with dispatch function~~
+* ~~`.onError((error? : string, dispatch? : Dispatch<AnyAction>) => void)` error callback with dispatch~~
 * `.memoized(enabled? : boolean = true)` keeps a record of inputs and their outputs, and returns the cached results
 * `.exponentialErrorRetry(enabled? : boolean = true)` retries the request if it fails a few seconds from now, following exponential backoff
 * `.exponentialDataSync(enabled? : boolean = true)`
 * lifecycle `.meta` display meta information about the selector eg:
-  * consecutive data count
-  * consecutive error count
-  * time inflight : number
-  * timeout number
+  * ~~consecutive data count~~
+  * ~~consecutive error count~~
+  * ~~time inflight : number~~
+  * ~~timeout number~~
+  * ~~debounce number~~
+  * ~~throttle number~~
   * error retry bool
   * data retry bool
 * test support for immutablejs

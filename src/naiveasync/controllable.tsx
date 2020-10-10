@@ -1,3 +1,5 @@
+import lodashDebounce from "lodash.debounce"
+import lodashThrottle from "lodash.throttle"
 import * as React from 'react'
 // tslint:disable-next-line: no-implicit-dependencies
 import { Provider } from 'react-redux'
@@ -59,8 +61,14 @@ export interface AsyncLifecycle<Data, Params> {
   readonly reset: AsyncActionCreator<undefined>
   /** Meta toggle to enable memoized responses on the lifecycle. Toggling will reset the memo. */
   readonly memoized: (enabled: boolean) => AsyncLifecycle<Data, Params>
-  /** Meta toggle to enable a timeout of the propmise, dispatching 'error' timeout if the request takes too long */
+  /** Meta toggle to debounce the promise for N milliseconds (execute this function at most once every N milliseconds.) */
+  readonly throttle: (throttle: number) => AsyncLifecycle<Data, Params>
+  /** Meta toggle to debounce the promise for N milliseconds (execute this function only if N milliseconds have passed without it being called.) */
+  readonly debounce: (debounce: number) => AsyncLifecycle<Data, Params>
+  /** Meta toggle to enable a millisecond timeout of the promise, dispatching 'error' timeout if the request takes too long. (0 will disable) */
   readonly timeout: (timeout: number) => AsyncLifecycle<Data, Params>
+  /** (still in development) Meta toggle to enable a millisecond (sync) repeat of the promise (0 will disable) */
+  readonly subscribe: (subscribe: number) => AsyncLifecycle<Data, Params>
   /** Assign a callback function to be called when the 'data' event is dispatched. */
   readonly onData: (onData: OnData<Data>) => AsyncLifecycle<Data, Params>
   /** Assign a callback function to be called when the 'error' event is dispatched. */
@@ -113,7 +121,7 @@ const matchCallOrSyncOrDestroy = (asyncLifeCycle: AsyncLifecycle<any, object>) =
 function resolveObservable(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, value: any): Observable<Action<any>> {
   const {
     data,
-    done,
+    done
   } = asyncLifeCycle
   return new Observable(subscriber => {
     const subscription = $from(Promise.resolve(value)).subscribe(
@@ -128,7 +136,7 @@ function resolveObservable(action$: Observable<Action<any>>, asyncLifeCycle: Asy
 }
 
 const operationWithTimeout = (operation: NaiveAsyncFunction<any, any>, payload: object, timeout: number) => {
-  if (isNaN(timeout) || timeout < 0) {
+  if (isNaN(timeout) || timeout < 1) {
     return operation(payload)
   }
   const timeoutRejectPromise = new Promise((_, reject) =>
@@ -137,7 +145,7 @@ const operationWithTimeout = (operation: NaiveAsyncFunction<any, any>, payload: 
   return Promise.race([operation(payload), timeoutRejectPromise]);
 }
 
-function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object, timeout: number): Observable<Action<any>> {
+function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object, meta: AsyncMeta<any, object>): Observable<Action<any>> {
   return new Observable(subscriber => {
     const {
       operation,
@@ -147,7 +155,7 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
     } = asyncLifeCycle
     try {
       const subscription = $from(
-        operationWithTimeout(operation, payload, timeout)
+        operationWithTimeout(operation, payload, meta.timeout || 0 )
       ).subscribe(
         nextData => subscriber.next(data(nextData)),
         err => subscriber.next(error(err)),
@@ -162,12 +170,13 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
   })
 }
 
-const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhase, reuseParams: boolean): Observable<Action> => {
+const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhase, reuseParams: boolean, dispatch: Dispatch<AnyAction>): Observable<Action> => {
   const phaseMatcher = asyncActionMatcher(undefined, phase)
   const mergeMapAction = (action: AsyncAction<any>) => {
     const name = action[naiveAsyncEmoji].name
     const meta = { ...naiveAsyncInitialMeta, ...metaCache.get(name) }
-    const { timeout, memo, lastParams } = meta
+    const { memo, lastParams } = meta
+    const now = Date.now()
     const payload = reuseParams && action.payload === undefined
       ? lastParams
       : action.payload
@@ -176,7 +185,6 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhas
     if (!actionAsyncLifecycle) {
       return empty()
     }
-    metaCache.set(name, { ...meta, lastParams: payload, lastCalled: Date.now() })
     // if using a memoized record
     if (memo) {
       const memoized = memo.get(JSON.stringify(payload))
@@ -184,7 +192,8 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhas
         return resolveObservable(action$, actionAsyncLifecycle, memoized)
       }
     }
-    return observableFromAsyncLifeCycle(action$, actionAsyncLifecycle, payload, timeout)
+    metaCache.set(name, { ...meta, lastParams: payload, lastCalled: now })
+    return observableFromAsyncLifeCycle(action$, actionAsyncLifecycle, payload, meta)
   }
   return action$.pipe(
     filter(phaseMatcher),
@@ -227,8 +236,8 @@ const responseDispatchOnPhase = (action$: Observable<Action<any>>, phase: AsyncP
 export const naiveAsyncMiddleware: Middleware = store => {
   const action$: Subject<Action> = new Subject()
   const middleware = $toMiddleware(action$)
-  AsyncableEpicOnPhase(action$, 'call', false).subscribe(store.dispatch)
-  AsyncableEpicOnPhase(action$, 'sync', true).subscribe(store.dispatch)
+  AsyncableEpicOnPhase(action$, 'call', false, store.dispatch).subscribe(store.dispatch)
+  AsyncableEpicOnPhase(action$, 'sync', true, store.dispatch).subscribe(store.dispatch)
   responseDispatchOnPhase(action$, 'data', store.dispatch).subscribe(store.dispatch)
   responseDispatchOnPhase(action$, 'error', store.dispatch).subscribe(store.dispatch)
   return middleware(store)
@@ -292,6 +301,29 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     },
     timeout: (timeout: number) => {
       const meta = { ...metaCache.get(id), ...{timeout} }
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
+      return lifecycle;
+    },
+    throttle: (throttle: number) => {
+      const thisMeta = metaCache.get(id)
+      const meta = { ...thisMeta, ...{throttle} }
+      const operation = lodashThrottle(lifecycle.operation, throttle)
+      const updatedLifecycle = {...lifecycle, operation};
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
+      cache.set(id, updatedLifecycle)
+      return updatedLifecycle
+    },
+    debounce: (debounce: number) => {
+      const thisMeta = metaCache.get(id)
+      const meta = { ...thisMeta, ...{debounce} }
+      const operation = lodashDebounce(lifecycle.operation, debounce)
+      const updatedLifecycle = {...lifecycle, operation};
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
+      cache.set(id, updatedLifecycle)
+      return updatedLifecycle;
+    },
+    subscribe: (subscribe: number) => {
+      const meta = { ...metaCache.get(id), ...{subscribe} }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },

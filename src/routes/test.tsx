@@ -11,11 +11,14 @@ import { applyMiddleware, createStore } from "redux";
 import * as packagejson from '../../package.json'
 import { NaiveAsyncState } from "../naiveasync/actions"
 import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer } from "../naiveasync/index"
+import DebounceTest from './components/debounceTest'
 import MemoizedSync from './components/memoized'
+import MetadataTest from './components/metadataTest'
 import OnDataSync from './components/onData'
 import OnErrorSync from './components/onError'
 import RandomNumberSelectableSync from './components/RandomNumberSelectableSync'
 import RandomNumberSync from './components/RandomNumberSync'
+import ThrottleTest from './components/throttleTest'
 import TimeoutSync from './components/timeout'
 
 
@@ -219,7 +222,21 @@ export default class Test extends React.Component {
           #14 test meta
         </h4>
         <Provider store={store}>
-          <span>todo...</span>
+          <MetadataTest />
+        </Provider>
+
+        <h4>
+          #15 throttle
+        </h4>
+        <Provider store={store}>
+          <ThrottleTest />
+        </Provider>
+
+        <h4>
+          #16 debounce
+        </h4>
+        <Provider store={store}>
+          <DebounceTest />
         </Provider>
       </div>
 

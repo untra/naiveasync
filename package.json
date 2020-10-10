@@ -1,6 +1,6 @@
 {
   "name": "@stackhawk/naiveasync",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "An Opinionated and Painless React & Redux promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
@@ -45,7 +45,9 @@
   "dependencies": {
     "react": "^16.13.1",
     "redux": "^4.0.5",
-    "rxjs": "6.5.5"
+    "rxjs": "6.5.5",
+    "lodash.debounce": "^4.0.8",
+    "lodash.throttle": "4.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
@@ -62,6 +64,8 @@
     "@types/react-highlight": "0.12.1",
     "@types/react-redux": "^7.1.8",
     "@types/react-router-dom": "4.3.3",
+    "@types/lodash.debounce": "^4.0.6",
+    "@types/lodash.throttle": "^4.1.6",
     "babel-loader": "^8.1.0",
     "chai": "^4.2.0",
     "css-loader": "^3.5.3",
@@ -75,7 +79,7 @@
     "react-highlight": "0.12.0",
     "react-redux": "^7.2.0",
     "react-router-dom": "5.0.1",
-    "react-scripts": "^3.4.1",
+    "react-scripts": "^3.4.3",
     "ts-loader": "^6.2.2",
     "tslint": "^5.20.1",
     "tslint-config-prettier": "^1.18.0",

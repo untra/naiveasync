@@ -200,6 +200,8 @@ export type NaiveAsyncState<Data, Params> =
   | ErrorNAsyncState<Data, Params>
   | DoneNAsyncState<Data, Params>
 
+export type AsyncState<Data, Params> = NaiveAsyncState<Data, Params>
+
 /** the initial state of a naiveasync operation */
 export const naiveAsyncInitialState = Object.freeze({
   status: '',
@@ -218,6 +220,9 @@ export type OnData<Data> = OnCb | OnData1<Data> | OnData2<Data>;
 
 
 export interface AsyncMeta<Data,Params> {
+  debounce: number
+  throttle: number,
+  subscribe: number
   timeout: number,
   record: number,
   dataCount: number,
@@ -238,5 +243,9 @@ export const naiveAsyncInitialMeta = Object.freeze({
   memo: undefined,
   onData: () => "noop",
   onError: () => "noop",
-  lastParams: undefined
+  debounceTimeout: undefined,
+  lastParams: undefined,
+  debounce: 0,
+  throttle: 0,
+  subscribe: 0
 })
