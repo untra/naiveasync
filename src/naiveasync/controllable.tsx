@@ -1,10 +1,11 @@
 import lodashDebounce from "lodash.debounce"
 import lodashThrottle from "lodash.throttle"
 import * as React from 'react'
-import { useState, useEffect } from "react"
+// tslint:disable-next-line: no-duplicate-imports
+import { useState } from "react"
 // tslint:disable-next-line: no-implicit-dependencies
-import { Provider, useDispatch, useStore } from 'react-redux'
-import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer, Store } from 'redux'
+import { useDispatch, useStore } from 'react-redux'
+import { Action, Dispatch, Middleware, Reducer } from 'redux'
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"

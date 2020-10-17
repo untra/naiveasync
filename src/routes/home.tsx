@@ -1,6 +1,7 @@
 import React from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import Highlight from "react-highlight";
+// tslint:disable-next-line: no-implicit-dependencies
 import { Provider } from "react-redux";
 // tslint:disable-next-line: no-implicit-dependencies
 import { Link } from "react-router-dom";
