@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import { NaiveAsyncFunction, NaiveAsyncState } from './actions'
-import { createControllableContext, naiveAsyncLifecycle, naiveAsyncMiddleware, naiveAsyncReducer } from './controllable'
+import { AsyncLifecycle, createControllableContext, naiveAsyncLifecycle, naiveAsyncMiddleware, naiveAsyncReducer } from './controllable'
 
 export type NaiveAsyncComponentChildren<Data, Params> = (state: NaiveAsyncState<Data, Params>, call: (params: Params) => void) => JSX.Element
 
 export interface NaiveAsyncComponentProps<Data, Params extends object> {
-    id: string
-    operation: NaiveAsyncFunction<Data, Params>
+    id?: string
+    operation?: NaiveAsyncFunction<Data, Params>
     autoParams?: Params
     children: NaiveAsyncComponentChildren<Data, Params>
+    lifecycle?: AsyncLifecycle<Data, Params>
 }
 
 export interface LifecycleAsyncProps<Data, Params> {
@@ -39,8 +40,10 @@ export const AsyncManaged: React.FC<LifecycleAsyncProps<any, object>> = <Data, P
     return children(state, call)
 }
 
+const noop = () => Promise.resolve({})
+
 /**
- * the NaiveAsync tag accepts an operation and autoParams object of initial parameters to pass in
+ * the NaiveAsync tag accepts an operation and autoParams object of initial parameters to pass in, 
  *
  * @export
  * @template Data
@@ -49,10 +52,10 @@ export const AsyncManaged: React.FC<LifecycleAsyncProps<any, object>> = <Data, P
  * @returns {React.ReactElement<NaiveAsyncComponentProps<Data, Params>>}
  */
 export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncComponentProps<Data, Params>): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> {
-    const { operation, children, autoParams, id } = props
+    const { operation, children, autoParams, id, lifecycle } = props
     const [state, setState] = useState({
         params: autoParams,
-        asyncLifeCycle: naiveAsyncLifecycle(operation, id),
+        asyncLifeCycle: lifecycle ? lifecycle : naiveAsyncLifecycle(operation || noop, id || operation?.name || ''),
         AsyncControllable: createControllableContext(naiveAsyncReducer, naiveAsyncMiddleware),
     });
     const { params, asyncLifeCycle, AsyncControllable } = state

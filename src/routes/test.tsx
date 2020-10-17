@@ -10,7 +10,7 @@ import { Provider } from "react-redux";
 import { applyMiddleware, createStore } from "redux";
 import * as packagejson from '../../package.json'
 import { NaiveAsyncState } from "../naiveasync/actions"
-import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer } from "../naiveasync/index"
+import { NaiveAsync, naiveAsyncLifecycle, naiveAsyncMiddleware, naiveAsyncReducer } from "../naiveasync/index"
 import DebounceTest from './components/debounceTest'
 import MemoizedSync from './components/memoized'
 import MetadataTest from './components/metadataTest'
@@ -77,6 +77,7 @@ const namedFunction = function namedFunction() {
   return timeoutResolve(true)
 }
 
+const lifeCycleInput = naiveAsyncLifecycle(autoParamsOp, "#17 lifecycle input");
 
 
 export default class Test extends React.Component {
@@ -238,6 +239,25 @@ export default class Test extends React.Component {
         <Provider store={store}>
           <DebounceTest />
         </Provider>
+
+        <h4>
+          #17 naiveasync with lifecycle input
+        </h4>
+        <NaiveAsync lifecycle={lifeCycleInput} autoParams={{}} >{(state, call) => (<div>
+          <p>status: {JSON.stringify(state.status)}</p>
+          <p>params: {JSON.stringify(state.params)}</p>
+          <p>error: {JSON.stringify(state.error)}</p>
+          <p>data: {JSON.stringify(state.data)}</p>
+          <button onClick={() => call({})} >call</button>
+        </div>)}</NaiveAsync>
+        <NaiveAsync operation={lifeCycleInput.operation} >{(state, call) => (<div>
+          <p>status: {JSON.stringify(state.status)}</p>
+          <p>params: {JSON.stringify(state.params)}</p>
+          <p>error: {JSON.stringify(state.error)}</p>
+          <p>data: {JSON.stringify(state.data)}</p>
+          <button onClick={() => call({})} >call</button>
+        </div>)}</NaiveAsync>
+      
       </div>
 
     );
