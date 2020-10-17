@@ -4,7 +4,7 @@ import { AsyncLifecycle, createControllableContext, naiveAsyncLifecycle, naiveAs
 
 export type NaiveAsyncComponentChildren<Data, Params> = (state: NaiveAsyncState<Data, Params>, call: (params: Params) => void) => JSX.Element
 
-export interface NaiveAsyncComponentProps<Data, Params extends object> {
+export interface NaiveAsyncComponentProps<Data, Params> {
     id?: string
     operation?: NaiveAsyncFunction<Data, Params>
     autoParams?: Params
