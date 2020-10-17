@@ -1,9 +1,10 @@
 import lodashDebounce from "lodash.debounce"
 import lodashThrottle from "lodash.throttle"
 import * as React from 'react'
+import { useState, useEffect } from "react"
 // tslint:disable-next-line: no-implicit-dependencies
-import { Provider } from 'react-redux'
-import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } from 'redux'
+import { Provider, useDispatch, useStore } from 'react-redux'
+import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer, Store } from 'redux'
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
@@ -156,7 +157,7 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
     } = asyncLifeCycle
     try {
       const subscription = $from(
-        operationWithTimeout(operation, payload, meta.timeout || 0 )
+        operationWithTimeout(operation, payload, meta.timeout || 0)
       ).subscribe(
         nextData => subscriber.next(data(nextData)),
         err => subscriber.next(error(err)),
@@ -293,40 +294,40 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
       return lifecycle;
     },
     onData: (onData: OnData<Data>) => {
-      const meta = { ...metaCache.get(id), ...{onData} }
+      const meta = { ...metaCache.get(id), ...{ onData } }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },
     onError: (onError: OnError) => {
-      const meta = { ...metaCache.get(id), ...{onError} }
+      const meta = { ...metaCache.get(id), ...{ onError } }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },
     timeout: (timeout: number) => {
-      const meta = { ...metaCache.get(id), ...{timeout} }
+      const meta = { ...metaCache.get(id), ...{ timeout } }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },
     throttle: (throttle: number) => {
       const thisMeta = metaCache.get(id)
-      const meta = { ...thisMeta, ...{throttle} }
+      const meta = { ...thisMeta, ...{ throttle } }
       const operation = lodashThrottle(lifecycle.operation, throttle)
-      const updatedLifecycle = {...lifecycle, operation};
+      const updatedLifecycle = { ...lifecycle, operation };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       cache.set(id, updatedLifecycle)
       return updatedLifecycle
     },
     debounce: (debounce: number) => {
       const thisMeta = metaCache.get(id)
-      const meta = { ...thisMeta, ...{debounce} }
-      const operation = lodashDebounce(lifecycle.operation, debounce, {leading: true, trailing: true})
-      const updatedLifecycle = {...lifecycle, operation};
+      const meta = { ...thisMeta, ...{ debounce } }
+      const operation = lodashDebounce(lifecycle.operation, debounce, { leading: true, trailing: true })
+      const updatedLifecycle = { ...lifecycle, operation };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       cache.set(id, updatedLifecycle)
       return updatedLifecycle;
     },
     subscribe: (subscribe: number) => {
-      const meta = { ...metaCache.get(id), ...{subscribe} }
+      const meta = { ...metaCache.get(id), ...{ subscribe } }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },
@@ -336,39 +337,32 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
   return lifecycle
 }
 
+/**
+ * Creates a controllable context, wrapping the provided reducer and middleware around dispatched actions.
+ *
+ * @export
+ * @template State
+ * @param {Reducer<State>} reducer
+ * @param {Middleware} middleware
+ * @return {*}  {Controllerable<State>}
+ */
 export function createControllableContext<State extends NaiveAsyncSlice>(
   reducer: Reducer<State>,
   middleware: Middleware
 ): Controllerable<State> {
-
-  const store = createStore(reducer, applyMiddleware(middleware))
-
-  class Controllable extends React.Component<ControllableProps<State>, State> {
-    constructor(props: ControllableProps<State>) {
-      super(props)
-      const initialState = reducer(undefined, { type: '@@CONTROLLABLE' })
-      this.state = initialState
-      this.dispatch = middleware({
-        dispatch: this.dispatch,
-        getState: () => this.state,
-      })(this.dispatch)
+  const Controllable = <State extends NaiveAsyncSlice>(props: ControllableProps<State>) => {
+    const store = useStore()
+    const dp = useDispatch()
+    const [state, setState] = useState<NaiveAsyncSlice>(reducer(store.getState(), { type: ''}))
+    const internalDispatch: Dispatch<AnyAction> = <A extends Action>(action: A) => {
+      setState(reducer(state as any, action))
+      return dp(action)
     }
-
-    public componentWillUnmount = () => {
-      // tslint:disable-next-line: no-empty
-      this.setState = () => { }
-    }
-
-    public dispatch: Dispatch<AnyAction> = <A extends Action>(action: A) => {
-      this.setState(reducer(this.state, action))
-      return action
-    }
-
-    public render() {
-      // 💥 TODO: this is so incorrect and inefficient, bad sam! bad code
-      return <Provider store={store}>{this.props.children(this.state, this.dispatch)}</Provider>
-    }
+    const dispatch = middleware({
+      dispatch: internalDispatch, // dispatches loading states
+      getState: () => store.getState(),
+    })(internalDispatch) // dispatches done and error states
+    return (<React.Fragment>{props.children(state as State, dispatch)}</React.Fragment>)
   }
-
   return Controllable
 }

@@ -148,7 +148,6 @@ export const asyncActionCreatorFactory = <Data, Params>(
  */
 export interface NaiveAsyncSlice {
   [naiveAsyncEmoji]: { [key: string]: NaiveAsyncState<any, any> }
-  [naiveAsyncEmoji]: { [key: string]: NaiveAsyncState<any, any> }
 }
 
 export interface Gettable {
