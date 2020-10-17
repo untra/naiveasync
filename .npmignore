@@ -30,3 +30,5 @@ dist/src/index.d.ts
 
 # not this one
 # !dist/src/naiveasync
+biodome.sh
+buildspec.yml
