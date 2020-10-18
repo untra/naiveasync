@@ -4,7 +4,7 @@ import * as React from 'react'
 // tslint:disable-next-line: no-duplicate-imports
 import { useState } from "react"
 // tslint:disable-next-line: no-implicit-dependencies
-import { useDispatch, useStore } from 'react-redux'
+import { Provider, useDispatch, useStore } from 'react-redux'
 import { Action, Dispatch, Middleware, Reducer } from 'redux'
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
@@ -354,16 +354,20 @@ export function createControllableContext<State extends NaiveAsyncSlice>(
   const Controllable = <State extends NaiveAsyncSlice>(props: ControllableProps<State>) => {
     const store = useStore()
     const dp = useDispatch()
-    const [state, setState] = useState<NaiveAsyncSlice>(reducer(store.getState(), { type: ''}))
+    const [state, setState] = useState<NaiveAsyncSlice>(reducer(undefined, { type: ''}),)
     const internalDispatch: Dispatch<AnyAction> = <A extends Action>(action: A) => {
-      setState(reducer(state as any, action))
-      return dp(action)
+      const dispatchedAction = dp(action)
+      setState(reducer(store.getState(), dispatchedAction))
+      return dp(dispatchedAction)
     }
     const dispatch = middleware({
       dispatch: internalDispatch, // dispatches loading states
-      getState: () => store.getState(),
+      getState: () => state,
     })(internalDispatch) // dispatches done and error states
-    return (<React.Fragment>{props.children(state as State, dispatch)}</React.Fragment>)
+    return (<Provider store={store}>{props.children(state as State, dispatch)}</Provider>)
   }
   return Controllable
 }
+
+
+

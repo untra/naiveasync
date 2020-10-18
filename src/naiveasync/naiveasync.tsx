@@ -51,10 +51,10 @@ const noop = () => Promise.resolve({})
  * @returns {React.ReactElement<NaiveAsyncComponentProps<Data, Params>>}
  */
 export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncComponentProps<Data, Params>): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> {
-    const { operation, children, autoParams, id } = props
+    const { operation = noop, children, autoParams, id = operation?.name } = props
     const [state, setState] = useState({
         params: autoParams,
-        asyncLifeCycle: naiveAsyncLifecycle(operation || noop, id || operation?.name || ''),
+        asyncLifeCycle: naiveAsyncLifecycle(operation, id),
         AsyncControllable: createControllableContext(naiveAsyncReducer, naiveAsyncMiddleware),
     });
     const { params, asyncLifeCycle, AsyncControllable } = state
