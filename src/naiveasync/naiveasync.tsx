@@ -105,7 +105,7 @@ export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncCompone
 }
 
 /**
- * The Async tag accepts a lifecycle, and an optional desired initial state for the operation (without trigger the underlying Async Function)
+ * The Async tag accepts a lifecycle, and an optional desired initial state for the operation (without triggering the underlying async function)
  * @export
  * @template Data
  * @template Params
