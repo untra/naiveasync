@@ -9,7 +9,7 @@ import { Action, Dispatch, Middleware, Reducer } from 'redux'
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncMeta, AsyncPhase, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
+import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncMeta, AsyncPhase, AsyncState, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
@@ -77,6 +77,8 @@ export interface AsyncLifecycle<Data, Params> {
   readonly onError: (onError: OnError) => AsyncLifecycle<Data, Params>
   /** select the meta object */
   readonly meta: () => AsyncMeta<Data, Params>
+  /** Utility action to assign the provided AsyncState to the redux store */
+  readonly assign: AsyncActionCreator<AsyncState<Data,Params>>
 }
 
 /** the initial slice state for use in a redux store */
@@ -288,6 +290,7 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     error: factory<string>('error'),
     done: factory<undefined>('done'),
     reset: factory<undefined>('reset'),
+    assign: factory<AsyncState<Data,Params>>('assign'),
     memoized: (enabled: boolean) => {
       const memo = (enabled ? new KeyedCache<any>() : undefined);
       const meta = { ...metaCache.get(id), memo }

@@ -5,7 +5,7 @@ import { KeyedCache } from "./keyedcache"
 export const naiveAsyncEmoji = '🔁'
 
 /** the phase state of the naiveAsync lifecycle */
-export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync'
+export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync' | 'assign'
 
 interface AsyncPostmark {
   readonly name: string
@@ -246,4 +246,4 @@ export const naiveAsyncInitialMeta = Object.freeze({
   debounce: 0,
   throttle: 0,
   subscribe: 0
-})
+}) as AsyncMeta<any,any>
