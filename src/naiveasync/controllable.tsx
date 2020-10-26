@@ -1,11 +1,15 @@
+import lodashDebounce from "lodash.debounce"
+import lodashThrottle from "lodash.throttle"
 import * as React from 'react'
+// tslint:disable-next-line: no-duplicate-imports
+import { useState } from "react"
 // tslint:disable-next-line: no-implicit-dependencies
-import { Provider } from 'react-redux'
-import { Action, applyMiddleware, createStore, Dispatch, Middleware, Reducer } from 'redux'
+import { Provider, useDispatch, useStore } from 'react-redux'
+import { Action, Dispatch, Middleware, Reducer } from 'redux'
 import { empty, Observable, Subject } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncMeta, AsyncPhase, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
+import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncMeta, AsyncPhase, AsyncState, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
@@ -59,14 +63,22 @@ export interface AsyncLifecycle<Data, Params> {
   readonly reset: AsyncActionCreator<undefined>
   /** Meta toggle to enable memoized responses on the lifecycle. Toggling will reset the memo. */
   readonly memoized: (enabled: boolean) => AsyncLifecycle<Data, Params>
-  /** Meta toggle to enable a timeout of the propmise, dispatching 'error' timeout if the request takes too long */
+  /** Meta toggle to debounce the promise for N milliseconds (execute this function at most once every N milliseconds.) */
+  readonly throttle: (throttle: number) => AsyncLifecycle<Data, Params>
+  /** Meta toggle to debounce the promise for N milliseconds (execute this function only if N milliseconds have passed without it being called.) */
+  readonly debounce: (debounce: number) => AsyncLifecycle<Data, Params>
+  /** Meta toggle to enable a millisecond timeout of the promise, dispatching 'error' timeout if the request takes too long. (0 will disable) */
   readonly timeout: (timeout: number) => AsyncLifecycle<Data, Params>
+  /** (still in development) Meta toggle to enable a millisecond (sync) repeat of the promise (0 will disable) */
+  readonly subscribe: (subscribe: number) => AsyncLifecycle<Data, Params>
   /** Assign a callback function to be called when the 'data' event is dispatched. */
   readonly onData: (onData: OnData<Data>) => AsyncLifecycle<Data, Params>
   /** Assign a callback function to be called when the 'error' event is dispatched. */
   readonly onError: (onError: OnError) => AsyncLifecycle<Data, Params>
   /** select the meta object */
   readonly meta: () => AsyncMeta<Data, Params>
+  /** Utility action to assign the provided AsyncState to the redux store */
+  readonly assign: AsyncActionCreator<AsyncState<Data,Params>>
 }
 
 /** the initial slice state for use in a redux store */
@@ -113,7 +125,7 @@ const matchCallOrSyncOrDestroy = (asyncLifeCycle: AsyncLifecycle<any, object>) =
 function resolveObservable(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, value: any): Observable<Action<any>> {
   const {
     data,
-    done,
+    done
   } = asyncLifeCycle
   return new Observable(subscriber => {
     const subscription = $from(Promise.resolve(value)).subscribe(
@@ -128,7 +140,7 @@ function resolveObservable(action$: Observable<Action<any>>, asyncLifeCycle: Asy
 }
 
 const operationWithTimeout = (operation: NaiveAsyncFunction<any, any>, payload: object, timeout: number) => {
-  if (isNaN(timeout) || timeout < 0) {
+  if (isNaN(timeout) || timeout < 1) {
     return operation(payload)
   }
   const timeoutRejectPromise = new Promise((_, reject) =>
@@ -137,9 +149,10 @@ const operationWithTimeout = (operation: NaiveAsyncFunction<any, any>, payload: 
   return Promise.race([operation(payload), timeoutRejectPromise]);
 }
 
-function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object, timeout: number): Observable<Action<any>> {
+function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object, meta: AsyncMeta<any, object>): Observable<Action<any>> {
   return new Observable(subscriber => {
     const {
+      id,
       operation,
       data,
       error,
@@ -147,7 +160,7 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
     } = asyncLifeCycle
     try {
       const subscription = $from(
-        operationWithTimeout(operation, payload, timeout)
+        operationWithTimeout(operation, payload, meta.timeout || 0)
       ).subscribe(
         nextData => subscriber.next(data(nextData)),
         err => subscriber.next(error(err)),
@@ -157,6 +170,8 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
         .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
         .subscribe(() => subscription.unsubscribe())
     } catch (err) {
+      // tslint:disable-next-line: no-console
+      console.warn(`unexpected error calling observable from lifecycle ${id}`, err)
       subscriber.next(error(err))
     }
   })
@@ -167,7 +182,8 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhas
   const mergeMapAction = (action: AsyncAction<any>) => {
     const name = action[naiveAsyncEmoji].name
     const meta = { ...naiveAsyncInitialMeta, ...metaCache.get(name) }
-    const { timeout, memo, lastParams } = meta
+    const { memo, lastParams } = meta
+    const now = Date.now()
     const payload = reuseParams && action.payload === undefined
       ? lastParams
       : action.payload
@@ -176,7 +192,6 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhas
     if (!actionAsyncLifecycle) {
       return empty()
     }
-    metaCache.set(name, { ...meta, lastParams: payload, lastCalled: Date.now() })
     // if using a memoized record
     if (memo) {
       const memoized = memo.get(JSON.stringify(payload))
@@ -184,7 +199,8 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhas
         return resolveObservable(action$, actionAsyncLifecycle, memoized)
       }
     }
-    return observableFromAsyncLifeCycle(action$, actionAsyncLifecycle, payload, timeout)
+    metaCache.set(name, { ...meta, lastParams: payload, lastCalled: now })
+    return observableFromAsyncLifeCycle(action$, actionAsyncLifecycle, payload, meta)
   }
   return action$.pipe(
     filter(phaseMatcher),
@@ -274,6 +290,7 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     error: factory<string>('error'),
     done: factory<undefined>('done'),
     reset: factory<undefined>('reset'),
+    assign: factory<AsyncState<Data,Params>>('assign'),
     memoized: (enabled: boolean) => {
       const memo = (enabled ? new KeyedCache<any>() : undefined);
       const meta = { ...metaCache.get(id), memo }
@@ -281,17 +298,40 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
       return lifecycle;
     },
     onData: (onData: OnData<Data>) => {
-      const meta = { ...metaCache.get(id), ...{onData} }
+      const meta = { ...metaCache.get(id), ...{ onData } }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },
     onError: (onError: OnError) => {
-      const meta = { ...metaCache.get(id), ...{onError} }
+      const meta = { ...metaCache.get(id), ...{ onError } }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },
     timeout: (timeout: number) => {
-      const meta = { ...metaCache.get(id), ...{timeout} }
+      const meta = { ...metaCache.get(id), ...{ timeout } }
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
+      return lifecycle;
+    },
+    throttle: (throttle: number) => {
+      const thisMeta = metaCache.get(id)
+      const meta = { ...thisMeta, ...{ throttle } }
+      const operation = lodashThrottle(lifecycle.operation, throttle)
+      const updatedLifecycle = { ...lifecycle, operation };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
+      cache.set(id, updatedLifecycle)
+      return updatedLifecycle
+    },
+    debounce: (debounce: number) => {
+      const thisMeta = metaCache.get(id)
+      const meta = { ...thisMeta, ...{ debounce } }
+      const operation = lodashDebounce(lifecycle.operation, debounce, { leading: true, trailing: true })
+      const updatedLifecycle = { ...lifecycle, operation };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
+      cache.set(id, updatedLifecycle)
+      return updatedLifecycle;
+    },
+    subscribe: (subscribe: number) => {
+      const meta = { ...metaCache.get(id), ...{ subscribe } }
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       return lifecycle;
     },
@@ -301,39 +341,36 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
   return lifecycle
 }
 
+/**
+ * Creates a controllable context, wrapping the provided reducer and middleware around dispatched actions.
+ *
+ * @export
+ * @template State
+ * @param {Reducer<State>} reducer
+ * @param {Middleware} middleware
+ * @return {*}  {Controllerable<State>}
+ */
 export function createControllableContext<State extends NaiveAsyncSlice>(
   reducer: Reducer<State>,
   middleware: Middleware
 ): Controllerable<State> {
-
-  const store = createStore(reducer, applyMiddleware(middleware))
-
-  class Controllable extends React.Component<ControllableProps<State>, State> {
-    constructor(props: ControllableProps<State>) {
-      super(props)
-      const initialState = reducer(undefined, { type: '@@CONTROLLABLE' })
-      this.state = initialState
-      this.dispatch = middleware({
-        dispatch: this.dispatch,
-        getState: () => this.state,
-      })(this.dispatch)
+  const Controllable = <State extends NaiveAsyncSlice>(props: ControllableProps<State>) => {
+    const store = useStore()
+    const dp = useDispatch()
+    const [state, setState] = useState<NaiveAsyncSlice>(reducer(undefined, { type: ''}),)
+    const internalDispatch: Dispatch<AnyAction> = <A extends Action>(action: A) => {
+      const dispatchedAction = dp(action)
+      setState(reducer(store.getState(), dispatchedAction))
+      return dp(dispatchedAction)
     }
-
-    public componentWillUnmount = () => {
-      // tslint:disable-next-line: no-empty
-      this.setState = () => { }
-    }
-
-    public dispatch: Dispatch<AnyAction> = <A extends Action>(action: A) => {
-      this.setState(reducer(this.state, action))
-      return action
-    }
-
-    public render() {
-      // 💥 TODO: this is so incorrect and inefficient, bad sam! bad code
-      return <Provider store={store}>{this.props.children(this.state, this.dispatch)}</Provider>
-    }
+    const dispatch = middleware({
+      dispatch: internalDispatch, // dispatches loading states
+      getState: () => state,
+    })(internalDispatch) // dispatches done and error states
+    return (<Provider store={store}>{props.children(state as State, dispatch)}</Provider>)
   }
-
   return Controllable
 }
+
+
+
