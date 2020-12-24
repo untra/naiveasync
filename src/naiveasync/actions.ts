@@ -5,7 +5,7 @@ import { KeyedCache } from "./keyedcache"
 export const naiveAsyncEmoji = '🔁'
 
 /** the phase state of the naiveAsync lifecycle */
-export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync'
+export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync' | 'assign'
 
 interface AsyncPostmark {
   readonly name: string
@@ -148,7 +148,6 @@ export const asyncActionCreatorFactory = <Data, Params>(
  */
 export interface NaiveAsyncSlice {
   [naiveAsyncEmoji]: { [key: string]: NaiveAsyncState<any, any> }
-  [naiveAsyncEmoji]: { [key: string]: NaiveAsyncState<any, any> }
 }
 
 export interface Gettable {
@@ -200,6 +199,8 @@ export type NaiveAsyncState<Data, Params> =
   | ErrorNAsyncState<Data, Params>
   | DoneNAsyncState<Data, Params>
 
+export type AsyncState<Data, Params> = NaiveAsyncState<Data, Params>
+
 /** the initial state of a naiveasync operation */
 export const naiveAsyncInitialState = Object.freeze({
   status: '',
@@ -218,6 +219,9 @@ export type OnData<Data> = OnCb | OnData1<Data> | OnData2<Data>;
 
 
 export interface AsyncMeta<Data,Params> {
+  debounce: number
+  throttle: number,
+  subscribe: number
   timeout: number,
   record: number,
   dataCount: number,
@@ -238,5 +242,8 @@ export const naiveAsyncInitialMeta = Object.freeze({
   memo: undefined,
   onData: () => "noop",
   onError: () => "noop",
-  lastParams: undefined
-})
+  lastParams: undefined,
+  debounce: 0,
+  throttle: 0,
+  subscribe: 0
+}) as AsyncMeta<any,any>

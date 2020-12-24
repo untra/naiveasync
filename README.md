@@ -7,9 +7,11 @@
 
 **NaiveAsync** is a straightforward React functional module that can be used to quickly turn an asynchronous operation into a well-managed react component centered around that asynchronous operation.
 
+Real quick: an [async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function) can be specified with the `async function` keyword, or can be understand to be a _function that returns a promise_ or `() => Promise`.
+
 NaiveAsync will autogenerate your redux selectors, dispatch operations, and provide a managed lifecycle object you can control around your async operations for use in react components.
 
-It turns a promise into a state object to render child components with, and a call function to invoke the promise, with just a few abstractions to manage it reasonably well.
+The AsyncLifecycle will turn an async function into a state object to render child components with, redux action creators, selectors, and reducers to manage the promise state in redux, with just a few abstractions to manage it reasonably well.
 
 ## Usage
 
@@ -62,18 +64,20 @@ Some Terminology:
 
 * swap placement of P and D, rename the dang thing
 * rename the `AsyncState` type
-* `.timeout()` will stop the async function and error after a specified timeout
+* ~~`.timeout()` will stop the async function and error after a specified timeout~~
 * `.subscribe()` retries the request on a given interval
-* `.onData((data? : D, dispatch? : Dispatch<AnyAction>) => void)` data callback with dispatch function
-* `.onError((error? : string, dispatch? : Dispatch<AnyAction>) => void)` error callback with dispatch
+* ~~`.onData((data? : D, dispatch? : Dispatch<AnyAction>) => void)` data callback with dispatch function~~
+* ~~`.onError((error? : string, dispatch? : Dispatch<AnyAction>) => void)` error callback with dispatch~~
 * `.memoized(enabled? : boolean = true)` keeps a record of inputs and their outputs, and returns the cached results
 * `.exponentialErrorRetry(enabled? : boolean = true)` retries the request if it fails a few seconds from now, following exponential backoff
 * `.exponentialDataSync(enabled? : boolean = true)`
 * lifecycle `.meta` display meta information about the selector eg:
-  * consecutive data count
-  * consecutive error count
-  * time inflight : number
-  * timeout number
+  * ~~consecutive data count~~
+  * ~~consecutive error count~~
+  * ~~time inflight : number~~
+  * ~~timeout number~~
+  * ~~debounce number~~
+  * ~~throttle number~~
   * error retry bool
   * data retry bool
 * test support for immutablejs

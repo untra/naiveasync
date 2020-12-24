@@ -7,19 +7,20 @@
 import React from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import { Provider } from "react-redux";
-import { applyMiddleware, createStore } from "redux";
 import * as packagejson from '../../package.json'
 import { NaiveAsyncState } from "../naiveasync/actions"
-import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer } from "../naiveasync/index"
+import { NaiveAsync, naiveAsyncLifecycle } from "../naiveasync/index"
+import { Async } from "../naiveasync/naiveasync";
+import { createdConnectedStore } from "../store";
+import DebounceTest from './components/debounceTest'
 import MemoizedSync from './components/memoized'
+import MetadataTest from './components/metadataTest'
 import OnDataSync from './components/onData'
 import OnErrorSync from './components/onError'
 import RandomNumberSelectableSync from './components/RandomNumberSelectableSync'
 import RandomNumberSync from './components/RandomNumberSync'
+import ThrottleTest from './components/throttleTest'
 import TimeoutSync from './components/timeout'
-
-
-const store = createStore(naiveAsyncReducer, applyMiddleware(naiveAsyncMiddleware))
 
 const emojiView = (state: NaiveAsyncState<any, {}>) => (<p>{
   state.status === 'inflight' ? '💬'
@@ -74,11 +75,30 @@ const namedFunction = function namedFunction() {
   return timeoutResolve(true)
 }
 
+const unreliableAsyncOperation = (): Promise<{ value: true }> => {
 
+  return new Promise((resolve, reject) => {
+    const r = Math.random()
+    const time = r * 1000
+
+    setTimeout(() => {
+      if (r < 0.8) {
+        resolve({ value: true })
+      }
+      reject(new Error('an error was thrown'))
+    }, time)
+  })
+}
+
+const lifeCycleInput = naiveAsyncLifecycle(autoParamsOp, "17_LIFECYCLE_INPUT");
+
+const asyncInputLifecycle = naiveAsyncLifecycle(unreliableAsyncOperation, "19_ASYNC_OPERATION");
+
+const store = createdConnectedStore()
 
 export default class Test extends React.Component {
   public render() {
-    return (
+    return (<Provider store={store}>
       <div className="wrapper">
         <h1>
           <span role="img" aria-label="Bento">
@@ -118,6 +138,7 @@ export default class Test extends React.Component {
           <p>error: {JSON.stringify(state.error)}</p>
           <p>data: {JSON.stringify(state.data)}</p>
         </div>)}</NaiveAsync>
+
         <h4>
           #2 It can be invoked when the call cb is invoked
         </h4>
@@ -128,18 +149,22 @@ export default class Test extends React.Component {
           <p>data: {JSON.stringify(state.data)}</p>
           <button onClick={() => call({})} >call</button>
         </div>)}</NaiveAsync>
+
         <h4>
           #3 Multiple autoParamed operations should execute
         </h4>
         <NaiveAsync id="NA3a" operation={autoResolve} autoParams={{}} >{(state: any) => (<div>
           <p>{state.data || '💬'}</p>
         </div>)}</NaiveAsync>
+
         <NaiveAsync id="NA3b" operation={autoResolve} autoParams={{}} >{(state: any) => (<div>
           <p>{state.data || '💬'}</p>
         </div>)}</NaiveAsync>
+
         <NaiveAsync id="NA3c" operation={autoResolve} autoParams={{}} >{(state: any) => (<div>
           <p>{state.data || '💬'}</p>
         </div>)}</NaiveAsync>
+
         <h4>
           #4 a circus of promises
         </h4>
@@ -151,12 +176,14 @@ export default class Test extends React.Component {
         <NaiveAsync id="NA4f" operation={() => timeoutResolve(false)} autoParams={{}}>{emojiView}</NaiveAsync>
         <NaiveAsync id="NA4g" operation={() => timeoutReject('slow boom') as Promise<boolean>} autoParams={{}}>{emojiView}</NaiveAsync>
         <NaiveAsync id="NA4h" operation={() => timeoutReject(new Error('slow kaboom!')) as Promise<boolean>} autoParams={{}}>{emojiView}</NaiveAsync>
+
         <h4>
           #5 callable promises
         </h4>
         <NaiveAsync id="NA5a" operation={() => Promise.resolve(true)}>{callableView}</NaiveAsync>
         <NaiveAsync id="NA5b" operation={() => timeoutResolve(true)}>{callableView}</NaiveAsync>
         <NaiveAsync id="NA5c" operation={() => slowResolve(true)}>{callableView}</NaiveAsync>
+
         <h4>
           #6 very small timeouts
         </h4>
@@ -168,61 +195,94 @@ export default class Test extends React.Component {
         <NaiveAsync id="NA6f" operation={() => timeoutResolve(true, 6)} autoParams={{}}>{emojiView}</NaiveAsync>
         <NaiveAsync id="NA6g" operation={() => timeoutResolve(true, 7)} autoParams={{}}>{emojiView}</NaiveAsync>
         <NaiveAsync id="NA6h" operation={() => timeoutResolve(true, 8)} autoParams={{}}>{emojiView}</NaiveAsync>
+
         <h4>
           #7 shared id experiment
         </h4>
         <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
         <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
         <NaiveAsync id="NA7" operation={namedFunction}>{callableView}</NaiveAsync>
+
         <h4>
           #8 lifecycle sync
         </h4>
-        <Provider store={store}>
-          <RandomNumberSync />
-        </Provider>
+        <RandomNumberSync />
+
         <h4>
           #9 lifecycle sync retains last passed params
         </h4>
-        <Provider store={store}>
-          <RandomNumberSelectableSync />
-        </Provider>
+        <RandomNumberSelectableSync />
 
         <h4>
           #10 test memoized
         </h4>
-        <Provider store={store}>
-          <MemoizedSync />
-        </Provider>
+        <MemoizedSync />
 
         <h4>
           #11 test timeout
         </h4>
-        <Provider store={store}>
-          <TimeoutSync />
-        </Provider>
+        <TimeoutSync />
 
         <h4>
           #12 test onData
         </h4>
-        <Provider store={store}>
-          <OnDataSync />
-        </Provider>
+        <OnDataSync />
 
         <h4>
           #13 test onError
         </h4>
-        <Provider store={store}>
-          <OnErrorSync />
-        </Provider>
+        <OnErrorSync />
 
         <h4>
           #14 test meta
         </h4>
-        <Provider store={store}>
-          <span>todo...</span>
-        </Provider>
-      </div>
+        <MetadataTest />
 
-    );
+        <h4>
+          #15 throttle
+        </h4>
+        <ThrottleTest />
+
+        <h4>
+          #16 debounce
+        </h4>
+        <DebounceTest />
+
+        <h4>
+          #17 naiveasync with lifecycle input
+        </h4>
+        <NaiveAsync operation={lifeCycleInput.operation} id="TEST_18">{(state, call) => (<div>
+          <p>status: {JSON.stringify(state.status)}</p>
+          <p>params: {JSON.stringify(state.params)}</p>
+          <p>error: {JSON.stringify(state.error)}</p>
+          <p>data: {JSON.stringify(state.data)}</p>
+          <button onClick={() => call({})} >call</button>
+        </div>)}</NaiveAsync>
+
+        <h4>
+          #18 Async tag with a managed lifecycle
+        </h4>
+        <Async lifecycle={asyncInputLifecycle}>{({state, call}) => (<div>
+          <p>status: {JSON.stringify(state.status)}</p>
+          <p>params: {JSON.stringify(state.params)}</p>
+          <p>error: {JSON.stringify(state.error)}</p>
+          <p>data: {JSON.stringify(state.data)}</p>
+          <button onClick={() => call({})} >call</button>
+        </div>)}</Async>
+
+        <h4>
+          #19 reusing Async tag with the same lifecycle, more buttons
+        </h4>
+        <Async lifecycle={asyncInputLifecycle}>{({state, call, reset, sync }) => (<div>
+          <p>status: {JSON.stringify(state.status)}</p>
+          <p>params: {JSON.stringify(state.params)}</p>
+          <p>error: {JSON.stringify(state.error)}</p>
+          <p>data: {JSON.stringify(state.data)}</p>
+          <button onClick={() => call({})} >call</button>
+          <button style={{ backgroundColor: "blue" }} onClick={() => sync({})} >sync</button>
+          <button style={{ backgroundColor: "yellow" }} onClick={() => reset()} >reset</button>
+        </div>)}</Async>
+      </div>
+    </Provider>);
   }
 }

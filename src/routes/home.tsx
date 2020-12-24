@@ -2,11 +2,14 @@ import React from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import Highlight from "react-highlight";
 // tslint:disable-next-line: no-implicit-dependencies
+import { Provider } from "react-redux";
+// tslint:disable-next-line: no-implicit-dependencies
 import { Link } from "react-router-dom";
 import packageJSON from '../../package.json'
 import wwords from "../content/home-content.json";
 // tslint:disable-next-line: ordered-imports no-implicit-dependencies
 import { NaiveAsync, naiveAsyncInitialState, NaiveAsyncState } from "../naiveasync";
+import { createdConnectedStore } from "../store";
 
 interface DataValue {
   value: string
@@ -89,6 +92,7 @@ const asyncableView = (state: NaiveAsyncState<DataValue, ParamsValue>, call: (pa
 
 const lifecycleflowimage = "https://naiveasync.untra.io/images/naiveasync-flow.png"
 
+const store = createdConnectedStore()
 
 export default class Home extends React.Component<HomeScreenProps> {
   constructor(props: HomeScreenProps) {
@@ -105,7 +109,7 @@ export default class Home extends React.Component<HomeScreenProps> {
       return `${display}` || "❌";
       // return this.theseWords[input] || this.defaultWords[input] || "❌";
     };
-    return (
+    return (<Provider store={store}>
       <div className="page-content">
         <div className="wrapper">
           <h1><span role="img" aria-label="Bento">🔁</span> NaiveAsync</h1>
@@ -147,15 +151,15 @@ import { NaiveAsync } from "@untra/naiveasync";
 
           <p>the <code><i>{`asyncLifecycle<Data,Params>`}</i></code> object exposes the following:</p>
           <ul>
-          <li><code><strong>id : string</strong></code> the provided id used as the unique state identifer for the <code>selector</code> to identify the <code>AsyncState</code> in the redux store. Its optional; if not provided, the <code>Operation.name</code> is used.</li>
-          <li><code><strong>operation : AsyncOperation</strong></code> the provided function, </li>
-          <li><code><strong>selector(state : ReduxState) : AsyncState</strong></code> this is a redux state selector against the redux state, for use in <code>mapStateToProps</code>. Returns the `AsyncState` instance owned by this manager.</li>
-          <li><code><strong>.call(params : Params)</strong></code> Action creator that triggers the associated <code>AsyncOperation</code> when dispatched, passing <code>params</code> into the operation. Resets its state when called again.</li>
-          <li><code><strong>.sync({})</strong></code> Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last remaining params. Does not reset data or error states, making it useful for polling operations.</li>
-          <li><code><strong>.reset({})</strong></code> Action dispatched internally when the associated `AsyncOperation` is reset to it's initial State.</li>
-          <li><code><strong>.data(data : Data)</strong></code>Action dispatched internally when the associated `AsyncOperation` emits data.</li>
-          <li><code><strong>.error(error : string)</strong></code>Action dispatched internally when the associated `AsyncOperation` emits an error (rejects) or throws an exception. The error will to be coerced to a string.</li>
-          <li>and finally <code><strong>.destroy({})</strong></code> which removes the <code>AsyncState</code> instance owned by this lifecycle from the state tree. <code>AsyncState</code> objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom. This can become a memory leak if left unchecked. For React components, a good practice is to dispatch the <code>.destroy({})</code> action in the component's <code>componentWillUnmount</code> method, or with a <code>useEffect</code> cleanup.</li>
+            <li><code><strong>id : string</strong></code> the provided id used as the unique state identifer for the <code>selector</code> to identify the <code>AsyncState</code> in the redux store. Its optional; if not provided, the <code>Operation.name</code> is used.</li>
+            <li><code><strong>operation : AsyncOperation</strong></code> the provided function, </li>
+            <li><code><strong>selector(state : ReduxState) : AsyncState</strong></code> this is a redux state selector against the redux state, for use in <code>mapStateToProps</code>. Returns the `AsyncState` instance owned by this manager.</li>
+            <li><code><strong>.call(params : Params)</strong></code> Action creator that triggers the associated <code>AsyncOperation</code> when dispatched, passing <code>params</code> into the operation. Resets its state when called again.</li>
+            <li><code><strong>.sync({})</strong></code> Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last employed params if none are provided. Does not reset data or error states, making it useful for polling / repeated operations.</li>
+            <li><code><strong>.reset({})</strong></code> Action dispatched internally when the associated `AsyncOperation` is reset to it's initial State.</li>
+            <li><code><strong>.data(data : Data)</strong></code>Action dispatched internally when the associated `AsyncOperation` emits data.</li>
+            <li><code><strong>.error(error : string)</strong></code>Action dispatched internally when the associated `AsyncOperation` emits an error (rejects) or throws an exception. The error will to be coerced to a string.</li>
+            <li>and finally <code><strong>.destroy({})</strong></code> which removes the <code>AsyncState</code> instance owned by this lifecycle from the redux state tree. <code>AsyncState</code> objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom. This can become a memory leak if left unchecked. For React components, a good practice is to dispatch the <code>.destroy({})</code> action in the component's <code>componentWillUnmount</code> method, or with a <code>useEffect</code> cleanup.</li>
           </ul>
           <p></p>
           <Highlight className="tsx">{
@@ -177,6 +181,6 @@ const asyncLifecycle = naiveasyncLifecycle(asyncoperation, "ASYNC_OP_NAME")
           </Highlight>
         </div>
       </div>
-    );
+    </Provider>);
   }
 }
