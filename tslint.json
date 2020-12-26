@@ -6,7 +6,8 @@
     "semicolon": false,
     "interface-name": false,
     "object-literal-sort-keys": false,
-    "no-shadowed-variable": false
+    "no-shadowed-variable": false,
+    "ordered-imports":false
   },
   "rulesDirectory": []
 }

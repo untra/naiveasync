@@ -6,7 +6,6 @@ import { Provider } from "react-redux";
 // tslint:disable-next-line: no-implicit-dependencies
 import { Link } from "react-router-dom";
 import packageJSON from '../../package.json'
-import wwords from "../content/home-content.json";
 // tslint:disable-next-line: ordered-imports no-implicit-dependencies
 import { NaiveAsync, naiveAsyncInitialState, NaiveAsyncState } from "../naiveasync";
 import { createdConnectedStore } from "../store";
@@ -19,9 +18,6 @@ interface ParamsValue {
   foo: string
 }
 
-const words: { [index: string]: { [index: string]: string } } = wwords
-
-type SupportedLangs = keyof typeof words;
 const version = packageJSON.version
 
 const exampleInit = naiveAsyncInitialState
@@ -51,13 +47,6 @@ const examples = [
 ]
 const pickedExample = examples[(Math.floor(4 * Math.random()))]
 
-
-// const randomData = blamDataRows(["foo", "bar", "baz"], 5);
-// These are the supported languages
-const DEFAULT_LANG = "en";
-interface HomeScreenProps {
-  lang: SupportedLangs;
-}
 
 const asyncOperation = (params: ParamsValue): Promise<DataValue> => {
 
@@ -94,21 +83,10 @@ const lifecycleflowimage = "https://naiveasync.untra.io/images/naiveasync-flow.p
 
 const store = createdConnectedStore()
 
-export default class Home extends React.Component<HomeScreenProps> {
-  constructor(props: HomeScreenProps) {
-    super(props);
-  }
+export default class Home extends React.Component<{}> {
 
   public render() {
-    // this is the word render function
-    // it will display the text content in the given language or in english
-    // the red X means there is missing text content
-    // eslint-disable-next-line
-    const W = (input: string) => {
-      const display = words[DEFAULT_LANG][input] || "";
-      return `${display}` || "❌";
-      // return this.theseWords[input] || this.defaultWords[input] || "❌";
-    };
+
     return (<Provider store={store}>
       <div className="page-content">
         <div className="wrapper">

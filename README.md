@@ -60,6 +60,14 @@ Some Terminology:
 }
 ```
 
+## Reccomended usage arround REST APIs
+
+* use .OnData to dispatch a .sync indexing calls on create, update and destory 
+* use .debounce on search calls, to ensure that the underlying call is not repeated
+* use a (very low > 1000 ms) .throttle on index calls, so multiple resources that need it can receive it
+* sensitive calls that should not throw an error (eg. login / auth) can use .onError to dispatch emergency logout
+* calls to the api whose response is not likely to change can use .memoize(true)
+
 ## Feature wishlist:
 
 * swap placement of P and D, rename the dang thing

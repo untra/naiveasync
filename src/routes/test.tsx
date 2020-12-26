@@ -1,5 +1,5 @@
 /***
- * Naivetable Tests
+ * Naiveasync Tests
  * MIT License
  * Made with 💙 by @untra
  * ---
@@ -20,6 +20,7 @@ import OnErrorSync from './components/onError'
 import RandomNumberSelectableSync from './components/RandomNumberSelectableSync'
 import RandomNumberSync from './components/RandomNumberSync'
 import ThrottleTest from './components/throttleTest'
+import AssignTest from './components/assignTest'
 import TimeoutSync from './components/timeout'
 
 const emojiView = (state: NaiveAsyncState<any, {}>) => (<p>{
@@ -262,7 +263,7 @@ export default class Test extends React.Component {
         <h4>
           #18 Async tag with a managed lifecycle
         </h4>
-        <Async lifecycle={asyncInputLifecycle}>{({state, call}) => (<div>
+        <Async lifecycle={asyncInputLifecycle}>{({ state, call }) => (<div>
           <p>status: {JSON.stringify(state.status)}</p>
           <p>params: {JSON.stringify(state.params)}</p>
           <p>error: {JSON.stringify(state.error)}</p>
@@ -273,7 +274,7 @@ export default class Test extends React.Component {
         <h4>
           #19 reusing Async tag with the same lifecycle, more buttons
         </h4>
-        <Async lifecycle={asyncInputLifecycle}>{({state, call, reset, sync }) => (<div>
+        <Async lifecycle={asyncInputLifecycle}>{({ state, call, reset, sync }) => (<div>
           <p>status: {JSON.stringify(state.status)}</p>
           <p>params: {JSON.stringify(state.params)}</p>
           <p>error: {JSON.stringify(state.error)}</p>
@@ -282,6 +283,11 @@ export default class Test extends React.Component {
           <button style={{ backgroundColor: "blue" }} onClick={() => sync({})} >sync</button>
           <button style={{ backgroundColor: "yellow" }} onClick={() => reset()} >reset</button>
         </div>)}</Async>
+
+        <h4>
+          #20 assignTest
+        </h4>
+        <AssignTest />
       </div>
     </Provider>);
   }

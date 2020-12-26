@@ -63,7 +63,7 @@ export interface AsyncLifecycle<Data, Params> {
   readonly reset: AsyncActionCreator<undefined>
   /** Meta toggle to enable memoized responses on the lifecycle. Toggling will reset the memo. */
   readonly memoized: (enabled: boolean) => AsyncLifecycle<Data, Params>
-  /** Meta toggle to debounce the promise for N milliseconds (execute this function at most once every N milliseconds.) */
+  /** Meta toggle to throttle the promise for N milliseconds (execute this function at most once every N milliseconds.) */
   readonly throttle: (throttle: number) => AsyncLifecycle<Data, Params>
   /** Meta toggle to debounce the promise for N milliseconds (execute this function only if N milliseconds have passed without it being called.) */
   readonly debounce: (debounce: number) => AsyncLifecycle<Data, Params>

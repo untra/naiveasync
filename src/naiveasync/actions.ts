@@ -201,6 +201,17 @@ export type NaiveAsyncState<Data, Params> =
 
 export type AsyncState<Data, Params> = NaiveAsyncState<Data, Params>
 
+/**
+ * isAsyncState typeGuards AsyncState<any>
+ * @param {Object} state
+ * @returns {state is AsyncState<any,any>}
+ */
+export const isAsyncState = <D,P>(state: object): state is AsyncState<D,P> =>
+"status" in state &&
+"error" in state &&
+"data" in state &&
+"params" in state;
+
 /** the initial state of a naiveasync operation */
 export const naiveAsyncInitialState = Object.freeze({
   status: '',
