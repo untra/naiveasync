@@ -1,5 +1,5 @@
 /***
- * Naivetable Tests
+ * Naiveasync Tests
  * MIT License
  * Made with 💙 by @untra
  * ---
@@ -263,7 +263,7 @@ export default class Test extends React.Component {
         <h4>
           #18 Async tag with a managed lifecycle
         </h4>
-        <Async lifecycle={asyncInputLifecycle}>{({state, call}) => (<div>
+        <Async lifecycle={asyncInputLifecycle}>{({ state, call }) => (<div>
           <p>status: {JSON.stringify(state.status)}</p>
           <p>params: {JSON.stringify(state.params)}</p>
           <p>error: {JSON.stringify(state.error)}</p>
@@ -274,7 +274,7 @@ export default class Test extends React.Component {
         <h4>
           #19 reusing Async tag with the same lifecycle, more buttons
         </h4>
-        <Async lifecycle={asyncInputLifecycle}>{({state, call, reset, sync }) => (<div>
+        <Async lifecycle={asyncInputLifecycle}>{({ state, call, reset, sync }) => (<div>
           <p>status: {JSON.stringify(state.status)}</p>
           <p>params: {JSON.stringify(state.params)}</p>
           <p>error: {JSON.stringify(state.error)}</p>

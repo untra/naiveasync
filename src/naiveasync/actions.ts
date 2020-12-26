@@ -78,10 +78,7 @@ export function asyncActionMatcher<Data extends any, Params extends object>(
   operation: NaiveAsyncFunction<Data, Params> | undefined,
   phase: 'call',
 ): (action: AnyAction) => action is AsyncAction<Params>
-export function asyncActionMatcher<Data extends any, Params extends object>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
-  phase: 'assign',
-): (action: AnyAction) => action is AsyncAction<Params>
+
 export function asyncActionMatcher<Data, Params extends object>(
   operation: NaiveAsyncFunction<Data, Params> | undefined,
   phase: 'sync',
