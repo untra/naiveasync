@@ -1,5 +1,5 @@
 import { Reducer } from 'redux'
-import { AnyAction, isAsyncAction, naiveAsyncEmoji, naiveAsyncInitialState, NaiveAsyncState } from './actions'
+import { AnyAction, isAsyncAction, isAsyncState, naiveAsyncEmoji, naiveAsyncInitialState, NaiveAsyncState } from './actions'
 
 const callReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: NaiveAsyncState<any, any> = naiveAsyncInitialState, action: AnyAction) =>
   isAsyncAction(action) && action[naiveAsyncEmoji].phase === 'call'
@@ -69,5 +69,7 @@ export const chain = <S>(firstReducer: Reducer<S>, ...reducers: Array<Reducer<S>
     firstReducer(state, action),
   )
 
+const assignReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (state: NaiveAsyncState<any, any> = naiveAsyncInitialState, action: AnyAction) =>
+  isAsyncAction(action) && action[naiveAsyncEmoji].phase === 'assign' && isAsyncState(action.payload) ? action.payload : state
 
-export const asyncStateReducer = chain(callReducer, syncReducer, dataReducer, errorReducer, doneReducer, resetReducer)
+export const asyncStateReducer = chain(callReducer, syncReducer, dataReducer, errorReducer, doneReducer, resetReducer, assignReducer)
