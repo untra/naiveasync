@@ -78,7 +78,10 @@ export function asyncActionMatcher<Data extends any, Params extends object>(
   operation: NaiveAsyncFunction<Data, Params> | undefined,
   phase: 'call',
 ): (action: AnyAction) => action is AsyncAction<Params>
-
+export function asyncActionMatcher<Data extends any, Params extends object>(
+  operation: NaiveAsyncFunction<Data, Params> | undefined,
+  phase: 'assign',
+): (action: AnyAction) => action is AsyncAction<Params>
 export function asyncActionMatcher<Data, Params extends object>(
   operation: NaiveAsyncFunction<Data, Params> | undefined,
   phase: 'sync',
@@ -203,8 +206,8 @@ export type AsyncState<Data, Params> = NaiveAsyncState<Data, Params>
 
 /**
  * isAsyncState typeGuards AsyncState<any>
- * @param {AnyAction} action
- * @returns {action is AsyncAction<any>}
+ * @param {Object} state
+ * @returns {state is AsyncState<any,any>}
  */
 export const isAsyncState = <D,P>(state: object): state is AsyncState<D,P> =>
 "status" in state &&

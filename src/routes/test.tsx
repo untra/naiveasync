@@ -20,6 +20,7 @@ import OnErrorSync from './components/onError'
 import RandomNumberSelectableSync from './components/RandomNumberSelectableSync'
 import RandomNumberSync from './components/RandomNumberSync'
 import ThrottleTest from './components/throttleTest'
+import AssignTest from './components/assignTest'
 import TimeoutSync from './components/timeout'
 
 const emojiView = (state: NaiveAsyncState<any, {}>) => (<p>{
@@ -282,6 +283,11 @@ export default class Test extends React.Component {
           <button style={{ backgroundColor: "blue" }} onClick={() => sync({})} >sync</button>
           <button style={{ backgroundColor: "yellow" }} onClick={() => reset()} >reset</button>
         </div>)}</Async>
+
+        <h4>
+          #20 assignTest
+        </h4>
+        <AssignTest />
       </div>
     </Provider>);
   }
