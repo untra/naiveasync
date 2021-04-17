@@ -78,7 +78,7 @@ export interface AsyncLifecycle<Data, Params> {
   /** Meta toggle to enable an N millisecond timeout of the promise, dispatching 'error' timeout if the request takes too long. (0 will disable) */
   readonly timeout: (timeout: number) => AsyncLifecycle<Data, Params>
   /** (still in development) Meta toggle to enable a millisecond (sync) repeat of the operation with its previously supplied params. (0 will disable) */
-  readonly subscribe: (subscribe: number) => AsyncLifecycle<Data, Params>
+  readonly subscribe: AsyncActionCreator<number>
   /** Assign a callback function to be called when the 'data' event is dispatched. */
   readonly onData: (onData: OnData<Data>) => AsyncLifecycle<Data, Params>
   /** Assign a callback function to be called when the 'error' event is dispatched. */
@@ -121,7 +121,7 @@ const matchCallOrSyncOrDestroy = (asyncLifeCycle: AsyncLifecycle<any, object>) =
   const {
     call,
     destroy,
-    sync
+    sync,
   } = asyncLifeCycle
   const matchCall = call(payload).match
   const matchDestroy = destroy().match
@@ -130,7 +130,7 @@ const matchCallOrSyncOrDestroy = (asyncLifeCycle: AsyncLifecycle<any, object>) =
   return (matchCall(actionPayload) || matchSync(actionPayload) || matchDestroy(actionPayload))
 }
 
-function resolveObservable(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, value: any): Observable<Action<any>> {
+function resolveObservableAs(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, value: any): Observable<Action<any>> {
   const {
     data,
     done
@@ -166,7 +166,6 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       data,
       error,
       done,
-      sync,
     } = asyncLifeCycle
     try {
       const subscription : Subscription = $from(
@@ -175,13 +174,7 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
         nextData => subscriber.next(data(nextData)),
         err => subscriber.next(error(err)),
         () => subscriber.next(done()),
-      )
-      if(meta.subscribe && !isNaN(meta.subscribe)) {
-        setTimeout(() => {
-          subscription.unsubscribe()
-          subscriber.next(sync())
-        }, meta.subscribe)
-      }
+      );
       action$
         .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
         .subscribe(() => subscription.unsubscribe())
@@ -199,7 +192,7 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhas
     const name = action[naiveAsyncEmoji].name
     const meta = { ...naiveAsyncInitialMeta, ...metaCache.get(name) }
     const { memo, lastParams } = meta
-    const now = Date.now()
+    const now = Date.now();
     const payload = reuseParams && action.payload === undefined
       ? lastParams
       : action.payload
@@ -213,16 +206,16 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhas
     if (memo) {
       const memoized = memo.get(JSON.stringify(payload))
       if (memoized) {
-        return resolveObservable(action$, actionAsyncLifecycle, memoized)
+        return resolveObservableAs(action$, actionAsyncLifecycle, memoized)
       }
     }
-    metaCache.set(name, { ...meta, lastParams: payload, lastCalled: now })
-    return observableFromAsyncLifeCycle(action$, actionAsyncLifecycle, payload, meta)
+    metaCache.set(name, { ...meta, lastParams: payload, lastCalled: now });
+    return observableFromAsyncLifeCycle(action$, actionAsyncLifecycle, payload, meta);
   }
   return action$.pipe(
     filter(phaseMatcher),
     mergeMap(mergeMapAction)
-  ) as Observable<Action<any>>
+  );
 }
 
 const responseDispatchOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhase, dispatch: Dispatch<AnyAction>): Observable<Action> => {
@@ -230,14 +223,28 @@ const responseDispatchOnPhase = (action$: Observable<Action<any>>, phase: AsyncP
   const mergeMapDataAction = (action: AsyncAction<any>) => {
     const name = action[naiveAsyncEmoji].name;
     const meta: AsyncMeta<any, any> = { ...naiveAsyncInitialMeta, ...metaCache.get(name) };
+    // onData
     if (phase === 'data' && meta.onData) {
       meta.onData(action.payload, dispatch)
     }
+    // onError
     if (phase === 'error' && meta.onError) {
       meta.onError(action.payload, dispatch)
     }
+    // memoize 
     if (phase === 'data' && meta.memo) {
       meta.memo.set(JSON.stringify(meta.lastParams), action.payload)
+    }
+    // subscirbe
+    if (phase === 'subscribe') {
+      const actionAsyncLifecycle = cache.get(name);
+      const subscribe : number = action.payload;
+      clearInterval(meta?.subscribeInterval)
+      const subscribeInterval  = actionAsyncLifecycle && subscribe > 0
+        ? setInterval(() => dispatch(actionAsyncLifecycle.sync()), subscribe)
+        : undefined;
+      metaCache.set(name, { ...meta, subscribe, subscribeInterval });
+      return EMPTY;
     }
 
     const dataCount = phase === 'data' ? meta.dataCount + 1 : 0
@@ -264,6 +271,7 @@ export const naiveAsyncMiddleware: Middleware = store => {
   AsyncableEpicOnPhase(action$, 'sync', true).subscribe(store.dispatch)
   responseDispatchOnPhase(action$, 'data', store.dispatch).subscribe(store.dispatch)
   responseDispatchOnPhase(action$, 'error', store.dispatch).subscribe(store.dispatch)
+  responseDispatchOnPhase(action$, 'subscribe', store.dispatch).subscribe(store.dispatch)
   return middleware(store)
 }
 
@@ -323,6 +331,7 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     done: factory<undefined>('done'),
     reset: factory<undefined>('reset'),
     assign: factory<AsyncState<Data, Params>>('assign'),
+    subscribe: factory<number>('subscribe'),
     memoized: (enabled: boolean) => {
       const memo = (enabled ? new KeyedCache<any>() : undefined);
       const meta = { ...metaCache.get(id), memo }
@@ -361,11 +370,6 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       cache.set(id, updatedLifecycle)
       return updatedLifecycle;
-    },
-    subscribe: (subscribe: number) => {
-      const meta = { ...metaCache.get(id), ...{ subscribe } }
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
-      return lifecycle;
     },
     meta: () => ({ ...naiveAsyncInitialMeta, ...metaCache.get(id) })
   }

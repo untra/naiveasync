@@ -5,7 +5,7 @@ import { KeyedCache } from "./keyedcache"
 export const naiveAsyncEmoji = '🔁'
 
 /** the phase state of the naiveAsync lifecycle */
-export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync' | 'assign'
+export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync' | 'assign' | 'subscribe'
 
 interface AsyncPostmark {
   readonly name: string
@@ -233,18 +233,19 @@ export type OnError = OnCb | OnError1 | OnError2;
 export type OnData<Data> = OnCb | OnData1<Data> | OnData2<Data>;
 
 export interface AsyncMeta<Data,Params> {
-  debounce: number
+  debounce: number,
   throttle: number,
-  subscribe: number
+  subscribe: number,
+  subscribeInterval: any,
   timeout: number,
   record: number,
   dataCount: number,
   errorCount: number,
   memo?: KeyedCache<Data>,
-  lastParams?: any
+  lastParams?: any,
   lastCalled: number,
   onData?: OnData<Data>,
-  onError?: OnError
+  onError?: OnError,
 }
 
 export const naiveAsyncInitialMeta = Object.freeze({
@@ -259,5 +260,6 @@ export const naiveAsyncInitialMeta = Object.freeze({
   lastParams: undefined,
   debounce: 0,
   throttle: 0,
-  subscribe: 0
+  subscribe: 0,
+  subscribeInterval: undefined,
 }) as AsyncMeta<any,any>

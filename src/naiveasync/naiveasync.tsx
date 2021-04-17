@@ -10,6 +10,7 @@ interface AsyncComponentChildrenProps<D, P> {
     sync: (params: P) => void
     reset: () => void
     destroy: () => void
+    subscribe: (val: number) => void
 }
 export type AsyncComponentChildren<Data, Params> = (childrenProps: AsyncComponentChildrenProps<Data, Params>) => JSX.Element;
 
@@ -42,6 +43,7 @@ export interface LifecycleAsyncProps<Data, Params> {
     sync: (params?: Params) => void
     reset: () => void
     destroy: () => void
+    subscribe: (val: number) => void
     children: AsyncComponentChildren<Data, Params>
 }
 
@@ -63,8 +65,8 @@ const NaiveAsyncManaged: React.FC<NaiveLifecycleAsyncProps<any, object>> = <Data
 export const AsyncManaged: React.FC<LifecycleAsyncProps<any, object>> = <Data, Params>(
     props: LifecycleAsyncProps<Data, Params>
 ) => {
-    const { call, children, state, destroy, reset, sync, meta } = props
-    return children({ state, call, reset, destroy, sync, meta })
+    const { call, children, state, destroy, reset, sync, meta, subscribe } = props
+    return children({ state, call, reset, destroy, sync, meta, subscribe })
 }
 
 const noop = () => Promise.resolve({})
@@ -114,16 +116,21 @@ export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncCompone
  */
 export function Async<Data, Params extends object>(props: AsyncComponentProps<Data, Params>): React.ReactElement<AsyncComponentProps<Data, Params>> {
     const { children, lifecycle, initialState } = props
+    const [intervalTickle, setIntervalTickle] = useState(0);
     const [state, setState] = useState({
         initState: initialState || undefined,
         Controllable: createControllableContext(naiveAsyncReducer, naiveAsyncMiddleware),
+        subscribeInterval: undefined as any,
     });
     const assignState = (dispatch: (action: AnyAction) => void, asyncState: AsyncState<Data,Params>) => {
         dispatch(assign(asyncState))
         setState({...state, initState: undefined})
     }
     const { Controllable, initState } = state
-    const { selector, call, destroy, reset, sync, meta, assign } = lifecycle
+    useEffect(() => {
+        "noop to rerender"
+    }, [intervalTickle])
+    const { selector, call, destroy, reset, sync, meta, assign, subscribe } = lifecycle
     return (<Controllable>{
         (reduxState, dispatch) => {
             if (initState) {
@@ -143,6 +150,12 @@ export function Async<Data, Params extends object>(props: AsyncComponentProps<Da
                 }}
                 reset={() => {
                     dispatch(reset())
+                }}
+                subscribe={(val: number) => {
+                    clearInterval(state.subscribeInterval);
+                    const subscribeInterval = val > 0 ? setInterval(() => setIntervalTickle(Math.random()), val) : undefined;
+                    setState({...state, subscribeInterval });
+                    dispatch(subscribe(val))
                 }}
             >{children}</AsyncManaged>)
         }

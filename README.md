@@ -80,6 +80,13 @@ Some Terminology:
 }
 ```
 
+### Simmilar but worse
+
+to achieve the simmilar goals as what react + redux + naiveasync can provide, heres a starting point for your other framework or whatever
+
+- [angular](https://stackoverflow.com/a/24091953/1435958)
+- [svelte](https://svelte-recipes.netlify.app/components/)
+
 ## Recommended usage arround REST APIs
 
 * use `.OnData` to dispatch a .sync indexing calls on create, update and destory 
@@ -96,10 +103,10 @@ Some Terminology:
 * ~~swap placement of P and D, rename the dang thing~~
 * ~~rename the `AsyncState` type~~
 * ~~`.timeout()` will stop the async function and error after a specified timeout~~
-* `.subscribe()` retries the request on a given interval
+* ~~`.subscribe()` retries the request on a given interval~~
 * ~~`.onData((data? : D, dispatch? : Dispatch<AnyAction>) => void)` data callback with dispatch function~~
 * ~~`.onError((error? : string, dispatch? : Dispatch<AnyAction>) => void)` error callback with dispatch~~
-* ~~`.memoized(enabled? : boolean = true)` keeps a record of inputs and their outputs, and returns the cached results
+* ~~`.memoized(enabled? : boolean = true)` keeps a record of inputs and their outputs, and returns the cached results~~
 * `.exponentialErrorRetry(enabled? : boolean = true)` if the request errors, retries the request if it fails a few seconds from now, following an exponential backoff strategy
 * ~~lifecycle `.meta` display meta information about the selector eg:~~
   * ~~consecutive data count~~
@@ -113,6 +120,6 @@ Some Terminology:
 * test support for immutablejs
 * test support as observable / generator
 
-# Copyright
+## Copyright
 Copyright (c) Samuel Volin 2021. License: MIT
 
