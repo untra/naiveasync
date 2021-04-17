@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { AnyAction, AsyncMeta, AsyncState, NaiveAsyncFunction, NaiveAsyncState } from './actions'
-import { AsyncLifecycle, createControllableContext, naiveAsyncLifecycle, naiveAsyncMiddleware, naiveAsyncReducer } from './controllable'
+import { AsyncLifecycle, createControllableContext, naiveAsyncMiddleware, naiveAsyncReducer } from './controllable'
 
 type NaiveAsyncComponentChildren<Data, Params> = (state: NaiveAsyncState<Data, Params>, call: (params: Params) => void) => JSX.Element;
 interface AsyncComponentChildrenProps<D, P> {
@@ -19,6 +19,12 @@ export interface AsyncComponentProps<Data, Params> {
     children: AsyncComponentChildren<Data, Params>
     lifecycle: AsyncLifecycle<Data, Params>
     initialState?: AsyncState<Data, Params>
+}
+
+export interface AsyncComponentProps<Data,Params> {
+    children: NaiveAsyncComponentChildren<Data, Params>
+    lifecycle: AsyncLifecycle<Data, Params>
+    autoParams?: Params
 }
 
 export interface NaiveAsyncComponentProps<Data, Params> {
@@ -83,7 +89,7 @@ export function NaiveAsync<Data, Params extends object>(props: NaiveAsyncCompone
     const { operation = noop, children, autoParams, id = operation?.name } = props
     const [state, setState] = useState({
         params: autoParams,
-        asyncLifeCycle: naiveAsyncLifecycle(operation, id),
+        asyncLifeCycle: naiveAsyncLifecycle(operation || noop, id || operation?.name || ''),
         AsyncControllable: createControllableContext(naiveAsyncReducer, naiveAsyncMiddleware),
     });
     const { params, asyncLifeCycle, AsyncControllable } = state

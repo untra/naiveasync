@@ -86,7 +86,6 @@ const store = createdConnectedStore()
 export default class Home extends React.Component<{}> {
 
   public render() {
-
     return (<Provider store={store}>
       <div className="page-content">
         <div className="wrapper">
