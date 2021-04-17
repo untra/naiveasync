@@ -6,10 +6,10 @@ import { useState } from "react"
 // tslint:disable-next-line: no-implicit-dependencies
 import { Provider, useDispatch, useStore } from 'react-redux'
 import { Action, Dispatch, Middleware, Reducer } from 'redux'
-import { empty, Observable, Subject } from "rxjs"
+import { EMPTY, Observable, Subject, Subscription } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncMeta, AsyncPhase, AsyncState, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
+import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncFunction, AsyncMeta, AsyncPhase, AsyncState, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
@@ -29,7 +29,12 @@ interface ControllableProps<State> {
 
 export type Controllerable<State> = React.ComponentType<ControllableProps<State>>
 
-
+/**
+ * A managed async function () => Promise and identifier, with factory-made selectors, dispatch actions, and other goodies
+ * @interface AsyncLifecycle
+ * @template Data - the 'response' type
+ * @template Params - the 'request' type
+ */
 export interface AsyncLifecycle<Data, Params> {
   /** The identifier of the async state that owns this */
   readonly id: string
@@ -39,12 +44,12 @@ export interface AsyncLifecycle<Data, Params> {
   readonly selector: (
     state: NaiveAsyncSlice,
   ) => NaiveAsyncState<Data, Params>
-  /** Action creator that triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. Resets its state when called again */
+  /** Action creator that resets the state for this asyncOperation, triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. */
   readonly call: AsyncActionCreator<Params>
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last remaining params. Does not reset data or error states, making it useful for polling data. */
   readonly sync: AsyncActionCreator<Params | undefined>
   /**
-   * Removes the `AsyncState` instance owned by this `AsyncLifecycle` from the state tree.
+   * Removes the `AsyncState` instance owned by this `AsyncLifecycle` from the state tree, and removes its registry from the internal cache.
    * `AsyncState` objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom.
    * For React components, a good practice is to dispatch the `destroy` action in the component's `componentWillUnmount` method, or with
    * useEffect(() => {
@@ -59,17 +64,20 @@ export interface AsyncLifecycle<Data, Params> {
   readonly error: AsyncActionCreator<string>
   /** Action dispatched internally when the associated `AsyncOperation` completes (resolves, or emits all data in the case of an `Observable` or `AsyncIterable`). */
   readonly done: AsyncActionCreator<undefined>
-  /** Action dispatched internally when the associated `AsyncOperation` is reset to it's initialState */
+  /** Action dispatched internally when the associated `AsyncOperation` is reset to it's initialState. */
   readonly reset: AsyncActionCreator<undefined>
-  /** Meta toggle to enable memoized responses on the lifecycle. Toggling will reset the memo. */
+  /** Meta toggle to enable memoized responses on the lifecycle.
+   * Memoized responses means that responses will be cached and subsequent requests with similar params will return the cached data.
+   * The memoize cache is not invincible, and might be prone to memory leaks with exceptional usage.
+   * Toggling will reset the memo. */
   readonly memoized: (enabled: boolean) => AsyncLifecycle<Data, Params>
   /** Meta toggle to throttle the promise for N milliseconds (execute this function at most once every N milliseconds.) */
   readonly throttle: (throttle: number) => AsyncLifecycle<Data, Params>
-  /** Meta toggle to debounce the promise for N milliseconds (execute this function only if N milliseconds have passed without it being called.) */
+  /** Meta toggle to debounce the promise for N milliseconds (execute this function only if N milliseconds have passed without it being called.) (good for search) */
   readonly debounce: (debounce: number) => AsyncLifecycle<Data, Params>
-  /** Meta toggle to enable a millisecond timeout of the promise, dispatching 'error' timeout if the request takes too long. (0 will disable) */
+  /** Meta toggle to enable an N millisecond timeout of the promise, dispatching 'error' timeout if the request takes too long. (0 will disable) */
   readonly timeout: (timeout: number) => AsyncLifecycle<Data, Params>
-  /** (still in development) Meta toggle to enable a millisecond (sync) repeat of the promise (0 will disable) */
+  /** (still in development) Meta toggle to enable a millisecond (sync) repeat of the operation with its previously supplied params. (0 will disable) */
   readonly subscribe: (subscribe: number) => AsyncLifecycle<Data, Params>
   /** Assign a callback function to be called when the 'data' event is dispatched. */
   readonly onData: (onData: OnData<Data>) => AsyncLifecycle<Data, Params>
@@ -77,8 +85,8 @@ export interface AsyncLifecycle<Data, Params> {
   readonly onError: (onError: OnError) => AsyncLifecycle<Data, Params>
   /** select the meta object */
   readonly meta: () => AsyncMeta<Data, Params>
-  /** Utility action to assign the provided AsyncState to the redux store */
-  readonly assign: AsyncActionCreator<AsyncState<Data,Params>>
+  /** Utility action to assign the provided AsyncState to the redux store. Its use in testing is encouraged, its use in prod is not. */
+  readonly assign: AsyncActionCreator<AsyncState<Data, Params>>
 }
 
 /** the initial slice state for use in a redux store */
@@ -139,14 +147,15 @@ function resolveObservable(action$: Observable<Action<any>>, asyncLifeCycle: Asy
   })
 }
 
-const operationWithTimeout = (operation: NaiveAsyncFunction<any, any>, payload: object, timeout: number) => {
-  if (isNaN(timeout) || timeout < 1) {
-    return operation(payload)
+const operationWithMeta = (operation: NaiveAsyncFunction<any, any>, payload: object, meta: AsyncMeta<any, any>) => {
+  const { timeout } = meta;
+  if (!isNaN(timeout) && timeout > 0) {
+    const timeoutRejectPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(`timeout`), timeout)
+    );
+    return Promise.race([operation(payload), timeoutRejectPromise]);
   }
-  const timeoutRejectPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(`timeout`), timeout)
-  );
-  return Promise.race([operation(payload), timeoutRejectPromise]);
+  return operation(payload)
 }
 
 function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLifeCycle: AsyncLifecycle<any, object>, payload: object, meta: AsyncMeta<any, object>): Observable<Action<any>> {
@@ -157,15 +166,22 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       data,
       error,
       done,
+      sync,
     } = asyncLifeCycle
     try {
-      const subscription = $from(
-        operationWithTimeout(operation, payload, meta.timeout || 0)
+      const subscription : Subscription = $from(
+        operationWithMeta(operation, payload, meta)
       ).subscribe(
         nextData => subscriber.next(data(nextData)),
         err => subscriber.next(error(err)),
         () => subscriber.next(done()),
       )
+      if(meta.subscribe && !isNaN(meta.subscribe)) {
+        setTimeout(() => {
+          subscription.unsubscribe()
+          subscriber.next(sync())
+        }, meta.subscribe)
+      }
       action$
         .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
         .subscribe(() => subscription.unsubscribe())
@@ -190,7 +206,8 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhas
     const actionAsyncLifecycle = cache.get(name)
     // if the dispatched action doesn't have an assigned lifecycle
     if (!actionAsyncLifecycle) {
-      return empty()
+      console.warn(`No lifecycle found for dispatched action ${action.type} ${name}`)
+      return EMPTY
     }
     // if using a memoized record
     if (memo) {
@@ -227,7 +244,7 @@ const responseDispatchOnPhase = (action$: Observable<Action<any>>, phase: AsyncP
     const errorCount = phase === 'error' ? meta.errorCount + 1 : 0
     const record = (Date.now() - meta.lastCalled)
     metaCache.set(name, { ...meta, dataCount, errorCount, record })
-    return empty()
+    return EMPTY;
   }
   return action$.pipe(
     filter(phaseMatcher),
@@ -262,8 +279,23 @@ const selectFunction = (id: string) => (state: NaiveAsyncSlice) => {
 }
 
 /**
+ * returns the lifecycle registered with the given id, or undefined if not found
+ * NOTE: impure function, refers to managed internal cache of created lifecycles
+ * @param {string} id
+ * @return {*}  {(AsyncLifecycle<any, any> | undefined)}
+ */
+export const findLifecycleById = (id: string): AsyncLifecycle<any, any> | undefined => {
+  const existing = id && cache.get(id);
+  if (existing) {
+    return existing;
+  }
+  return undefined;
+}
+
+/**
  * wraps a NaiveAsyncFunction and a unique identifier to provide a redux store managed lifecycle
  * that manages the given async operation
+ * @deprecated favor asyncLifecycle instead
  * @template Data
  * @template Params
  * @param {NaiveAsyncFunction<Data, Params>} operation
@@ -290,7 +322,7 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
     error: factory<string>('error'),
     done: factory<undefined>('done'),
     reset: factory<undefined>('reset'),
-    assign: factory<AsyncState<Data,Params>>('assign'),
+    assign: factory<AsyncState<Data, Params>>('assign'),
     memoized: (enabled: boolean) => {
       const memo = (enabled ? new KeyedCache<any>() : undefined);
       const meta = { ...metaCache.get(id), memo }
@@ -342,6 +374,20 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
 }
 
 /**
+ * Wraps a NaiveAsyncFunction and a unique identifier to provide a redux store managed lifecycle
+ * that manages the given async operation, recognized by the given id
+ * @template Data
+ * @template Params
+ * @param {NaiveAsyncFunction<Data, Params>} operation
+ * @param {string} id
+ * @returns {AsyncLifecycle<Data, Params>}
+ */
+export const asyncLifecycle = <Data, Params extends object>(
+  id: string,
+  operation: AsyncFunction<Params, Data>,
+): AsyncLifecycle<Data, Params> => naiveAsyncLifecycle(operation, id)
+
+/**
  * Creates a controllable context, wrapping the provided reducer and middleware around dispatched actions.
  *
  * @export
@@ -357,7 +403,7 @@ export function createControllableContext<State extends NaiveAsyncSlice>(
   const Controllable = <State extends NaiveAsyncSlice>(props: ControllableProps<State>) => {
     const store = useStore()
     const dp = useDispatch()
-    const [state, setState] = useState<NaiveAsyncSlice>(reducer(undefined, { type: ''}),)
+    const [state, setState] = useState<NaiveAsyncSlice>(reducer(undefined, { type: '' }),)
     const internalDispatch: Dispatch<AnyAction> = <A extends Action>(action: A) => {
       const dispatchedAction = dp(action)
       setState(reducer(store.getState(), dispatchedAction))
