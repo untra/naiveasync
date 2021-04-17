@@ -66,10 +66,12 @@ export interface AsyncLifecycle<Data, Params> {
   readonly done: AsyncActionCreator<undefined>
   /** Action dispatched internally when the associated `AsyncOperation` is reset to it's initialState. */
   readonly reset: AsyncActionCreator<undefined>
-  /** Meta toggle to enable memoized responses on the lifecycle.
+  /**
+   * Meta toggle to enable memoized responses on the lifecycle.
    * Memoized responses means that responses will be cached and subsequent requests with similar params will return the cached data.
    * The memoize cache is not invincible, and might be prone to memory leaks with exceptional usage.
-   * Toggling will reset the memo. */
+   * Toggling will reset the memo.
+   */
   readonly memoized: (enabled: boolean) => AsyncLifecycle<Data, Params>
   /** Meta toggle to throttle the promise for N milliseconds (execute this function at most once every N milliseconds.) */
   readonly throttle: (throttle: number) => AsyncLifecycle<Data, Params>
@@ -199,6 +201,7 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhas
     const actionAsyncLifecycle = cache.get(name)
     // if the dispatched action doesn't have an assigned lifecycle
     if (!actionAsyncLifecycle) {
+      // tslint:disable-next-line: no-console
       console.warn(`No lifecycle found for dispatched action ${action.type} ${name}`)
       return EMPTY
     }
