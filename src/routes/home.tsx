@@ -6,7 +6,6 @@ import { Provider } from "react-redux";
 // tslint:disable-next-line: no-implicit-dependencies
 import { Link } from "react-router-dom";
 import packageJSON from '../../package.json'
-import wwords from "../content/home-content.json";
 // tslint:disable-next-line: ordered-imports no-implicit-dependencies
 import { NaiveAsync, naiveAsyncInitialState, NaiveAsyncState } from "../naiveasync";
 import { createdConnectedStore } from "../store";
@@ -19,9 +18,6 @@ interface ParamsValue {
   foo: string
 }
 
-const words: { [index: string]: { [index: string]: string } } = wwords
-
-type SupportedLangs = keyof typeof words;
 const version = packageJSON.version
 
 const exampleInit = naiveAsyncInitialState
@@ -51,13 +47,6 @@ const examples = [
 ]
 const pickedExample = examples[(Math.floor(4 * Math.random()))]
 
-
-// const randomData = blamDataRows(["foo", "bar", "baz"], 5);
-// These are the supported languages
-const DEFAULT_LANG = "en";
-interface HomeScreenProps {
-  lang: SupportedLangs;
-}
 
 const asyncOperation = (params: ParamsValue): Promise<DataValue> => {
 
@@ -94,21 +83,9 @@ const lifecycleflowimage = "https://naiveasync.untra.io/images/naiveasync-flow.p
 
 const store = createdConnectedStore()
 
-export default class Home extends React.Component<HomeScreenProps> {
-  constructor(props: HomeScreenProps) {
-    super(props);
-  }
+export default class Home extends React.Component<{}> {
 
   public render() {
-    // this is the word render function
-    // it will display the text content in the given language or in english
-    // the red X means there is missing text content
-    // eslint-disable-next-line
-    const W = (input: string) => {
-      const display = words[DEFAULT_LANG][input] || "";
-      return `${display}` || "❌";
-      // return this.theseWords[input] || this.defaultWords[input] || "❌";
-    };
     return (<Provider store={store}>
       <div className="page-content">
         <div className="wrapper">
@@ -155,11 +132,11 @@ import { NaiveAsync } from "@untra/naiveasync";
             <li><code><strong>operation : AsyncOperation</strong></code> the provided function, </li>
             <li><code><strong>selector(state : ReduxState) : AsyncState</strong></code> this is a redux state selector against the redux state, for use in <code>mapStateToProps</code>. Returns the `AsyncState` instance owned by this manager.</li>
             <li><code><strong>.call(params : Params)</strong></code> Action creator that triggers the associated <code>AsyncOperation</code> when dispatched, passing <code>params</code> into the operation. Resets its state when called again.</li>
-            <li><code><strong>.sync({})</strong></code> Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last remaining params. Does not reset data or error states, making it useful for polling operations.</li>
+            <li><code><strong>.sync({})</strong></code> Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last employed params if none are provided. Does not reset data or error states, making it useful for polling / repeated operations.</li>
             <li><code><strong>.reset({})</strong></code> Action dispatched internally when the associated `AsyncOperation` is reset to it's initial State.</li>
             <li><code><strong>.data(data : Data)</strong></code>Action dispatched internally when the associated `AsyncOperation` emits data.</li>
             <li><code><strong>.error(error : string)</strong></code>Action dispatched internally when the associated `AsyncOperation` emits an error (rejects) or throws an exception. The error will to be coerced to a string.</li>
-            <li>and finally <code><strong>.destroy({})</strong></code> which removes the <code>AsyncState</code> instance owned by this lifecycle from the state tree. <code>AsyncState</code> objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom. This can become a memory leak if left unchecked. For React components, a good practice is to dispatch the <code>.destroy({})</code> action in the component's <code>componentWillUnmount</code> method, or with a <code>useEffect</code> cleanup.</li>
+            <li>and finally <code><strong>.destroy({})</strong></code> which removes the <code>AsyncState</code> instance owned by this lifecycle from the redux state tree. <code>AsyncState</code> objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom. This can become a memory leak if left unchecked. For React components, a good practice is to dispatch the <code>.destroy({})</code> action in the component's <code>componentWillUnmount</code> method, or with a <code>useEffect</code> cleanup.</li>
           </ul>
           <p></p>
           <Highlight className="tsx">{
