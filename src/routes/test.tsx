@@ -9,7 +9,7 @@ import React from "react";
 import { Provider } from "react-redux";
 import * as packagejson from '../../package.json'
 import { NaiveAsyncState } from "../naiveasync/actions"
-import { NaiveAsync, naiveAsyncLifecycle } from "../naiveasync/index"
+import { asyncLifecycle, NaiveAsync } from "../naiveasync/index"
 import { Async } from "../naiveasync/naiveasync";
 import { createdConnectedStore } from "../store";
 import DebounceTest from './components/debounceTest'
@@ -21,6 +21,8 @@ import RandomNumberSelectableSync from './components/RandomNumberSelectableSync'
 import RandomNumberSync from './components/RandomNumberSync'
 import ThrottleTest from './components/throttleTest'
 import AssignTest from './components/assignTest'
+import RetryTest from './components/retryTest'
+import SubscribeTest from './components/subscribeTest'
 import TimeoutSync from './components/timeout'
 
 const emojiView = (state: NaiveAsyncState<any, {}>) => (<p>{
@@ -76,24 +78,28 @@ const namedFunction = function namedFunction() {
   return timeoutResolve(true)
 }
 
-const unreliableAsyncOperation = (): Promise<{ value: true }> => {
+const unreliableTime = 2000;
+
+const unreliableAsyncOperation = (): Promise<{ value: number }> => {
 
   return new Promise((resolve, reject) => {
     const r = Math.random()
-    const time = r * 1000
+    const time = r * unreliableTime
 
     setTimeout(() => {
-      if (r < 0.8) {
-        resolve({ value: true })
+      if (r < 0.99) {
+        resolve({ value: r})
       }
       reject(new Error('an error was thrown'))
     }, time)
   })
 }
 
-const lifeCycleInput = naiveAsyncLifecycle(autoParamsOp, "17_LIFECYCLE_INPUT");
+const lifeCycleInput = asyncLifecycle("17_LIFECYCLE_INPUT", autoParamsOp);
 
-const asyncInputLifecycle = naiveAsyncLifecycle(unreliableAsyncOperation, "19_ASYNC_OPERATION");
+const asyncInputLifecycle = asyncLifecycle("19_ASYNC_OPERATION", unreliableAsyncOperation);
+
+const subscribeLifecycle = asyncLifecycle("21_SUBSCRIBE_OPERATION", unreliableAsyncOperation)
 
 const store = createdConnectedStore()
 
@@ -280,7 +286,7 @@ export default class Test extends React.Component {
           <p>error: {JSON.stringify(state.error)}</p>
           <p>data: {JSON.stringify(state.data)}</p>
           <button onClick={() => call({})} >call</button>
-          <button style={{ backgroundColor: "blue" }} onClick={() => sync({})} >sync</button>
+          <button style={{ backgroundColor: "cyan" }} onClick={() => sync({})} >sync</button>
           <button style={{ backgroundColor: "yellow" }} onClick={() => reset()} >reset</button>
         </div>)}</Async>
 
@@ -288,6 +294,34 @@ export default class Test extends React.Component {
           #20 assignTest
         </h4>
         <AssignTest />
+
+        <h4>
+          #21 subscribe with Async Test
+        </h4>
+        <Async lifecycle={subscribeLifecycle}>{({ state, call, reset, sync, subscribe }) => (<div>
+          <p>status: {JSON.stringify(state.status)}</p>
+          <p>params: {JSON.stringify(state.params)}</p>
+          <p>error: {JSON.stringify(state.error)}</p>
+          <p>data: {JSON.stringify(state.data)}</p>
+          <button onClick={() => call({})} >call</button>
+          <button style={{ backgroundColor: "cyan" }} onClick={() => sync({})} >sync</button>
+          <button style={{ backgroundColor: "yellow" }} onClick={() => reset()} >reset</button>
+          <p>subscriptions</p>
+          <button style={{ backgroundColor: "gray" }} onClick={() => subscribe(2000)} >subscribe 2sec</button>
+          <button style={{ backgroundColor: "gray" }} onClick={() => subscribe(6000)} >subscribe 6sec</button>
+          <button style={{ backgroundColor: "gray" }} onClick={() => subscribe(10000)} >subscribe 10sec</button>
+          <button style={{ backgroundColor: "light-gray" }} onClick={() => subscribe(0)} >clear subscribe</button>
+        </div>)}</Async>
+
+        <h4>
+          #22 subscribe test
+        </h4>
+        <SubscribeTest />
+
+        <h4>
+          #23 retry test
+        </h4>
+        <RetryTest />
       </div>
     </Provider>);
   }

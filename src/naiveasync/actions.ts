@@ -5,7 +5,7 @@ import { KeyedCache } from "./keyedcache"
 export const naiveAsyncEmoji = '🔁'
 
 /** the phase state of the naiveAsync lifecycle */
-export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync' | 'assign'
+export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync' | 'assign' | 'subscribe'
 
 interface AsyncPostmark {
   readonly name: string
@@ -14,6 +14,9 @@ interface AsyncPostmark {
 
 /** a function that takes a singular params object P, returning a Promise<D> */
 export type NaiveAsyncFunction<Data, Params> = (params: Params) => Promise<Data>
+
+/** a function that takes a singular params object P, returning a Promise<D> */
+export type AsyncFunction<Params, Data> = (params: Params) => Promise<Data>
 
 /**
  * A typical redux action, templating a payload
@@ -115,7 +118,7 @@ export type AsyncActionCreator<Payload> = (payload?: Payload) => {
   /** Full type constant for actions created by this function, `eagle/myFunction/call`. */
   readonly type: string
   /** Metadata for the owning this. */
-  readonly meta: AsyncPostmark
+  readonly postmark: AsyncPostmark
   /**
    * Function that returns true iff the given action matches all properties of this action creator's meta.
    * In practice, this can be used to detect actions dispatched for this specific operation and lifecycle event.
@@ -127,16 +130,16 @@ export const asyncActionCreatorFactory = <Data, Params>(
   name: string,
 ) => <Payload>(phase: AsyncPhase): AsyncActionCreator<Payload> => {
   const type = `${naiveAsyncEmoji}/${name}/${phase}`
-  const meta = { name, phase }
+  const postmark = { name, phase }
   const guard = asyncActionMatcher(undefined, phase)
   const match = (action: Action<Payload>): action is AsyncAction<Payload> =>
     guard(action) && action[naiveAsyncEmoji].name === name
   const actionCreator: AsyncActionCreator<Payload> = (payload?: Payload) => ({
     type,
-    meta,
+    postmark,
     match,
     payload,
-    [naiveAsyncEmoji]: meta
+    [naiveAsyncEmoji]: postmark
   })
   return actionCreator
 }
@@ -207,6 +210,7 @@ export type AsyncState<Data, Params> = NaiveAsyncState<Data, Params>
  * @returns {state is AsyncState<any,any>}
  */
 export const isAsyncState = <D,P>(state: object): state is AsyncState<D,P> =>
+state !== null &&
 "status" in state &&
 "error" in state &&
 "data" in state &&
@@ -225,23 +229,28 @@ type OnData1<Data> = (data : Data) => void
 type OnData2<Data> = (data : Data, dispatch: Dispatch<AnyAction>) => void
 type OnError1 = (error : string) => void
 type OnError2 = (error : string, dispatch: Dispatch<AnyAction>) => void
+type ErrRetry1 = (error : any) => void
+type ErrRetry2 = (error : any, retry : number) => void
 export type OnError = OnCb | OnError1 | OnError2;
 export type OnData<Data> = OnCb | OnData1<Data> | OnData2<Data>;
-
+export type ErrRetryCb = OnCb | ErrRetry1 | ErrRetry2;
 
 export interface AsyncMeta<Data,Params> {
-  debounce: number
+  debounce: number,
   throttle: number,
-  subscribe: number
+  retries: number,
+  subscribe: number,
+  subscribeInterval: any,
   timeout: number,
   record: number,
   dataCount: number,
   errorCount: number,
   memo?: KeyedCache<Data>,
-  lastParams?: any
+  lastParams?: any,
   lastCalled: number,
   onData?: OnData<Data>,
-  onError?: OnError
+  onError?: OnError,
+  errRetryCb?: ErrRetryCb,
 }
 
 export const naiveAsyncInitialMeta = Object.freeze({
@@ -253,8 +262,11 @@ export const naiveAsyncInitialMeta = Object.freeze({
   memo: undefined,
   onData: () => "noop",
   onError: () => "noop",
+  errRetryCb: () => "noop",
   lastParams: undefined,
   debounce: 0,
   throttle: 0,
-  subscribe: 0
+  retries: 0,
+  subscribe: 0,
+  subscribeInterval: undefined,
 }) as AsyncMeta<any,any>
