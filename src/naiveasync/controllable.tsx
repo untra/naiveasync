@@ -9,7 +9,7 @@ import { Action, Dispatch, Middleware, Reducer } from 'redux'
 import { EMPTY, Observable, Subject, Subscription } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
-import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncFunction, AsyncMeta, AsyncPhase, AsyncState, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
+import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncFunction, AsyncMeta, AsyncPhase, AsyncState, ErrRetryCb, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
 import { KeyedCache } from './keyedcache'
 import { $from, $toMiddleware } from './observables'
 import { asyncStateReducer } from './reducer'
@@ -79,6 +79,8 @@ export interface AsyncLifecycle<Data, Params> {
   readonly debounce: (debounce: number) => AsyncLifecycle<Data, Params>
   /** Meta toggle to enable an N millisecond timeout of the promise, dispatching 'error' timeout if the request takes too long. (0 will disable) */
   readonly timeout: (timeout: number) => AsyncLifecycle<Data, Params>
+  /** Meta toggle to reattempt the promise N times, dispatching the last error on the final retry (0 will disable) */
+  readonly retries: (retries: number, errRetryCb?: ErrRetryCb) => AsyncLifecycle<Data, Params>
   /** (still in development) Meta toggle to enable a millisecond (sync) repeat of the operation with its previously supplied params. (0 will disable) */
   readonly subscribe: AsyncActionCreator<number>
   /** Assign a callback function to be called when the 'data' event is dispatched. */
@@ -289,6 +291,17 @@ const selectFunction = (id: string) => (state: NaiveAsyncSlice) => {
   return naiveAsyncInitialState
 }
 
+const retryOperation = <Params extends object, Data>(operation: AsyncFunction<Params, Data>, errRetryCb: ErrRetryCb, retries = 0): AsyncFunction<Params, Data> => {
+  if(retries <= 0) {
+    return operation
+  }
+  return (params: Params) => operation(params)
+  .catch((err: any) => {
+    errRetryCb(err, retries)
+    return retryOperation(operation, errRetryCb, retries - 1)(params)
+  })
+}
+
 /**
  * returns the lifecycle registered with the given id, or undefined if not found
  * NOTE: impure function, refers to managed internal cache of created lifecycles
@@ -369,6 +382,15 @@ export const naiveAsyncLifecycle = <Data, Params extends object>(
       const thisMeta = metaCache.get(id)
       const meta = { ...thisMeta, ...{ debounce } }
       const operation = lodashDebounce(lifecycle.operation, debounce, { leading: true, trailing: true })
+      const updatedLifecycle = { ...lifecycle, operation };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
+      cache.set(id, updatedLifecycle)
+      return updatedLifecycle;
+    },
+    retries: (retries: number, errRetryCb: ErrRetryCb = () => 'noop') => {
+      const thisMeta = metaCache.get(id)
+      const meta = { ...thisMeta, ...{ retries, errRetryCb } }
+      const operation = retryOperation(lifecycle.operation, errRetryCb, retries)
       const updatedLifecycle = { ...lifecycle, operation };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta })
       cache.set(id, updatedLifecycle)

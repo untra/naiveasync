@@ -21,7 +21,8 @@ import RandomNumberSelectableSync from './components/RandomNumberSelectableSync'
 import RandomNumberSync from './components/RandomNumberSync'
 import ThrottleTest from './components/throttleTest'
 import AssignTest from './components/assignTest'
-import SubscribeTest from './components/suscribeTest'
+import RetryTest from './components/retryTest'
+import SubscribeTest from './components/subscribeTest'
 import TimeoutSync from './components/timeout'
 
 const emojiView = (state: NaiveAsyncState<any, {}>) => (<p>{
@@ -316,6 +317,11 @@ export default class Test extends React.Component {
           #22 subscribe test
         </h4>
         <SubscribeTest />
+
+        <h4>
+          #23 retry test
+        </h4>
+        <RetryTest />
       </div>
     </Provider>);
   }
