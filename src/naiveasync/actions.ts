@@ -235,21 +235,44 @@ export type OnError = OnCb | OnError1 | OnError2;
 export type OnData<Data> = OnCb | OnData1<Data> | OnData2<Data>;
 export type ErrRetryCb = OnCb | ErrRetry1 | ErrRetry2;
 
+/**
+ * Meta information representative of a lifecycle. useful for testing.
+ *
+ * @export
+ * @interface AsyncMeta
+ * @template Data
+ * @template Params
+ */
 export interface AsyncMeta<Data,Params> {
+  /** 'debounce' assignment */
   debounce: number,
+  /** 'throttle' assignment */
   throttle: number,
+  /** 'retries' assignment */
   retries: number,
+  /** 'subscribe' assignment (experimental) */
   subscribe: number,
+  /** 'subscribe' assignment (experimental) */
   subscribeInterval: any,
+  /** 'timeout' assignment */
   timeout: number,
+  /** time in ms the operation took to run */
   record: number,
-  dataCount: number,
-  errorCount: number,
-  memo?: KeyedCache<Data>,
-  lastParams?: any,
+  /** timestamp when the operation was last run */
   lastCalled: number,
+  /** number of times data was returned */
+  dataCount: number,
+  /** number of times error was returned */
+  errorCount: number,
+  /** the memoize cache, if its enabled */
+  memo?: KeyedCache<Data>,
+  /** the last params used to call this operation */
+  lastParams?: Params,
+  /** 'onData' callback assignment */
   onData?: OnData<Data>,
+  /** 'onError' callback assignment */
   onError?: OnError,
+  /** retries 'errRetryCb' callback assignment */
   errRetryCb?: ErrRetryCb,
 }
 

@@ -157,7 +157,7 @@ export function Async<Data, Params extends object>(props: AsyncComponentProps<Da
                     setState({...state, subscribeInterval });
                     dispatch(subscribe(val))
                 }}
-            >{children}</AsyncManaged>)
+            >{children as any}</AsyncManaged>)
         }
     }</Controllable>)
 }
