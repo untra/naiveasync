@@ -1,9 +1,8 @@
 {
-    "name": "naivetable",
+    "name": "NaiveAsync",
     "readme": "./README.md",
     "out": "docs",
-    "theme": "minimal",
-    "includeDeclarations": "false",
+    "theme": "default",
     "excludeExternals": "true",
     "exclude": [
       "**/node_modules/**",
@@ -11,6 +10,6 @@
       "**/mocha.config.ts",
       "**/*.spec.*"
     ],
-    "includes": "./",
-    "__media": "media files that will be copied to the output directory; use media://FILENAME in comments"
+    "includes": "src/naiveasync",
+    "cleanOutputDir": "true"
   }

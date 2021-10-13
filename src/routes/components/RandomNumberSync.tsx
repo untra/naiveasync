@@ -2,50 +2,37 @@ import React, { useEffect } from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import { connect } from "react-redux";
 import { AnyAction, Dispatch } from "redux";
-import { naiveAsyncLifecycle } from "../../naiveasync"
-import { NaiveAsyncState } from '../../naiveasync/actions'
+import { asyncLifecycle, AsyncState } from "../../naiveasync";
+import { slowResolve } from "../../utils/promise";
 
-const slowResolve = <T extends any>(val: T): Promise<T> => new Promise((resolve) => {
-    const timeMS = Math.random() * 4000
-    setTimeout(() => resolve(val), timeMS)
-})
-const randomNumberFn = () => slowResolve(Math.floor(Math.random() * 100))
-const randomNumberLifecycle = naiveAsyncLifecycle(randomNumberFn, 'RANDOM')
+const randomNumberFn = () => slowResolve(Math.floor(Math.random() * 100));
+const randomNumberLifecycle = asyncLifecycle("RANDOM", randomNumberFn);
 
 interface MP {
-  state: NaiveAsyncState<number,any>
+  state: AsyncState<number, never>;
 }
 
 interface DP {
-  generate : () => void
+  generate: () => void;
 }
 
-type Props = MP & DP
+type Props = MP & DP;
 
-const RandomNumberSync : React.FC<Props> = ({state, generate }) => {
-    const val = state.data
-    useEffect(() => {
-        generate()
-    }, [val, generate])
-    const display = `random number: ${val}`
-    return (<p>{display}</p>)
-}
+const RandomNumberSync: React.FC<Props> = ({ state, generate }) => {
+  const val = state.data;
+  useEffect(() => {
+    generate();
+  }, [val, generate]);
+  const display = `random number: ${val}`;
+  return <p>{display}</p>;
+};
 
-const mapStateToProps = (
-  state: any,
-): MP => ({
-  state : randomNumberLifecycle.selector(state)
+const mapStateToProps = (state: never): MP => ({
+  state: randomNumberLifecycle.selector(state),
 });
 
-const mapDispatchToProps = (
-  dispatch: Dispatch<AnyAction>,
-): DP => ({
-  generate : () => dispatch(randomNumberLifecycle.sync({}))
+const mapDispatchToProps = (dispatch: Dispatch<AnyAction>): DP => ({
+  generate: () => dispatch(randomNumberLifecycle.sync({})),
 });
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(
-  RandomNumberSync
-);
+export default connect(mapStateToProps, mapDispatchToProps)(RandomNumberSync);
