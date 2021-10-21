@@ -6,7 +6,9 @@ import { useState } from "react"
 // tslint:disable-next-line: no-implicit-dependencies
 import { Provider, useDispatch, useStore } from 'react-redux'
 import { Action, Dispatch, Middleware, Reducer } from 'redux'
-import { EMPTY, Observable, Subject, Subscription } from "rxjs"
+import { Observable } from "rxjs/dist/types/internal/Observable"
+import { Subject } from "rxjs/dist/types/internal/Subject"
+import { Subscription } from "rxjs/dist/types/internal/Subscription"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
 import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncFunction, AsyncMeta, AsyncPhase, AsyncState, ErrRetryCb, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'
@@ -141,8 +143,8 @@ function resolveObservableAs(action$: Observable<Action<any>>, asyncLifeCycle: A
   } = asyncLifeCycle
   return new Observable(subscriber => {
     const subscription = $from(Promise.resolve(value)).subscribe(
-      nextData => subscriber.next(data(nextData)),
-      err => `noop ${err}`,
+      (      nextData: any) => subscriber.next(data(nextData)),
+      (      err: any) => `noop ${err}`,
       () => subscriber.next(done()),
     )
     action$
@@ -172,11 +174,11 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
       done,
     } = asyncLifeCycle
     try {
-      const subscription : Subscription = $from(
+      const subscription: Subscription = $from(
         operationWithMeta(operation, payload, meta)
       ).subscribe(
-        nextData => subscriber.next(data(nextData)),
-        err => subscriber.next(error(err)),
+        (nextData: any) => subscriber.next(data(nextData)),
+        (err: string | undefined) => subscriber.next(error(err)),
         () => subscriber.next(done()),
       );
       action$
@@ -185,7 +187,7 @@ function observableFromAsyncLifeCycle(action$: Observable<Action<any>>, asyncLif
     } catch (err) {
       // tslint:disable-next-line: no-console
       console.warn(`unexpected error calling observable from lifecycle ${id}`, err)
-      subscriber.next(error(err))
+      subscriber.next(error(err as any))
     }
   })
 }
@@ -205,7 +207,7 @@ const AsyncableEpicOnPhase = (action$: Observable<Action<any>>, phase: AsyncPhas
     if (!actionAsyncLifecycle) {
       // tslint:disable-next-line: no-console
       console.warn(`No lifecycle found for dispatched action ${action.type} ${name}`)
-      return EMPTY
+      return new Observable<never>();
     }
     // if using a memoized record
     if (memo) {
@@ -243,20 +245,20 @@ const responseDispatchOnPhase = (action$: Observable<Action<any>>, phase: AsyncP
     // subscirbe
     if (phase === 'subscribe') {
       const actionAsyncLifecycle = cache.get(name);
-      const subscribe : number = action.payload;
+      const subscribe: number = action.payload;
       clearInterval(meta?.subscribeInterval)
-      const subscribeInterval  = actionAsyncLifecycle && subscribe > 0
+      const subscribeInterval = actionAsyncLifecycle && subscribe > 0
         ? setInterval(() => dispatch(actionAsyncLifecycle.sync()), subscribe)
         : undefined;
       metaCache.set(name, { ...meta, subscribe, subscribeInterval });
-      return EMPTY;
+      return new Observable<never>();
     }
 
     const dataCount = phase === 'data' ? meta.dataCount + 1 : 0
     const errorCount = phase === 'error' ? meta.errorCount + 1 : 0
     const record = (Date.now() - meta.lastCalled)
     metaCache.set(name, { ...meta, dataCount, errorCount, record })
-    return EMPTY;
+    return new Observable<never>();
   }
   return action$.pipe(
     filter(phaseMatcher),
@@ -292,14 +294,14 @@ const selectFunction = (id: string) => (state: NaiveAsyncSlice) => {
 }
 
 const retryOperation = <Params extends object, Data>(operation: AsyncFunction<Params, Data>, errRetryCb: ErrRetryCb, retries = 0): AsyncFunction<Params, Data> => {
-  if(retries <= 0) {
+  if (retries <= 0) {
     return operation
   }
   return (params: Params) => operation(params)
-  .catch((err: any) => {
-    errRetryCb(err, retries)
-    return retryOperation(operation, errRetryCb, retries - 1)(params)
-  })
+    .catch((err: any) => {
+      errRetryCb(err, retries)
+      return retryOperation(operation, errRetryCb, retries - 1)(params)
+    })
 }
 
 /**

@@ -2,7 +2,7 @@ import React, { ChangeEvent, useState } from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import { connect } from "react-redux";
 import { AnyAction, Dispatch } from "redux";
-import { naiveAsyncLifecycle } from "../../naiveasync"
+import { asyncLifecycle } from "../../naiveasync"
 import { NaiveAsyncState } from '../../naiveasync/actions'
 
 const slowResolve = <T extends any>(val: T): Promise<T> => new Promise((resolve) => {
@@ -15,7 +15,7 @@ const slowIconToName = (params: IconParams) => {
     name: iconToName[params.icon] || 'NOT FOUND'
   })
 }
-const timeoutLifecycle = naiveAsyncLifecycle(slowIconToName, 'TIMEOUT_SELECTABLE')
+const timeoutLifecycle = asyncLifecycle('TIMEOUT_SELECTABLE', slowIconToName)
 
 const iconToName = {
   "🦅": "eagle",

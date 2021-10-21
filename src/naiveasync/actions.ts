@@ -8,8 +8,8 @@ export const naiveAsyncEmoji = '🔁'
 export type AsyncPhase = 'call' | 'data' | 'error' | 'done' | 'destroy' | 'reset' | 'sync' | 'assign' | 'subscribe'
 
 interface AsyncPostmark {
-  readonly name: string
-  readonly phase: AsyncPhase
+  name: string,
+  phase: AsyncPhase
 }
 
 /** a function that takes a singular params object P, returning a Promise<D> */
@@ -236,8 +236,11 @@ export type OnData<Data> = OnCb | OnData1<Data> | OnData2<Data>;
 export type ErrRetryCb = OnCb | ErrRetry1 | ErrRetry2;
 
 /**
- * Meta information representative of a lifecycle. useful for testing.
- *
+ * Meta information representative of a lifecycle, useful for testing.
+ * 
+ * Async lifecycles manage a number of aspects of the operation and is configured execution.
+ * Some of these aspects are recorded in the meta cache, which are not associated with the redux store but used internally to control naiveasync operations.
+ * This selection is contextual from the instance when .meta() is called on the lifecycle.
  * @export
  * @interface AsyncMeta
  * @template Data
@@ -254,9 +257,9 @@ export interface AsyncMeta<Data,Params> {
   subscribe: number,
   /** 'subscribe' assignment (experimental) */
   subscribeInterval: any,
-  /** 'timeout' assignment */
+  /** 'timeout' assignment. starts at NaN if not yet assigned. */
   timeout: number,
-  /** time in ms the operation took to run */
+  /** time in ms the operation took to run. starts as NaN if not yet called. */
   record: number,
   /** timestamp when the operation was last run */
   lastCalled: number,
