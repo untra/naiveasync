@@ -6,9 +6,7 @@ import { useState } from "react"
 // tslint:disable-next-line: no-implicit-dependencies
 import { Provider, useDispatch, useStore } from 'react-redux'
 import { Action, Dispatch, Middleware, Reducer } from 'redux'
-import { Observable } from "rxjs/dist/types/internal/Observable"
-import { Subject } from "rxjs/dist/types/internal/Subject"
-import { Subscription } from "rxjs/dist/types/internal/Subscription"
+import { Observable, Subject, Subscription } from "rxjs"
 // tslint:disable-next-line: no-submodule-imports
 import { filter, first, mergeMap } from "rxjs/operators"
 import { AnyAction, AsyncAction, AsyncActionCreator, asyncActionCreatorFactory, asyncActionMatcher, AsyncFunction, AsyncMeta, AsyncPhase, AsyncState, ErrRetryCb, isAsyncAction, naiveAsyncEmoji, NaiveAsyncFunction, naiveAsyncInitialMeta, naiveAsyncInitialState, NaiveAsyncSlice, NaiveAsyncState, OnData, OnError } from './actions'

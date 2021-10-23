@@ -26,9 +26,6 @@ const handleErr = (err: string) => {
 }
 const retryTestLifecycle : AsyncLifecycle<{},{}> = asyncLifecycle('23_RETRY_TEST', riskyResolve).retries(3, handleErr)
 
-interface IconResp {
-  name: string
-}
 
 interface MP {
   state: NaiveAsyncState<{}, {}>
