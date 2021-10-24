@@ -1,8 +1,11 @@
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   applyMiddleware,
   compose,
   createStore,
   Middleware,
+  Store,
   StoreEnhancer,
 } from "redux";
 import {
@@ -10,7 +13,7 @@ import {
   naiveAsyncMiddleware,
   naiveAsyncReducer,
   NaiveAsyncSlice,
-} from "./naiveasync";
+} from "../naiveasync";
 // the following resources are needed to specify a redux store with devtools enabled
 
 type ReduxWindow = Window & {
@@ -19,10 +22,10 @@ type ReduxWindow = Window & {
 
 const getEnhancers = () => {
   const enhancers: StoreEnhancer[] = [];
-  const windoww: ReduxWindow = window;
+  const windoww: ReduxWindow | undefined = window ? window : undefined;
   const devToolsExtension: () => StoreEnhancer =
-    windoww.__REDUX_DEVTOOLS_EXTENSION__;
-  if (typeof devToolsExtension === "function") {
+    windoww?.__REDUX_DEVTOOLS_EXTENSION__;
+  if (windoww != null && typeof devToolsExtension === "function") {
     enhancers.push(devToolsExtension());
   }
   return enhancers;
@@ -37,5 +40,5 @@ const composedEnhancers: StoreEnhancer = compose(
   ...enhancers
 );
 
-export const createdConnectedStore = () =>
+export const createConnectedStore = (): Store =>
   createStore(naiveAsyncReducer, initialState, composedEnhancers);

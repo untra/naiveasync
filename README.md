@@ -72,7 +72,7 @@ Promises are a powerful tool in javascript, and a wrapper to abstract its most c
 
 Some Terminology:
 * an `AsyncOperation<D,P>` is a function that takes `(P)` and returns a `Promise<D>`
-* an `naiveasyncstate` is an object of type
+* an `AsyncState` is an object of type
 ```ts
 {
   status: '' | 'inflight' | 'error' | 'done'

@@ -1,6 +1,13 @@
-import { Action, Middleware, Store } from 'redux'
-import { BehaviorSubject, from as rxFrom, Observable, ObservableInput, Subject } from 'rxjs'
-import { AnyAction } from './actions'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Action, Middleware, Store } from "redux";
+import {
+  BehaviorSubject,
+  from as rxFrom,
+  Observable,
+  ObservableInput,
+  Subject,
+} from "rxjs";
+import { AnyAction } from "./actions";
 
 /**
  * SubjectLike interface type containing method signatures critical to behavior of an observable subject
@@ -9,8 +16,8 @@ import { AnyAction } from './actions'
  * @template A
  */
 interface SubjectLike<S, A = S> {
-  subscribe: Subject<S>['subscribe']
-  next: Subject<A>['next']
+  subscribe: Subject<S>["subscribe"];
+  next: Subject<A>["next"];
 }
 
 /**
@@ -20,9 +27,9 @@ interface SubjectLike<S, A = S> {
  * @template A
  */
 interface StoreLike<S, A extends Action = AnyAction> {
-  subscribe: Store<S, A>['subscribe']
-  getState: Store<S, A>['getState']
-  dispatch: Store<S, A>['dispatch']
+  subscribe: Store<S, A>["subscribe"];
+  getState: Store<S, A>["getState"];
+  dispatch: Store<S, A>["dispatch"];
 }
 
 // const isPromise = <Data>(obj: Promise<Data> | any): obj is Promise<Data> =>
@@ -52,58 +59,73 @@ interface StoreLike<S, A extends Action = AnyAction> {
 //     })(),
 // )
 
-const isAsyncIterable = <Data>(obj: AsyncIterable<Data> | any): obj is AsyncIterable<Data> =>
-  Symbol.asyncIterator in obj && typeof obj[Symbol.asyncIterator] === 'function'
+const isAsyncIterable = <Data>(
+  obj: AsyncIterable<Data> | any
+): obj is AsyncIterable<Data> =>
+  Symbol.asyncIterator in obj &&
+  typeof obj[Symbol.asyncIterator] === "function";
 
 /** Internal. Converts an `AsyncIterable` to an `Observable` by piping its yield into the subscriber until the `AsyncIterable` is exhausted. */
-const $fromAsyncIterable = <Data>(asyncIterable: AsyncIterable<Data>): Observable<Data> =>
+const $fromAsyncIterable = <Data>(
+  asyncIterable: AsyncIterable<Data>
+): Observable<Data> =>
   new Observable<Data>(
-    subscriber =>
+    (subscriber) =>
       void (async () => {
         try {
           for await (const data of asyncIterable) {
             if (subscriber.closed) {
-              return
+              return;
             }
-            subscriber.next(data)
+            subscriber.next(data);
           }
-          subscriber.complete()
+          subscriber.complete();
         } catch (e) {
-          subscriber.error(e)
+          subscriber.error(e);
         }
-      })(),
-  )
+      })()
+  );
 
 /** Type guard that indicates whether an object has the crucial methods to behave like a Redux Store. */
-export const isStoreLike = (maybeStoreLike: StoreLike<any, any> | any): maybeStoreLike is StoreLike<any, any> =>
+export const isStoreLike = (
+  maybeStoreLike: StoreLike<any, any> | any
+): maybeStoreLike is StoreLike<any, any> =>
   !!maybeStoreLike &&
-  'subscribe' in maybeStoreLike && typeof maybeStoreLike.subscribe === 'function' &&
-  'getState' in maybeStoreLike && typeof maybeStoreLike.getState === 'function' &&
-  'dispatch' in maybeStoreLike && typeof maybeStoreLike.dispatch === 'function'
+  "subscribe" in maybeStoreLike &&
+  typeof maybeStoreLike.subscribe === "function" &&
+  "getState" in maybeStoreLike &&
+  typeof maybeStoreLike.getState === "function" &&
+  "dispatch" in maybeStoreLike &&
+  typeof maybeStoreLike.dispatch === "function";
 
 /** Function that converts `Store<S, A>` -> `SubjectLike<S, A>`. */
-const $fromStore = <S, A extends Action>(store: StoreLike<S, A>): SubjectLike<S, A> => {
-  const state$ = new BehaviorSubject<S>(store.getState())
+const $fromStore = <S, A extends Action>(
+  store: StoreLike<S, A>
+): SubjectLike<S, A> => {
+  const state$ = new BehaviorSubject<S>(store.getState());
   store.subscribe(() => {
-    state$.next(store.getState())
-  })
+    state$.next(store.getState());
+  });
   return {
     subscribe: state$.subscribe.bind(state$) as any,
-    next: (action: A) => { store.dispatch(action) }
-  }
-}
+    next: (action: A) => {
+      store.dispatch(action);
+    },
+  };
+};
 /**
  * $from creates a redux observable from an observableinput type (a promise or other subscribable)
  * @template Item
  * @param {ObservableInput<Item>} observableInput
  * @returns
  */
-export const $from = <Item>(observableInput: ObservableInput<Item>) => {
-  return isStoreLike(observableInput) ? $fromStore(observableInput) :
-    isAsyncIterable(observableInput) ? $fromAsyncIterable(observableInput) :
-      // isPromise(observableInput) ? $fromPromise(observableInput) :
-      rxFrom(observableInput)
-}
+export const $from = <Item>(observableInput: ObservableInput<Item>) =>
+  isStoreLike(observableInput)
+    ? $fromStore(observableInput)
+    : isAsyncIterable(observableInput)
+    ? $fromAsyncIterable(observableInput)
+    : // isPromise(observableInput) ? $fromPromise(observableInput) :
+      rxFrom(observableInput);
 
 /**
  * $toMiddleware creates a Redux Middleware that pipes all dispatched actions through the given Subject.
@@ -113,11 +135,12 @@ export const $from = <Item>(observableInput: ObservableInput<Item>) => {
  * @param {Subject<Action>} action$
  * @returns {Middleware}
  */
-export const $toMiddleware = (action$: Subject<Action>): Middleware =>
+export const $toMiddleware =
+  (action$: Subject<Action>): Middleware =>
   () =>
-    next => action => {
-      const result = next(action)
-      action$.next(action)
-      return result
-    }
-
+  (next) =>
+  (action) => {
+    const result = next(action);
+    action$.next(action);
+    return result;
+  };
