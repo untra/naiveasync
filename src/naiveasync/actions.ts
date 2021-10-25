@@ -5,6 +5,9 @@ import { KeyedCache } from "./keyedcache";
 /** 🔁  */
 export const naiveAsyncEmoji = "🔁";
 
+/** 🔁  */
+export const asyncableEmoji = "🔁";
+
 /** the phase state of the naiveAsync lifecycle */
 export type AsyncPhase =
   | "call"
@@ -144,7 +147,7 @@ export type AsyncActionCreator<Payload> = (payload?: Payload) => {
 };
 
 export const asyncActionCreatorFactory =
-  <Data, Params>(name: string) =>
+  (name: string) =>
   <Payload>(phase: AsyncPhase): AsyncActionCreator<Payload> => {
     const type = `${naiveAsyncEmoji}/${name}/${phase}`;
     const postmark = { name, phase };
@@ -165,10 +168,18 @@ export const asyncActionCreatorFactory =
  * Any redux store that implements usage of AsyncableState keyed to the AsyncableSymbol, use to typeguard implementations
  * @export
  * @interface AsyncableSlice
+ * @deprecated favor AsyncableSlice instead
  */
 export interface NaiveAsyncSlice {
   [naiveAsyncEmoji]: { [key: string]: AsyncState<any, any> };
 }
+
+/**
+ * Any redux store that implements usage of AsyncableState keyed to the AsyncableSymbol, use to typeguard implementations
+ * @export
+ * @interface AsyncableSlice
+ */
+export type AsyncableSlice = NaiveAsyncSlice;
 
 export interface Gettable {
   get: (a: any) => any;
@@ -180,7 +191,7 @@ export const isGettable = (x: any): x is Gettable =>
 export type AsyncableStateStatus = "" | "inflight" | "error" | "done";
 
 /** the initial state of a naiveasync operation */
-export interface InitialNAsyncState {
+export interface InitialAsyncState {
   status: "";
   error: "";
   params: {};
@@ -188,7 +199,7 @@ export interface InitialNAsyncState {
 }
 
 /** the inflight state of a naiveasync operation */
-interface InflightNAsyncState<Data, Params> {
+interface InflightAsyncState<Data, Params> {
   status: "inflight";
   error: "" | string;
   params: {} | Params;
@@ -196,7 +207,7 @@ interface InflightNAsyncState<Data, Params> {
 }
 
 /** the error state of a naiveasync operation */
-interface ErrorNAsyncState<Data, Params> {
+interface ErrorAsyncState<Data, Params> {
   status: "error";
   error: "" | string;
   params: {} | Params;
@@ -204,7 +215,7 @@ interface ErrorNAsyncState<Data, Params> {
 }
 
 /** the done state of a naiveasync operation */
-interface DoneNAsyncState<Data, Params> {
+interface DoneAsyncState<Data, Params> {
   status: "done";
   error: "";
   params: {} | Params;
@@ -213,18 +224,18 @@ interface DoneNAsyncState<Data, Params> {
 
 /**
  * The state of a NaiveAsyncFunction, encompassing status, params, error, data
- * @deprecated favor AsyncState instead
  */
-export type NaiveAsyncState<Data, Params> =
-  | InitialNAsyncState
-  | InflightNAsyncState<Data, Params>
-  | ErrorNAsyncState<Data, Params>
-  | DoneNAsyncState<Data, Params>;
+export type AsyncState<Data, Params> =
+  | InitialAsyncState
+  | InflightAsyncState<Data, Params>
+  | ErrorAsyncState<Data, Params>
+  | DoneAsyncState<Data, Params>;
 
 /**
  * The state of a NaiveAsyncFunction, encompassing status, params, error, data
+ * @deprecated favor AsyncState instead
  */
-export type AsyncState<Data, Params> = NaiveAsyncState<Data, Params>;
+export type NaiveAsyncState<Data, Params> = AsyncState<Data, Params>;
 
 /**
  * isAsyncState typeGuards AsyncState<any>
@@ -244,7 +255,7 @@ export const naiveAsyncInitialState = Object.freeze({
   error: "",
   params: {},
   data: null,
-}) as InitialNAsyncState;
+}) as InitialAsyncState;
 
 type OnCb = () => void;
 type OnData1<Data> = (data: Data) => void;

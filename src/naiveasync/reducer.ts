@@ -6,11 +6,11 @@ import {
   isAsyncState,
   naiveAsyncEmoji,
   naiveAsyncInitialState,
-  NaiveAsyncState,
+  AsyncState,
 } from "./actions";
 
-const callReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
-  state: NaiveAsyncState<any, any> = naiveAsyncInitialState,
+const callReducer: Reducer<AsyncState<any, any>, AnyAction> = (
+  state: AsyncState<any, any> = naiveAsyncInitialState,
   action: AnyAction
 ) =>
   isAsyncAction(action) && action[naiveAsyncEmoji].phase === "call"
@@ -23,8 +23,8 @@ const callReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
       }
     : state;
 
-const syncReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
-  state: NaiveAsyncState<any, any> = naiveAsyncInitialState,
+const syncReducer: Reducer<AsyncState<any, any>, AnyAction> = (
+  state: AsyncState<any, any> = naiveAsyncInitialState,
   action: AnyAction
 ) => {
   if (isAsyncAction(action) && action[naiveAsyncEmoji].phase === "sync") {
@@ -38,8 +38,8 @@ const syncReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
   return state;
 };
 
-const dataReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
-  state: NaiveAsyncState<any, any> = naiveAsyncInitialState,
+const dataReducer: Reducer<AsyncState<any, any>, AnyAction> = (
+  state: AsyncState<any, any> = naiveAsyncInitialState,
   action: AnyAction
 ) =>
   isAsyncAction(action) && action[naiveAsyncEmoji].phase === "data"
@@ -50,8 +50,8 @@ const dataReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
       }
     : state;
 
-const errorReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
-  state: NaiveAsyncState<any, any> = naiveAsyncInitialState,
+const errorReducer: Reducer<AsyncState<any, any>, AnyAction> = (
+  state: AsyncState<any, any> = naiveAsyncInitialState,
   action: AnyAction
 ) => {
   if (isAsyncAction(action) && action[naiveAsyncEmoji].phase === "error") {
@@ -70,8 +70,8 @@ const errorReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
   return state;
 };
 
-const doneReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
-  state: NaiveAsyncState<any, any> = naiveAsyncInitialState,
+const doneReducer: Reducer<AsyncState<any, any>, AnyAction> = (
+  state: AsyncState<any, any> = naiveAsyncInitialState,
   action: AnyAction
 ) =>
   isAsyncAction(action) && action[naiveAsyncEmoji].phase === "done"
@@ -82,8 +82,8 @@ const doneReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
       }
     : state;
 
-const resetReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
-  state: NaiveAsyncState<any, any> = naiveAsyncInitialState,
+const resetReducer: Reducer<AsyncState<any, any>, AnyAction> = (
+  state: AsyncState<any, any> = naiveAsyncInitialState,
   action: AnyAction
 ) =>
   isAsyncAction(action) && action[naiveAsyncEmoji].phase === "reset"
@@ -98,8 +98,8 @@ export const chain =
       firstReducer(state, action)
     );
 
-const assignReducer: Reducer<NaiveAsyncState<any, any>, AnyAction> = (
-  state: NaiveAsyncState<any, any> = naiveAsyncInitialState,
+const assignReducer: Reducer<AsyncState<any, any>, AnyAction> = (
+  state: AsyncState<any, any> = naiveAsyncInitialState,
   action: AnyAction
 ) =>
   isAsyncAction(action) &&
