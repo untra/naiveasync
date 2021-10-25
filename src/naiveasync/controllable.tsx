@@ -110,10 +110,14 @@ export interface AsyncLifecycle<Data, Params> {
   readonly onData: (onData: OnData<Data>) => AsyncLifecycle<Data, Params>;
   /** Assign a callback function to be called when the 'error' event is dispatched. */
   readonly onError: (onError: OnError) => AsyncLifecycle<Data, Params>;
-  /** select the meta object */
+  /** Selects the meta object, a snapshot of this lifecycles metaCache for debugging analysis. */
   readonly meta: () => AsyncMeta<Data, Params>;
   /** Utility action to assign the provided AsyncState to the redux store. Its use in testing is encouraged, its use in prod is not. */
   readonly assign: AsyncActionCreator<AsyncState<Data, Params>>;
+  /** Returns a promise that awaits operation resolve (resolves to data or rejects with errors). Useful for testing. */
+  readonly awaitResolve: () => Promise<Data>;
+  /** Returns a promise that awaits operation reject (resolves to data or rejects with errors). Useful for testing. */
+  readonly awaitReject: () => Promise<Data>;
 }
 
 /** the initial slice state for use in a redux store */
@@ -288,6 +292,14 @@ const responseDispatchOnPhase = (
     if (phase === "error" && meta.onError) {
       meta.onError(action.payload, dispatch);
     }
+    // onData
+    if (phase === "data" && meta.awaitResolve) {
+      meta.awaitResolve(action.payload);
+    }
+    // onError
+    if (phase === "error" && meta.awaitReject) {
+      meta.awaitReject(action.payload);
+    }
     // memoize
     if (phase === "data" && meta.memo) {
       meta.memo.set(JSON.stringify(meta.lastParams), action.payload);
@@ -307,8 +319,19 @@ const responseDispatchOnPhase = (
 
     const dataCount = phase === "data" ? meta.dataCount + 1 : 0;
     const errorCount = phase === "error" ? meta.errorCount + 1 : 0;
+    const awaitResolve =
+      meta.awaitResolve && phase === "data" ? undefined : meta.awaitResolve;
+    const awaitReject =
+      meta.awaitReject && phase === "error" ? undefined : meta.awaitReject;
     const record = Date.now() - meta.lastCalled;
-    metaCache.set(name, { ...meta, dataCount, errorCount, record });
+    metaCache.set(name, {
+      ...meta,
+      dataCount,
+      errorCount,
+      record,
+      awaitResolve,
+      awaitReject,
+    });
     return new Observable<never>();
   };
   return action$.pipe(
@@ -468,6 +491,28 @@ export const asyncLifecycle = <Data, Params extends {}>(
       return updatedLifecycle;
     },
     meta: () => ({ ...naiveAsyncInitialMeta, ...metaCache.get(id) }),
+    awaitResolve: async () => {
+      const thisMeta = metaCache.get(id);
+      let awaitResolve: (value: Data) => void = () => null;
+      const awaitedPromise = new Promise<Data>((resolve) => {
+        awaitResolve = resolve;
+      });
+      const meta = { ...thisMeta, ...{ awaitResolve } };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      return awaitedPromise;
+    },
+    awaitReject: async () => {
+      const thisMeta = metaCache.get(id);
+      let awaitResolve: (value: Data) => void = () => null;
+      let awaitReject: (reason?: any) => void = () => null;
+      const awaitedPromise = new Promise<Data>((resolve, reject) => {
+        awaitResolve = resolve;
+        awaitReject = reject;
+      });
+      const meta = { ...thisMeta, ...{ awaitResolve, awaitReject } };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      return awaitedPromise;
+    },
   };
   cache.set(id, lifecycle);
   return lifecycle;

@@ -299,6 +299,10 @@ export interface AsyncMeta<Data, Params> {
   readonly onError?: OnError;
   /** retries 'errRetryCb' callback assignment */
   readonly errRetryCb?: ErrRetryCb;
+  /** awaiting resolve callback, if the lifecycle is being awaited on */
+  readonly awaitResolve?: (value: Data) => void;
+  /** awaiting reject callback, if the lifecycle is being awaited on */
+  readonly awaitReject?: (reason?: string) => void;
 }
 
 export const naiveAsyncInitialMeta = Object.freeze({

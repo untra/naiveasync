@@ -95,9 +95,10 @@ Some Terminology:
 
 ## Recommended usage with Testing
 
-* use `.meta()` to get a snapshot printout of the metacache for the lifecycle, useful in testing
+* use lifecycle `.meta()` to get the AsyncMeta, a snapshot printout of the metacache for this lifecycle, useful in testing
 * use `mockInitialAsyncState, mockInflightAsyncState, mockErrorAsyncState, mockDoneAsyncState` to represent async states in mocks and storybook scenes
 * dispatch the lifecycle `.assign(state)` action to assign a specific state to the lifecycle. this is typically frowned upon in redux philosophy, but is really helpful in mocking state
+* when testing within async functions, use `await lifecycle.awaitResolve()` to pause test execution until the async operation next resolves. simmilarly use `await lifecycle.awaitReject()` to test rejection.
 
 ## 1.0.0 feature wishlist:
 

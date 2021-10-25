@@ -37,7 +37,7 @@
     "lint": "eslint src --ext .ts,.tsx,.js --ignore-path .gitignore",
     "docs": "typedoc --out docs/docs src",
     "defs": "tsc -p build.tsconfig.json --declaration --outDir dist/ --emitDeclarationOnly",
-    "ci": "npm run build && npm run lint",
+    "ci": "npm run build && npm run lint && npm run test",
     "ci2": "npm run lint && npm run build && npm run cover",
     "start": "./node_modules/.bin/react-scripts start",
     "deploy": "./node_modules/.bin/gh-pages -d ./build",
