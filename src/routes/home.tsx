@@ -106,10 +106,7 @@ export default class Home extends React.Component<{}> {
               v{version} - <Link to="/test">Tests</Link>-{" "}
               <a href="https://github.com/untra/naiveasync">Github</a> -{" "}
               <a href="https://www.npmjs.com/package/@untra/naiveasync">NPM</a>{" "}
-              -{" "}
-              <a href="https://dashboard.cypress.io/#/projects/wrytfx/runs">
-                Cypress
-              </a>
+              - <a href="https://naiveasync.untra.io/docs">Docs</a>
             </h3>
             <NaiveAsync id="asyncOp" operation={asyncOperation}>
               {asyncableView}
