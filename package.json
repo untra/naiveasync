@@ -40,7 +40,7 @@
     "ci": "npm run build && npm run lint && npm run test",
     "ci2": "npm run lint && npm run build && npm run cover",
     "start": "./node_modules/.bin/react-scripts start",
-    "deploy": "./node_modules/.bin/gh-pages -d ./build",
+    "deploy": "echo \"deploy not enabled from this project.\"",
     "predeploy": "npm run build:site && npm run docs",
     "prettier:format": "prettier --write \"./src/**/*.{ts,tsx}\"",
     "watch": "./node_modules/.bin/webpack-dev-server dist/src/index.js",
