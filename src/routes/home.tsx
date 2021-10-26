@@ -5,142 +5,257 @@ import Highlight from "react-highlight";
 import { Provider } from "react-redux";
 // tslint:disable-next-line: no-implicit-dependencies
 import { Link } from "react-router-dom";
-import packageJSON from '../../package.json'
+import packageJSON from "../../package.json";
 // tslint:disable-next-line: ordered-imports no-implicit-dependencies
-import { NaiveAsync, naiveAsyncInitialState, NaiveAsyncState } from "../naiveasync";
-import { createdConnectedStore } from "../store";
+import {
+  NaiveAsync,
+  naiveAsyncInitialState,
+  NaiveAsyncState,
+} from "../naiveasync";
+import { createConnectedStore } from "../utils/store";
 
 interface DataValue {
-  value: string
+  value: string;
 }
 
 interface ParamsValue {
-  foo: string
+  foo: string;
 }
 
-const version = packageJSON.version
+const version = packageJSON.version;
 
-const exampleInit = naiveAsyncInitialState
+const exampleInit = naiveAsyncInitialState;
 const exampleInflight = {
   ...exampleInit,
-  "status": "inflight",
-  "params": {
-    "user": "admin",
-    "password": "hunter2"
+  status: "inflight",
+  params: {
+    user: "admin",
+    password: "hunter2",
   },
-}
+};
 const exampleError = {
   ...exampleInflight,
-  "status": "error",
-  "error": "kaboom typerror",
-}
+  status: "error",
+  error: "kaboom typerror",
+};
 const exampleDone = {
   ...exampleInflight,
-  "status": "done",
-  "data": { "evil-secrets": "..." },
-}
-const examples = [
-  exampleInit,
-  exampleInflight,
-  exampleError,
-  exampleDone
-]
-const pickedExample = examples[(Math.floor(4 * Math.random()))]
+  status: "done",
+  data: { "evil-secrets": "..." },
+};
+const examples = [exampleInit, exampleInflight, exampleError, exampleDone];
+const pickedExample = examples[Math.floor(4 * Math.random())];
 
-
-const asyncOperation = (params: ParamsValue): Promise<DataValue> => {
-
-  return new Promise((resolve, reject) => {
-    const r = Math.random()
-    const time = r * 1000
+const asyncOperation = (params: ParamsValue): Promise<DataValue> =>
+  new Promise((resolve, reject) => {
+    const r = Math.random();
+    const time = r * 1000;
 
     setTimeout(() => {
       if (r < 0.8) {
-        resolve({ value: `success! ${params.foo} ${time}` })
+        resolve({ value: `success! ${params.foo} ${time}` });
       }
-      reject(new Error('an error was thrown'))
-    }, time)
-  })
-}
+      reject(new Error("an error was thrown"));
+    }, time);
+  });
 
-const asyncableView = (state: NaiveAsyncState<DataValue, ParamsValue>, call: (params: ParamsValue) => void) => (<div>
-  <h2>status: {state.status}</h2>
-  <h2>params: {JSON.stringify(state.params)}</h2>
-  <h2>error: {state.error}</h2>
-  <h2>data: {JSON.stringify(state.data)}</h2>
-  <button onClick={() => call({ foo: 'foo' })}>
-    <p>foo</p>
-  </button>
-  <button onClick={() => call({ foo: 'bar' })}>
-    <p>bar</p>
-  </button>
-  <button onClick={() => call({ foo: 'baz' })}>
-    <p>baz</p>
-  </button>
-</div>)
+const asyncableView = (
+  state: NaiveAsyncState<DataValue, ParamsValue>,
+  call: (params: ParamsValue) => void
+) => (
+  <div>
+    <h2>status: {state.status}</h2>
+    <h2>params: {JSON.stringify(state.params)}</h2>
+    <h2>error: {state.error}</h2>
+    <h2>data: {JSON.stringify(state.data)}</h2>
+    <button onClick={() => call({ foo: "foo" })}>
+      <p>foo</p>
+    </button>
+    <button onClick={() => call({ foo: "bar" })}>
+      <p>bar</p>
+    </button>
+    <button onClick={() => call({ foo: "baz" })}>
+      <p>baz</p>
+    </button>
+  </div>
+);
 
-const lifecycleflowimage = "https://naiveasync.untra.io/images/naiveasync-flow.png"
+const lifecycleflowimage =
+  "https://naiveasync.untra.io/images/naiveasync-flow.png";
 
-const store = createdConnectedStore()
+const store = createConnectedStore();
 
 export default class Home extends React.Component<{}> {
-
   public render() {
-    return (<Provider store={store}>
-      <div className="page-content">
-        <div className="wrapper">
-          <h1><span role="img" aria-label="Bento">🔁</span> NaiveAsync</h1>
-          <h2>an opinionated and painless <a href="https://reactjs.org/">React</a> n <a href="https://redux.js.org/">Redux</a> promise wrapper</h2>
-          <h3>
-            v{version} -{" "}
-            <Link to="/test">Tests</Link>-{" "}
-            <a href="https://github.com/untra/naiveasync">Github</a> -{" "}
-            <a href="https://www.npmjs.com/package/@untra/naiveasync">NPM</a> -{" "}
-            <a href="https://dashboard.cypress.io/#/projects/wrytfx/runs">Cypress</a>
-          </h3>
-          <NaiveAsync id="asyncOp" operation={asyncOperation}>{asyncableView}</NaiveAsync>
-          <p>NaiveAsync is a React Component that wraps a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</a> and exposes an abstraction to invoke the promise and access it with a straightforward abstraction.</p>
-          <p>Child Components rendered in a NaiveAsync component have access to a <code>state</code> and a <code>call</code> function.</p>
-          <p>NaiveAsync takes three arguments:</p>
-          <ul>
-            <li><strong>operation:</strong><code>{`(params) => Promise`}</code> the operation takes in params and returns a promise</li>
-            <li><strong>id:</strong><code>{`string`}</code> optional string identifier under which the component redux state is stored. If not provided, it will use the function name.</li>
-            <li><strong>autoParams:</strong><code>{`Params`}</code> optional params object that, if provided, will be used to invoke the operation on component mount.</li>
-          </ul>
-          <Highlight className="tsx">{
-            `// react-app-async.tsx
+    return (
+      <Provider store={store}>
+        <div className="page-content">
+          <div className="wrapper">
+            <h1>
+              <span role="img" aria-label="Bento">
+                🔁
+              </span>{" "}
+              NaiveAsync
+            </h1>
+            <h2>
+              an opinionated and painless{" "}
+              <a href="https://reactjs.org/">React</a> n{" "}
+              <a href="https://redux.js.org/">Redux</a> promise wrapper
+            </h2>
+            <h3>
+              v{version} - <Link to="/test">Tests</Link>-{" "}
+              <a href="https://github.com/untra/naiveasync">Github</a> -{" "}
+              <a href="https://www.npmjs.com/package/@untra/naiveasync">NPM</a>{" "}
+              - <a href="https://naiveasync.untra.io/docs">Docs</a>
+            </h3>
+            <NaiveAsync id="asyncOp" operation={asyncOperation}>
+              {asyncableView}
+            </NaiveAsync>
+            <p>
+              NaiveAsync is a React Component that wraps a{" "}
+              <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">
+                promise
+              </a>{" "}
+              and exposes an abstraction to invoke the promise and access it
+              with a straightforward abstraction.
+            </p>
+            <p>
+              Child Components rendered in a NaiveAsync component have access to
+              a <code>state</code> and a <code>call</code> function.
+            </p>
+            <p>NaiveAsync takes three arguments:</p>
+            <ul>
+              <li>
+                <strong>operation:</strong>
+                <code>{`(params) => Promise`}</code> the operation takes in
+                params and returns a promise
+              </li>
+              <li>
+                <strong>id:</strong>
+                <code>{`string`}</code> optional string identifier under which
+                the component redux state is stored. If not provided, it will
+                use the function name.
+              </li>
+              <li>
+                <strong>autoParams:</strong>
+                <code>{`Params`}</code> optional params object that, if
+                provided, will be used to invoke the operation on component
+                mount.
+              </li>
+            </ul>
+            <Highlight className="tsx">
+              {`// react-app-async.tsx
 import React from "react";
 import { NaiveAsync } from "@untra/naiveasync";
 // NaiveAsync builds its own standard set of reducers and redux store
 // or perhaps written more terseley
 <NaiveAsync id="asyncOp" operation={asyncoperation}>{ asyncableView }</NaiveAsync>
 `}
-          </Highlight>
+            </Highlight>
 
-          <h2>naiveAsyncLifecycle(asyncOperation, id)</h2>
-          <img alt={"the naiveasync lifecycle"} src={lifecycleflowimage} />
-          <p>the core of the async lifecycle management comes from <code>{`naiveAsyncLifecycle`}</code>.
-          This is available as its own function and can be used for fine-grained control in react components.</p>
-          <code>{`const asyncLifecycle : AsyncLifecycle<Data,Params> = naiveAsyncLifecycle(function asyncoperation(params : Params) => {
+            <h2>naiveAsyncLifecycle(asyncOperation, id)</h2>
+            <img alt={"the naiveasync lifecycle"} src={lifecycleflowimage} />
+            <p>
+              the core of the async lifecycle management comes from{" "}
+              <code>{`naiveAsyncLifecycle`}</code>. This is available as its own
+              function and can be used for fine-grained control in react
+              components.
+            </p>
+            <code>{`const asyncLifecycle : AsyncLifecycle<Data,Params> = naiveAsyncLifecycle(function asyncoperation(params : Params) => {
             const data : Data = {};
             return data;
           })`}</code>
 
-          <p>the <code><i>{`asyncLifecycle<Data,Params>`}</i></code> object exposes the following:</p>
-          <ul>
-            <li><code><strong>id : string</strong></code> the provided id used as the unique state identifer for the <code>selector</code> to identify the <code>AsyncState</code> in the redux store. Its optional; if not provided, the <code>Operation.name</code> is used.</li>
-            <li><code><strong>operation : AsyncOperation</strong></code> the provided function, </li>
-            <li><code><strong>selector(state : ReduxState) : AsyncState</strong></code> this is a redux state selector against the redux state, for use in <code>mapStateToProps</code>. Returns the `AsyncState` instance owned by this manager.</li>
-            <li><code><strong>.call(params : Params)</strong></code> Action creator that triggers the associated <code>AsyncOperation</code> when dispatched, passing <code>params</code> into the operation. Resets its state when called again.</li>
-            <li><code><strong>.sync({})</strong></code> Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last employed params if none are provided. Does not reset data or error states, making it useful for polling / repeated operations.</li>
-            <li><code><strong>.reset({})</strong></code> Action dispatched internally when the associated `AsyncOperation` is reset to it's initial State.</li>
-            <li><code><strong>.data(data : Data)</strong></code>Action dispatched internally when the associated `AsyncOperation` emits data.</li>
-            <li><code><strong>.error(error : string)</strong></code>Action dispatched internally when the associated `AsyncOperation` emits an error (rejects) or throws an exception. The error will to be coerced to a string.</li>
-            <li>and finally <code><strong>.destroy({})</strong></code> which removes the <code>AsyncState</code> instance owned by this lifecycle from the redux state tree. <code>AsyncState</code> objects will remain in the state tree until they are destroyed, even if they are no longer being used by their components on the dom. This can become a memory leak if left unchecked. For React components, a good practice is to dispatch the <code>.destroy({})</code> action in the component's <code>componentWillUnmount</code> method, or with a <code>useEffect</code> cleanup.</li>
-          </ul>
-          <p></p>
-          <Highlight className="tsx">{
-            `// react-app-async.tsx
+            <p>
+              the{" "}
+              <code>
+                <i>{`asyncLifecycle<Data,Params>`}</i>
+              </code>{" "}
+              object exposes the following:
+            </p>
+            <ul>
+              <li>
+                <code>
+                  <strong>id : string</strong>
+                </code>{" "}
+                the provided id used as the unique state identifer for the{" "}
+                <code>selector</code> to identify the <code>AsyncState</code> in
+                the redux store. Its optional; if not provided, the{" "}
+                <code>Operation.name</code> is used.
+              </li>
+              <li>
+                <code>
+                  <strong>operation : AsyncOperation</strong>
+                </code>{" "}
+                the provided function,{" "}
+              </li>
+              <li>
+                <code>
+                  <strong>selector(state : ReduxState) : AsyncState</strong>
+                </code>{" "}
+                this is a redux state selector against the redux state, for use
+                in <code>mapStateToProps</code>. Returns the `AsyncState`
+                instance owned by this manager.
+              </li>
+              <li>
+                <code>
+                  <strong>.call(params : Params)</strong>
+                </code>{" "}
+                Action creator that triggers the associated{" "}
+                <code>AsyncOperation</code> when dispatched, passing{" "}
+                <code>params</code> into the operation. Resets its state when
+                called again.
+              </li>
+              <li>
+                <code>
+                  <strong>.sync({})</strong>
+                </code>{" "}
+                Action creator that triggers the associated `AsyncOperation`
+                when dispatched, reusing the last employed params if none are
+                provided. Does not reset data or error states, making it useful
+                for polling / repeated operations.
+              </li>
+              <li>
+                <code>
+                  <strong>.reset({})</strong>
+                </code>{" "}
+                Action dispatched internally when the associated
+                `AsyncOperation` is reset to it's initial State.
+              </li>
+              <li>
+                <code>
+                  <strong>.data(data : Data)</strong>
+                </code>
+                Action dispatched internally when the associated
+                `AsyncOperation` emits data.
+              </li>
+              <li>
+                <code>
+                  <strong>.error(error : string)</strong>
+                </code>
+                Action dispatched internally when the associated
+                `AsyncOperation` emits an error (rejects) or throws an
+                exception. The error will to be coerced to a string.
+              </li>
+              <li>
+                and finally{" "}
+                <code>
+                  <strong>.destroy({})</strong>
+                </code>{" "}
+                which removes the <code>AsyncState</code> instance owned by this
+                lifecycle from the redux state tree. <code>AsyncState</code>{" "}
+                objects will remain in the state tree until they are destroyed,
+                even if they are no longer being used by their components on the
+                dom. This can become a memory leak if left unchecked. For React
+                components, a good practice is to dispatch the{" "}
+                <code>.destroy({})</code> action in the component's{" "}
+                <code>componentWillUnmount</code> method, or with a{" "}
+                <code>useEffect</code> cleanup.
+              </li>
+            </ul>
+            <p></p>
+            <Highlight className="tsx">
+              {`// react-app-async.tsx
 import React from "react";
 import { naiveAsyncLifecycle } from "@untra/naiveasync";
 // remember, the asyncOperation is a function that takes params and returns a Promise
@@ -155,9 +270,10 @@ const asyncLifecycle = naiveasyncLifecycle(asyncoperation, "ASYNC_OP_NAME")
   "data": ${JSON.stringify(pickedExample.data)},
 }
 `}
-          </Highlight>
+            </Highlight>
+          </div>
         </div>
-      </div>
-    </Provider>);
+      </Provider>
+    );
   }
 }
