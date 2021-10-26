@@ -108,10 +108,10 @@ const noop = () => Promise.resolve({});
  * @param {NaiveAsyncComponentProps<Data, Params>} props
  * @returns {React.ReactElement<NaiveAsyncComponentProps<Data, Params>>}
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function NaiveAsync<Data, Params extends {}>(
+
+export const NaiveAsync = <Data, Params extends {}>(
   props: NaiveAsyncComponentProps<Data, Params>
-): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> {
+): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> => {
   const {
     operation = noop,
     children,
@@ -150,7 +150,7 @@ export function NaiveAsync<Data, Params extends {}>(
       )}
     </AsyncControllable>
   );
-}
+};
 
 /**
  * The Async tag accepts a lifecycle, and an optional desired initial state for the operation (without triggering the underlying async function)
@@ -160,10 +160,10 @@ export function NaiveAsync<Data, Params extends {}>(
  * @param {AsyncComponentProps<Data, Params>} props
  * @returns {React.ReactElement<AsyncComponentProps<Data, Params>>}
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function Async<Data, Params extends {}>(
+
+export const Async = <Data, Params extends {}>(
   props: AsyncComponentProps<Data, Params>
-): React.ReactElement<AsyncComponentProps<Data, Params>> {
+): React.ReactElement<AsyncComponentProps<Data, Params>> => {
   const { children, lifecycle, initialState } = props;
   const [intervalTickle, setIntervalTickle] = useState(0);
   const [state, setState] = useState({
@@ -225,4 +225,4 @@ export function Async<Data, Params extends {}>(
       }}
     </Controllable>
   );
-}
+};

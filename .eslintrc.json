@@ -240,7 +240,6 @@
     "operator-linebreak": "off",
     "padded-blocks": "off",
     "prefer-arrow-callback": "off",
-    "prefer-arrow/prefer-arrow-functions": "error",
     "prefer-const": "error",
     "prefer-promise-reject-errors": "error",
     "prefer-object-spread": "error",
