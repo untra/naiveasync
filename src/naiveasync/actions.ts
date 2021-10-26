@@ -78,14 +78,14 @@ export const isAsyncAction = (action: AnyAction): action is AsyncAction<any> =>
 const asyncActionMatchesPhase = (
   action: AsyncAction<any>,
   phase?: AsyncPhase
-) => !!(!phase || action[naiveAsyncEmoji].phase === phase);
+): boolean => !!(!phase || action[naiveAsyncEmoji].phase === phase);
 
 const asyncActionMatchesOperation = (
   action: AsyncAction<any>,
   operation?: NaiveAsyncFunction<any, any>
-) =>
+): boolean =>
   !operation ||
-  (operation.name && operation.name === action[naiveAsyncEmoji].name);
+  !!(operation.name && operation.name === action[naiveAsyncEmoji].name);
 
 /**
  * an action matcher typeguard for a given operation and phase
@@ -123,7 +123,6 @@ export function asyncActionMatcher<Data, Params>(
   operation?: NaiveAsyncFunction<Data, Params>,
   phase?: AsyncPhase
 ): (action: AnyAction) => action is AsyncAction<Params>;
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function asyncActionMatcher<Data, Params>(
   operation?: NaiveAsyncFunction<Data, Params>,
   phase?: AsyncPhase

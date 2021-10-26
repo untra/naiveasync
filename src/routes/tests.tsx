@@ -78,7 +78,6 @@ const thisGithubPage =
 // While you're here you may also want to check out that cypress page:
 const thatCypressPage = "https://dashboard.cypress.io/#/projects/wrytfx/runs";
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 const namedFunction = function namedFunction() {
   return slowResolve(true);
 };

@@ -459,7 +459,10 @@ export const asyncLifecycle = <Data, Params extends {}>(
     throttle: (throttle: number) => {
       const thisMeta = metaCache.get(id);
       const meta = { ...thisMeta, ...{ throttle } };
-      const operation = lodashThrottle(lifecycle.operation, throttle);
+      const operation = lodashThrottle(
+        lifecycle.operation,
+        throttle
+      ) as AsyncFunction<any, any>;
       const updatedLifecycle = { ...lifecycle, operation };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       cache.set(id, updatedLifecycle);
@@ -471,7 +474,7 @@ export const asyncLifecycle = <Data, Params extends {}>(
       const operation = lodashDebounce(lifecycle.operation, debounce, {
         leading: true,
         trailing: true,
-      });
+      }) as AsyncFunction<any, any>;
       const updatedLifecycle = { ...lifecycle, operation };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       cache.set(id, updatedLifecycle);
