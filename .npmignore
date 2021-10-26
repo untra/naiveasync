@@ -27,8 +27,15 @@ dist/src/content/
 dist/src/routes/
 dist/src/index.js
 dist/src/index.d.ts
+dist/index.html
+dist/src/**/*.test.*
 
 # not this one
 # !dist/src/naiveasync
 biodome.sh
 buildspec.yml
+
+## ignore these build tools
+prettierrc.*
+babel.config.*
+CNAME
