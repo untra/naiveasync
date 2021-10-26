@@ -1,0 +1,122 @@
+<!DOCTYPE html><html class="default no-js"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>NaiveAsync</title><meta name="description" content="Documentation for NaiveAsync"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script async src="assets/search.js" id="search-script"></script></head><body><script>document.body.classList.add(localStorage.getItem("tsd-theme") || "os")</script><header><div class="tsd-page-toolbar"><div class="container"><div class="table-wrap"><div class="table-cell" id="tsd-search" data-base="."><div class="field"><label for="tsd-search-field" class="tsd-widget search no-caption">Search</label><input type="text" id="tsd-search-field"/></div><ul class="results"><li class="state loading">Preparing search index...</li><li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">NaiveAsync</a></div><div class="table-cell" id="tsd-widgets"><div id="tsd-filter"><a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a><div class="tsd-filter-group"><div class="tsd-select" id="tsd-filter-visibility"><span class="tsd-select-label">All</span><ul class="tsd-select-list"><li data-value="public">Public</li><li data-value="protected">Public/Protected</li><li data-value="private" class="selected">All</li></ul></div> <input type="checkbox" id="tsd-filter-inherited" checked/><label class="tsd-widget" for="tsd-filter-inherited">Inherited</label></div></div><a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a></div></div></div></div><div class="tsd-page-title"><div class="container"><h1>NaiveAsync</h1></div></div></header><div class="container container-main"><div class="row"><div class="col-8 col-content"><div class="tsd-panel tsd-typography">
+<a href="#🔁-naiveasync" id="🔁-naiveasync" style="color: inherit; text-decoration: none;">
+  <h1>🔁 NaiveAsync</h1>
+</a>
+
+<a href="#an-opinionated-and-painless-react-n-redux-promise-wrapper" id="an-opinionated-and-painless-react-n-redux-promise-wrapper" style="color: inherit; text-decoration: none;">
+  <h2>an opinionated and painless <a href="https://reactjs.org/">React</a> n <a href="https://redux.js.org/">Redux</a> promise wrapper</h2>
+</a>
+<ul>
+<li><a href="https://naiveasync.untra.io/">homepage</a></li>
+<li><a href="https://naiveasync.untra.io/#/test">tests</a></li>
+<li><a href="https://www.npmjs.com/package/@untra/naiveasync">npm package</a></li>
+</ul>
+<blockquote>
+<p><em>Simultaneously master redux and never have to write it ever again</em></p>
+</blockquote>
+<p><strong>NaiveAsync</strong> is a variety of utilities for cleanly turning promises into state for react components, managed in a redux store. It is a straightforward React functional module that can be used to quickly turn an asynchronous function into a managed and cached lifecycle object that can represent components in various states. </p>
+<p>Real quick: an <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function">async function</a> can be specified with the <code>async function</code> keyword, or can be understand to be a <em>function that returns a promise</em> or <code>() =&gt; Promise</code>. Typescript makes this abundantly clear.</p>
+<p>NaiveAsync will autogenerate your redux selectors, dispatch operations, and provide a managed lifecycle object you can control around your async operations for use in react components.</p>
+<p>The AsyncLifecycle will turn an async function into a state object to render child components with, redux action creators, selectors, and reducers to manage the promise state in redux, with a bunch of other tools for combining operation wiring. It even provides test shapes and mock interfaces</p>
+<p><em>basically its a swiss army knife that does all your redux for you and makes your storybook better</em></p>
+
+<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
+  <h2>Usage</h2>
+</a>
+<p>NaiveAsync is a variety of utilities. At its core are two main tools though:</p>
+<ul>
+<li><code>asyncLifecycle</code> - which turns a () =&gt; Promise into the swiss army knife of managed redux juicy goodness</li>
+<li><code>&lt;NaiveAsync&gt;</code> - all that as an exotic react component</li>
+</ul>
+
+<a href="#asynclifecycle" id="asynclifecycle" style="color: inherit; text-decoration: none;">
+  <h3><code>asyncLifecycle</code></h3>
+</a>
+<p>This function takes in an async function and an identifier that is used in the redux store to namespace your promise state. As the promise executes, the state of the promise is recorded in a static object that can be selected efficiently:</p>
+<p><img src="/public/images/naiveasync-flow.png" alt=""></p>
+<p>If you&#39;re interested in what it does, it&#39;ll be easier just to <a href="https://github.com/untra/naiveasync/blob/master/src/naiveasync/controllable.tsx#L33">point you to the code</a>.</p>
+
+<a href="#naiveasync" id="naiveasync" style="color: inherit; text-decoration: none;">
+  <h3><code>NaiveAsync</code></h3>
+</a>
+<pre><code class="language-tsx"><span class="hl-0">import</span><span class="hl-1"> </span><span class="hl-2">*</span><span class="hl-1"> </span><span class="hl-0">as</span><span class="hl-1"> </span><span class="hl-3">ReactDOM</span><span class="hl-1"> </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-4">&quot;react-dom&quot;</span><span class="hl-1">;</span><br/><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-3">Provider</span><span class="hl-1"> } </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-4">&quot;redux&quot;</span><span class="hl-1">;</span><br/><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-3">applyMiddleware</span><span class="hl-1">, </span><span class="hl-3">createStore</span><span class="hl-1"> } </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-4">&quot;redux&quot;</span><span class="hl-1">;</span><br/><span class="hl-0">import</span><span class="hl-1"> { </span><span class="hl-3">NaiveAsync</span><span class="hl-1">, </span><span class="hl-3">naiveAsyncMiddleware</span><span class="hl-1">, </span><span class="hl-3">naiveAsyncReducer</span><span class="hl-1"> } </span><span class="hl-0">from</span><span class="hl-1"> </span><span class="hl-4">&#39;@untra/naiveasync&#39;</span><br/><span class="hl-5">// the naiveAsyncReducer maintains the redux state</span><br/><span class="hl-5">// the naiveAsyncMiddleware employs rxjs observables to fulfill promises</span><br/><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-6">store</span><span class="hl-1"> = </span><span class="hl-7">createStore</span><span class="hl-1">(</span><span class="hl-3">naiveAsyncReducer</span><span class="hl-1">, </span><span class="hl-7">applyMiddleware</span><span class="hl-1">(</span><span class="hl-3">naiveAsyncMiddleware</span><span class="hl-1">))</span><br/><br/><span class="hl-5">// an async function is a function that returns a promise.</span><br/><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-7">asyncOperation</span><span class="hl-1"> = (</span><span class="hl-3">val</span><span class="hl-1">: </span><span class="hl-8">number</span><span class="hl-1">) </span><span class="hl-2">=&gt;</span><span class="hl-1"> </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-8">Promise</span><span class="hl-1">((</span><span class="hl-3">resolve</span><span class="hl-1">) </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-6">timeMS</span><span class="hl-1"> = </span><span class="hl-8">Math</span><span class="hl-1">.</span><span class="hl-7">random</span><span class="hl-1">() * </span><span class="hl-9">4000</span><br/><span class="hl-1">  </span><span class="hl-7">setTimeout</span><span class="hl-1">(() </span><span class="hl-2">=&gt;</span><span class="hl-1"> </span><span class="hl-7">resolve</span><span class="hl-1">(</span><span class="hl-3">val</span><span class="hl-1">), </span><span class="hl-3">timeMS</span><span class="hl-1">)</span><br/><span class="hl-1">})</span><br/><br/><span class="hl-5">// supply the created store into your redux provider</span><br/><span class="hl-5">// use the &lt;NaiveAsync&gt;(state, call) =&gt; react component and callback</span><br/><span class="hl-5">// to render your asynchronous state with ease and splendor</span><br/><span class="hl-3">ReactDOM</span><span class="hl-1">.</span><span class="hl-7">render</span><span class="hl-1">(</span><br/><span class="hl-10">&lt;</span><span class="hl-8">Provider</span><span class="hl-1"> </span><span class="hl-11">store</span><span class="hl-1">=</span><span class="hl-2">{</span><span class="hl-3">store</span><span class="hl-2">}</span><span class="hl-10">&gt;</span><br/><span class="hl-1">    </span><span class="hl-10">&lt;</span><span class="hl-8">NaiveAsync</span><span class="hl-1"> </span><span class="hl-11">operation</span><span class="hl-1">=</span><span class="hl-2">{</span><span class="hl-3">asyncOperation</span><span class="hl-2">}</span><span class="hl-1"> </span><span class="hl-11">id</span><span class="hl-1">=</span><span class="hl-2">{</span><span class="hl-4">&quot;example&quot;</span><span class="hl-2">}</span><span class="hl-10">&gt;</span><span class="hl-1">(state, call) =&gt; (</span><br/><span class="hl-1">        state.data ? </span><span class="hl-10">&lt;</span><span class="hl-12">h2</span><span class="hl-10">&gt;</span><span class="hl-2">{</span><span class="hl-3">state</span><span class="hl-13">.</span><span class="hl-3">data</span><span class="hl-2">}</span><span class="hl-10">&lt;/</span><span class="hl-12">h2</span><span class="hl-10">&gt;</span><span class="hl-1"> :</span><br/><span class="hl-1">        state.status === &#39;inflight&#39; ? </span><span class="hl-10">&lt;</span><span class="hl-12">h2</span><span class="hl-10">&gt;</span><span class="hl-1">loading...</span><span class="hl-10">&lt;/</span><span class="hl-12">h2</span><span class="hl-10">&gt;</span><span class="hl-1"> :</span><br/><span class="hl-1">        </span><span class="hl-10">&lt;</span><span class="hl-12">button</span><span class="hl-1"> </span><span class="hl-11">onclick</span><span class="hl-1">=</span><span class="hl-2">{</span><span class="hl-7">call</span><span class="hl-13">()</span><span class="hl-2">}</span><span class="hl-10">&gt;</span><span class="hl-1">call</span><span class="hl-10">&lt;/</span><span class="hl-12">button</span><span class="hl-10">&gt;</span><br/><span class="hl-1">    )</span><br/><span class="hl-1">    </span><span class="hl-10">&lt;/</span><span class="hl-8">NaiveAsync</span><span class="hl-10">&gt;</span><br/><span class="hl-10">&lt;/</span><span class="hl-8">Provider</span><span class="hl-10">&gt;</span><br/><span class="hl-1">)</span><br/>
+</code></pre>
+
+<a href="#design" id="design" style="color: inherit; text-decoration: none;">
+  <h2>Design</h2>
+</a>
+<p>NaiveAsync uses react <a href="https://reactjs.org/docs/hooks-intro.html">16.8.5 hooks</a> to create an asynchronous experience you could take home to your mother.</p>
+<p>Promises are a powerful tool in javascript, and a wrapper to abstract its most common uses into a simple react component that <em>just works</em> is the goal here.</p>
+<p>Some Terminology:</p>
+<ul>
+<li>an <code>AsyncOperation&lt;D,P&gt;</code> is a function that takes <code>(P)</code> and returns a <code>Promise&lt;D&gt;</code></li>
+<li>an <code>AsyncState</code> is an object of type<pre><code class="language-ts"><span class="hl-1">{</span><br/><span class="hl-14">status</span><span class="hl-1">: </span><span class="hl-4">&#39;&#39;</span><span class="hl-1"> | </span><span class="hl-4">&#39;inflight&#39;</span><span class="hl-1"> | </span><span class="hl-4">&#39;error&#39;</span><span class="hl-1"> | </span><span class="hl-4">&#39;done&#39;</span><br/><span class="hl-14">error</span><span class="hl-1">: </span><span class="hl-3">string</span><br/><span class="hl-14">params</span><span class="hl-1">: &lt;</span><span class="hl-8">P</span><span class="hl-1"> </span><span class="hl-2">extends</span><span class="hl-1"> {}&gt;</span><br/><span class="hl-8">data</span><span class="hl-1">: </span><span class="hl-8">null</span><span class="hl-1">|</span><span class="hl-8">D</span><br/><span class="hl-1">}</span>
+</code></pre>
+</li>
+</ul>
+
+<a href="#recommended-usage-with-rest-apis" id="recommended-usage-with-rest-apis" style="color: inherit; text-decoration: none;">
+  <h2>Recommended usage with REST APIs</h2>
+</a>
+<ul>
+<li>use <code>.OnData</code> to dispatch a .sync indexing calls on create, update and destory </li>
+<li>use <code>.debounce</code> on search calls, to ensure that the underlying operation is not repeated</li>
+<li>use a 2 - 6 seconds <code>.subscribe</code> for live dashboards and gentle api usage.</li>
+<li>use a (very low &gt; 1000 ms) <code>.throttle</code> on index calls, so multiple resources that need it but request slow can receive it on the same batch</li>
+<li>sensitive calls that should not throw an error (eg. login / auth) can use <code>.onError</code> to dispatch emergency logout</li>
+<li>calls to the api whose response is not likely to change can use <code>.memoize(true)</code></li>
+<li>testing utilities pair nicely with storybook</li>
+<li>best served with typescript</li>
+</ul>
+
+<a href="#recommended-usage-with-testing" id="recommended-usage-with-testing" style="color: inherit; text-decoration: none;">
+  <h2>Recommended usage with Testing</h2>
+</a>
+<ul>
+<li>use lifecycle <code>.meta()</code> to get the AsyncMeta, a snapshot printout of the metacache for this lifecycle, useful in testing</li>
+<li>use <code>mockInitialAsyncState, mockInflightAsyncState, mockErrorAsyncState, mockDoneAsyncState</code> to represent async states in mocks and storybook scenes</li>
+<li>dispatch the lifecycle <code>.assign(state)</code> action to assign a specific state to the lifecycle. this is typically frowned upon in redux philosophy, but is really helpful in mocking state</li>
+<li>when testing within async functions, use <code>await lifecycle.awaitResolve()</code> to pause test execution until the async operation next resolves. simmilarly use <code>await lifecycle.awaitReject()</code> to test rejection.</li>
+</ul>
+
+<a href="#100-feature-wishlist" id="100-feature-wishlist" style="color: inherit; text-decoration: none;">
+  <h2>1.0.0 feature wishlist:</h2>
+</a>
+<ul>
+<li><del>swap placement of P and D, rename the dang thing</del></li>
+<li><del>rename the <code>AsyncState</code> type</del></li>
+<li><del><code>.timeout()</code> will stop the async function and error after a specified timeout</del></li>
+<li><code>.subscribe()</code> retries the request on a given interval</li>
+<li><del><code>.onData((data? : D, dispatch? : Dispatch&lt;AnyAction&gt;) =&gt; void)</code> data callback with dispatch function</del></li>
+<li><del><code>.onError((error? : string, dispatch? : Dispatch&lt;AnyAction&gt;) =&gt; void)</code> error callback with dispatch</del></li>
+<li><del><code>.memoized(enabled? : boolean = true)</code> keeps a record of inputs and their outputs, and returns the cached results</del></li>
+<li><code>.exponentialErrorRetry(enabled? : boolean = true)</code> if the request errors, retries the request if it fails a few seconds from now, following an exponential backoff strategy</li>
+<li><del>lifecycle <code>.meta</code> display meta information about the selector eg:</del><ul>
+<li><del>consecutive data count</del></li>
+<li><del>consecutive error count</del></li>
+<li><del>time inflight : number</del></li>
+<li><del>timeout number</del></li>
+<li><del>debounce number</del></li>
+<li><del>throttle number</del></li>
+<li><del>error retry bool</del></li>
+<li><del>data retry bool</del></li>
+</ul>
+</li>
+<li>test support for immutablejs</li>
+<li>test support as observable / generator</li>
+</ul>
+
+<a href="#simmilar-but-worse" id="simmilar-but-worse" style="color: inherit; text-decoration: none;">
+  <h2>Simmilar but worse</h2>
+</a>
+<p>To achieve the simmilar goals as what react + redux + naiveasync can provide, heres a starting point for your other framework or whatever</p>
+<ul>
+<li><a href="https://stackoverflow.com/a/24091953/1435958">angular</a></li>
+<li><a href="https://svelte-recipes.netlify.app/components/">svelte</a></li>
+</ul>
+
+<a href="#copyright" id="copyright" style="color: inherit; text-decoration: none;">
+  <h2>Copyright</h2>
+</a>
+<p>Copyright (c) Samuel Volin 2021. License: MIT</p>
+</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Exports</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul><li class="tsd-kind-interface tsd-has-type-parameter"><a href="interfaces/AsyncLifecycle.html" class="tsd-kind-icon">Async<wbr/>Lifecycle</a></li><li class="tsd-kind-interface"><a href="interfaces/NaiveAsyncSlice.html" class="tsd-kind-icon">Naive<wbr/>Async<wbr/>Slice</a></li><li class="tsd-kind-type-alias tsd-has-type-parameter"><a href="modules.html#AsyncState" class="tsd-kind-icon">Async<wbr/>State</a></li><li class="tsd-kind-type-alias tsd-has-type-parameter"><a href="modules.html#NaiveAsyncFunction" class="tsd-kind-icon">Naive<wbr/>Async<wbr/>Function</a></li><li class="tsd-kind-type-alias tsd-has-type-parameter"><a href="modules.html#NaiveAsyncState" class="tsd-kind-icon">Naive<wbr/>Async<wbr/>State</a></li><li class="tsd-kind-variable"><a href="modules.html#naiveAsyncEmoji" class="tsd-kind-icon">naive<wbr/>Async<wbr/>Emoji</a></li><li class="tsd-kind-variable"><a href="modules.html#naiveAsyncInitialSlice" class="tsd-kind-icon">naive<wbr/>Async<wbr/>Initial<wbr/>Slice</a></li><li class="tsd-kind-variable"><a href="modules.html#naiveAsyncInitialState" class="tsd-kind-icon">naive<wbr/>Async<wbr/>Initial<wbr/>State</a></li><li class="tsd-kind-function tsd-has-type-parameter"><a href="modules.html#Async" class="tsd-kind-icon">Async</a></li><li class="tsd-kind-function tsd-has-type-parameter"><a href="modules.html#NaiveAsync" class="tsd-kind-icon">Naive<wbr/>Async</a></li><li class="tsd-kind-function tsd-has-type-parameter"><a href="modules.html#asyncLifecycle" class="tsd-kind-icon">async<wbr/>Lifecycle</a></li><li class="tsd-kind-function"><a href="modules.html#findLifecycleById" class="tsd-kind-icon">find<wbr/>Lifecycle<wbr/>By<wbr/>Id</a></li><li class="tsd-kind-function tsd-has-type-parameter"><a href="modules.html#mockDoneAsyncState" class="tsd-kind-icon">mock<wbr/>Done<wbr/>Async<wbr/>State</a></li><li class="tsd-kind-function"><a href="modules.html#mockErrorAsyncState" class="tsd-kind-icon">mock<wbr/>Error<wbr/>Async<wbr/>State</a></li><li class="tsd-kind-function tsd-has-type-parameter"><a href="modules.html#mockInflightAsyncState" class="tsd-kind-icon">mock<wbr/>Inflight<wbr/>Async<wbr/>State</a></li><li class="tsd-kind-function"><a href="modules.html#mockInitialAsyncState" class="tsd-kind-icon">mock<wbr/>Initial<wbr/>Async<wbr/>State</a></li><li class="tsd-kind-function tsd-has-type-parameter"><a href="modules.html#mockedAsyncStates" class="tsd-kind-icon">mocked<wbr/>Async<wbr/>States</a></li><li class="tsd-kind-function tsd-has-type-parameter"><a href="modules.html#naiveAsyncLifecycle" class="tsd-kind-icon">naive<wbr/>Async<wbr/>Lifecycle</a></li><li class="tsd-kind-function"><a href="modules.html#naiveAsyncMiddleware" class="tsd-kind-icon">naive<wbr/>Async<wbr/>Middleware</a></li><li class="tsd-kind-function"><a href="modules.html#naiveAsyncReducer" class="tsd-kind-icon">naive<wbr/>Async<wbr/>Reducer</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>
