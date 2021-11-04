@@ -18,7 +18,15 @@
     "moduleResolution": "node",
     "isolatedModules": true,
     "allowJs": true,
-    "noEmit": true
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitAny": true,
+    "importHelpers": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "noUnusedLocals": true
   },
   "include": [
     "src/*"

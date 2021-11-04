@@ -72,7 +72,7 @@ Promises are a powerful tool in javascript, and a wrapper to abstract its most c
 
 Some Terminology:
 * an `AsyncOperation<D,P>` is a function that takes `(P)` and returns a `Promise<D>`
-* an `naiveasyncstate` is an object of type
+* an `AsyncState` is an object of type
 ```ts
 {
   status: '' | 'inflight' | 'error' | 'done'
@@ -81,13 +81,6 @@ Some Terminology:
   data: null|D
 }
 ```
-
-### Simmilar but worse
-
-to achieve the simmilar goals as what react + redux + naiveasync can provide, heres a starting point for your other framework or whatever
-
-- [angular](https://stackoverflow.com/a/24091953/1435958)
-- [svelte](https://svelte-recipes.netlify.app/components/)
 
 ## Recommended usage with REST APIs
 
@@ -102,9 +95,10 @@ to achieve the simmilar goals as what react + redux + naiveasync can provide, he
 
 ## Recommended usage with Testing
 
-* use `.meta()` to get a snapshot printout of the metacache for the lifecycle, useful in testing
+* use lifecycle `.meta()` to get the AsyncMeta, a snapshot printout of the metacache for this lifecycle, useful in testing
 * use `mockInitialAsyncState, mockInflightAsyncState, mockErrorAsyncState, mockDoneAsyncState` to represent async states in mocks and storybook scenes
 * dispatch the lifecycle `.assign(state)` action to assign a specific state to the lifecycle. this is typically frowned upon in redux philosophy, but is really helpful in mocking state
+* when testing within async functions, use `await lifecycle.awaitResolve()` to pause test execution until the async operation next resolves. simmilarly use `await lifecycle.awaitReject()` to test rejection.
 
 ## 1.0.0 feature wishlist:
 
@@ -127,6 +121,13 @@ to achieve the simmilar goals as what react + redux + naiveasync can provide, he
   * ~~data retry bool~~
 * test support for immutablejs
 * test support as observable / generator
+
+## Simmilar but worse
+
+To achieve the simmilar goals as what react + redux + naiveasync can provide, heres a starting point for your other framework or whatever
+
+- [angular](https://stackoverflow.com/a/24091953/1435958)
+- [svelte](https://svelte-recipes.netlify.app/components/)
 
 ## Copyright
 Copyright (c) Samuel Volin 2021. License: MIT
