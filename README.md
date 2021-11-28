@@ -7,15 +7,38 @@
 
 > _Simultaneously master redux and never have to write it ever again_
 
-**NaiveAsync** is a variety of utilities for cleanly turning promises into state for react components, managed in a redux store. It is a straightforward React functional module that can be used to quickly turn an asynchronous function into a managed and cached lifecycle object that can represent components in various states. 
+**NaiveAsync** is a variety of utilities for cleanly turning promises into state for react components, managed in a redux store. At it's core is `AsyncLifecycle`. With an interface simmilar to [react-query](https://react-query.tanstack.com/). It is a straightforward Typescript functional module that can be used to quickly turn an asynchronous function into a managed and cached lifecycle object that can represent components in various states.
+
+```tsx
+const exampleLifecycle = asyncLifecycle('REDUX_ID', async (params: {}) => {
+  return new Promise((resolve) => {
+    const timeMS = Math.random() * 4000
+    setTimeout(() => resolve({
+      value: `${Math.random()}`,
+    }), timeMS);
+  });
+});
+```
 
 Real quick: an [async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function) can be specified with the `async function` keyword, or can be understand to be a _function that returns a promise_ or `() => Promise`. Typescript makes this abundantly clear.
 
-NaiveAsync will autogenerate your redux selectors, dispatch operations, and provide a managed lifecycle object you can control around your async operations for use in react components.
+AsyncLifecycle takes `(id: string, (params: Params) => Promise<Data>)` input and will autogenerate your redux selectors, dispatch operations, and provide a managed lifecycle object you can control around your async operations for use in react components.
+
+```tsx
+// get the state of the lifecycle
+const exampleState = useSelector(exampleLifecycle.selector);
+const dispatch = useDispatch();
+// call the lifecycle if not yet called
+useEffect(() => {
+  if (!exampleState.status) {
+    dispatch(exampleLifecycle.call());
+  }
+}, [exampleState.status])
+```
 
 The AsyncLifecycle will turn an async function into a state object to render child components with, redux action creators, selectors, and reducers to manage the promise state in redux, with a bunch of other tools for combining operation wiring. It even provides test shapes and mock interfaces
 
-_basically its a swiss army knife that does all your redux for you and makes your storybook better_
+_basically its a swiss army knife that does all your redux for you and makes your storybook better._
 
 ## Usage
 
@@ -36,7 +59,7 @@ If you're interested in what it does, it'll be easier just to [point you to the 
 ```tsx
 import * as ReactDOM from "react-dom";
 import { Provider } from "redux";
-import { applyMiddleware, createStore } from "redux";
+import { applyMiddleware, createStore, } from "redux";
 import { NaiveAsync, naiveAsyncMiddleware, naiveAsyncReducer } from '@untra/naiveasync'
 // the naiveAsyncReducer maintains the redux state
 // the naiveAsyncMiddleware employs rxjs observables to fulfill promises
@@ -127,6 +150,14 @@ to achieve the simmilar goals as what react + redux + naiveasync can provide, he
   * ~~data retry bool~~
 * test support for immutablejs
 * test support as observable / generator
+
+## Simmilar but worse
+
+To achieve the simmilar goals as what react + redux + naiveasync can provide, heres a starting point for your other framework or whatever. good luck.
+
+- [angular](https://stackoverflow.com/a/24091953/1435958)
+- [svelte](https://svelte-recipes.netlify.app/components/)
+- [rtk-query](https://redux-toolkit.js.org/rtk-query/overview)
 
 ## Copyright
 Copyright (c) Samuel Volin 2021. License: MIT
