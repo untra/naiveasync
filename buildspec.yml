@@ -6,7 +6,7 @@ env:
 phases:
   install:
     runtime-versions:
-      nodejs: 10
+      nodejs: 14
     commands:
       - aws s3 cp s3://artifacts.${APP_ENV}.stackhawk.com/eagle-eyes/biodome.sh $(pwd)/biodome.sh
       - chmod +x $(pwd)/biodome.sh
