@@ -7,7 +7,6 @@
 
 > _Simultaneously master redux and never have to write it ever again_
 
-**NaiveAsync** is a variety of utilities for cleanly turning promises into state for react components, managed in a redux store. At it's core is `AsyncLifecycle`. With an interface simmilar to [react-query](https://react-query.tanstack.com/). It is a straightforward Typescript functional module that can be used to quickly turn an asynchronous function into a managed and cached lifecycle object that can represent components in various states.
 
 ```tsx
 const exampleLifecycle = asyncLifecycle('REDUX_ID', async (params: {}) => {
@@ -20,9 +19,7 @@ const exampleLifecycle = asyncLifecycle('REDUX_ID', async (params: {}) => {
 });
 ```
 
-Real quick: an [async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function) can be specified with the `async function` keyword, or can be understand to be a _function that returns a promise_ or `() => Promise`. Typescript makes this abundantly clear.
-
-AsyncLifecycle takes `(id: string, (params: Params) => Promise<Data>)` input and will autogenerate your redux selectors, dispatch operations, and provide a managed lifecycle object you can control around your async operations for use in react components.
+The AsyncLifecycle will turn an async function into a state object to render child components with, redux action creators, selectors, and reducers to manage the promise state in redux, with a bunch of other tools for combining operation wiring. It even provides test shapes and mock interfaces
 
 ```tsx
 // get the state of the lifecycle
