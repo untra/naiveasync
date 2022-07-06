@@ -472,7 +472,7 @@ export const asyncLifecycle = <Data, Params extends {}>(
       const thisMeta = metaCache.get(id);
       const meta = { ...thisMeta, ...{ debounce } };
       const operation = lodashDebounce(lifecycle.operation, debounce, {
-        leading: true,
+        leading: false,
         trailing: true,
       }) as AsyncFunction<any, any>;
       const updatedLifecycle = { ...lifecycle, operation };
