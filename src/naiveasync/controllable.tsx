@@ -472,12 +472,12 @@ export const asyncLifecycle = <Data, Params extends {}>(
       const thisMeta = metaCache.get(id);
       const meta = { ...thisMeta, ...{ debounce } };
       const operation = lodashDebounce(lifecycle.operation, debounce, {
-        leading: true,
+        leading: false,
         trailing: true,
       }) as AsyncFunction<any, any>;
       const updatedLifecycle = { ...lifecycle, operation };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      cache.set(id, updatedLifecycle as AsyncLifecycle<any, any>);
+      cache.set(id, updatedLifecycle);
       return updatedLifecycle;
     },
     retries: (retries: number, errRetryCb: ErrRetryCb = () => "noop") => {

@@ -155,4 +155,3 @@ To achieve the simmilar goals as what react + redux + naiveasync can provide, he
 
 ## Copyright
 Copyright (c) Samuel Volin 2021. License: MIT
-
