@@ -1,6 +1,6 @@
 {
   "name": "@stackhawk/naiveasync",
-  "version": "0.6.0",
+  "version": "0.5.2",
   "description": "An Opinionated and Painless React & Redux promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
@@ -54,7 +54,7 @@
   "peerDependencies": {
     "lodash.debounce": "^4.x.x",
     "lodash.throttle": "^4.x.x",
-    "react": "^18.x.x",
+    "react": "^16.x.x",
     "redux": "^4.x.x",
     "rxjs": "^6.x.x"
   },
