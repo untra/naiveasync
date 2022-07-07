@@ -53,7 +53,7 @@ const MemoizedComponent: React.FC<Props> = ({ state, select }) => {
   const status = `status: ${state.status}`;
   const error = `error: ${state.error}`;
   const params = `params: ${JSON.stringify(state.params)}`;
-  const assignonError = (onError?: OnError) => {
+  const assignonError = (onError?: OnError<never, IconParams>) => {
     if (onError) {
       setonErrorType(onError.name);
       onErrorLifecycle.onError(onError);
@@ -66,11 +66,15 @@ const MemoizedComponent: React.FC<Props> = ({ state, select }) => {
     // eslint-disable-next-line no-console
     console.error("onError received!");
   };
-  const cb: OnError = (error: string) => {
+  const cb: OnError<never, IconParams> = (error: string) => {
     // eslint-disable-next-line no-console
     console.error("an error was thrown", error);
   };
-  const dispatched = (error: string, dispatch: Dispatch<AnyAction>) => {
+  const dispatched = (
+    error: string,
+    params: IconParams,
+    dispatch: Dispatch<AnyAction>
+  ) => {
     // eslint-disable-next-line no-console
     console.error("very bad error!", error);
     // eslint-disable-next-line no-console

@@ -1,7 +1,7 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { Store } from "redux";
 import { asyncLifecycle } from ".";
-import { quickResolve } from "../utils/promise";
+import { quickReject, quickResolve } from "../utils/promise";
 import { createConnectedStore } from "../utils/store";
 import { naiveAsyncEmoji } from "./actions";
 import { v4 } from "uuid";
@@ -176,5 +176,34 @@ describe("lifecycle", () => {
     expect(asyncState.error).toEqual("");
     expect(asyncState.params).toEqual({ paramz });
     jest.resetAllMocks();
+  });
+
+  it(`should .onData and .onError with params to boot`, async () => {
+    const err = "mock err";
+    const dataz = { output: "success" };
+
+    const lcRejects = asyncLifecycle(v4(), async () =>
+      quickReject(new Error(err))
+    ).onError((data, params, dispatch) => {
+      // heck ya
+    });
+
+    const lcResolves = asyncLifecycle(v4(), async () =>
+      quickResolve(dataz)
+    ).onData((data, params, dispatch) => {
+      dispatch(lcRejects.sync({}));
+    });
+    //  dispatch resolves, which .onData dispatches rejects, which .onError stops
+    store.dispatch(lcResolves.sync({}));
+    await lcResolves.awaitResolve();
+    await lcRejects.awaitReject().catch(() => null);
+    const rejectsMeta = lcRejects.meta();
+    expect(rejectsMeta.errorCount).toBe(1);
+    expect(rejectsMeta.dataCount).toBe(0);
+    expect(rejectsMeta.onError).toBeTruthy();
+    const resolvesMeta = lcResolves.meta();
+    expect(resolvesMeta.dataCount).toBe(1);
+    expect(resolvesMeta.errorCount).toBe(0);
+    expect(resolvesMeta.onData).toBeTruthy();
   });
 });

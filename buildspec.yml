@@ -14,7 +14,7 @@ phases:
       - ./scripts/install.sh
   build:
     commands:
-      - ./scripts/build.sh
+      - npm run ci
   post_build:
     commands:
       - ./scripts/package.sh
