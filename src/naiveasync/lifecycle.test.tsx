@@ -1,7 +1,7 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { Store } from "redux";
 import { asyncLifecycle } from ".";
-import { mockRejectString, quickReject, quickResolve } from "../utils/promise";
+import { quickReject, quickResolve } from "../utils/promise";
 import { createConnectedStore } from "../utils/store";
 import { naiveAsyncEmoji } from "./actions";
 import { v4 } from "uuid";
@@ -183,7 +183,7 @@ describe("lifecycle", () => {
     const dataz = { output: "success" };
 
     const lcRejects = asyncLifecycle(v4(), async () =>
-      mockRejectString("mock", 20)
+      quickReject(new Error(err))
     ).onError((data, params, dispatch) => {
       // heck ya
     });
