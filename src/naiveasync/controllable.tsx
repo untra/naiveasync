@@ -290,11 +290,11 @@ const responseDispatchOnPhase = (
     };
     // onData
     if (phase === "data" && meta.onData) {
-      meta.onData(action.payload, meta.lastParams, dispatch);
+      meta.onData(action.payload, meta.lastParams || {}, dispatch);
     }
     // onError
     if (phase === "error" && meta.onError) {
-      meta.onError(action.payload, meta.lastParams, dispatch);
+      meta.onError(action.payload, meta.lastParams || {}, dispatch);
     }
     // onData
     if (phase === "data" && meta.awaitResolve) {
@@ -510,13 +510,12 @@ export const asyncLifecycle = <Data, Params extends {}>(
     },
     awaitReject: async () => {
       const thisMeta = metaCache.get(id);
-      let awaitResolve: (value: Data) => void = () => null;
       let awaitReject: (reason?: any) => void = () => null;
-      const awaitedPromise = new Promise<Data>((resolve, reject) => {
-        awaitResolve = resolve;
+      const mockData = {} as Data;
+      const awaitedPromise = new Promise<Data>((_resolve, reject) => {
         awaitReject = reject;
       });
-      const meta = { ...thisMeta, ...{ awaitResolve, awaitReject } };
+      const meta = { ...thisMeta, ...{ awaitReject } };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return awaitedPromise;
     },

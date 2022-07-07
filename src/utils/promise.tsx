@@ -13,6 +13,15 @@ export const mockReject = (err: Error, maxTime: number): Promise<never> =>
     setTimeout(() => reject(err), timeMS);
   });
 
+export const mockRejectString = (
+  err: string,
+  maxTime: number
+): Promise<never> =>
+  new Promise((resolve, reject) => {
+    const timeMS = Math.random() * maxTime;
+    setTimeout(() => reject(err), timeMS);
+  });
+
 export const slowResolve = <T extends unknown>(val: T): Promise<T> =>
   mockResolve(val, 4000);
 
