@@ -107,9 +107,13 @@ export interface AsyncLifecycle<Data, Params> {
   /** (still in development) Meta toggle to enable a millisecond (sync) repeat of the operation with its previously supplied params. (0 will disable) */
   readonly subscribe: AsyncActionCreator<number>;
   /** Assign a callback function to be called when the 'data' event is dispatched. */
-  readonly onData: (onData: OnData<Data>) => AsyncLifecycle<Data, Params>;
+  readonly onData: (
+    onData: OnData<Data, Params>
+  ) => AsyncLifecycle<Data, Params>;
   /** Assign a callback function to be called when the 'error' event is dispatched. */
-  readonly onError: (onError: OnError) => AsyncLifecycle<Data, Params>;
+  readonly onError: (
+    onError: OnError<Data, Params>
+  ) => AsyncLifecycle<Data, Params>;
   /** Selects the meta object, a snapshot of this lifecycles metaCache for debugging analysis. */
   readonly meta: () => AsyncMeta<Data, Params>;
   /** Utility action to assign the provided AsyncState to the redux store. Its use in testing is encouraged, its use in prod is not. */
@@ -286,11 +290,11 @@ const responseDispatchOnPhase = (
     };
     // onData
     if (phase === "data" && meta.onData) {
-      meta.onData(action.payload, dispatch);
+      meta.onData(action.payload, meta.lastParams, dispatch);
     }
     // onError
     if (phase === "error" && meta.onError) {
-      meta.onError(action.payload, dispatch);
+      meta.onError(action.payload, meta.lastParams, dispatch);
     }
     // onData
     if (phase === "data" && meta.awaitResolve) {
@@ -441,12 +445,12 @@ export const asyncLifecycle = <Data, Params extends {}>(
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return lifecycle;
     },
-    onData: (onData: OnData<Data>) => {
+    onData: (onData: OnData<Data, Params>) => {
       const meta = { ...metaCache.get(id), ...{ onData } };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return lifecycle;
     },
-    onError: (onError: OnError) => {
+    onError: (onError: OnError<Data, Params>) => {
       const meta = { ...metaCache.get(id), ...{ onError } };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return lifecycle;

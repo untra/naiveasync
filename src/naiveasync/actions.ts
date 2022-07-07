@@ -258,13 +258,31 @@ export const naiveAsyncInitialState = Object.freeze({
 
 type OnCb = () => void;
 type OnData1<Data> = (data: Data) => void;
-type OnData2<Data> = (data: Data, dispatch: Dispatch<AnyAction>) => void;
+type OnData2<Data, Params> = (data: Data, params: Params) => void;
+type OnData3<Data, Params> = (
+  data: Data,
+  params: Params,
+  dispatch: Dispatch<AnyAction>
+) => void;
 type OnError1 = (error: string) => void;
-type OnError2 = (error: string, dispatch: Dispatch<AnyAction>) => void;
+type OnError2<Params> = (error: string, params: Params) => void;
+type OnError3<Params> = (
+  error: string,
+  params: Params,
+  dispatch: Dispatch<AnyAction>
+) => void;
 type ErrRetry1 = (error: any) => void;
 type ErrRetry2 = (error: any, retry: number) => void;
-export type OnError = OnCb | OnError1 | OnError2;
-export type OnData<Data> = OnCb | OnData1<Data> | OnData2<Data>;
+export type OnError<_, Params> =
+  | OnCb
+  | OnError1
+  | OnError2<Params>
+  | OnError3<Params>;
+export type OnData<Data, Params> =
+  | OnCb
+  | OnData1<Data>
+  | OnData2<Data, Params>
+  | OnData3<Data, Params>;
 export type ErrRetryCb = OnCb | ErrRetry1 | ErrRetry2;
 
 /**
@@ -304,9 +322,9 @@ export interface AsyncMeta<Data, Params> {
   /** the last params used to call this operation */
   readonly lastParams?: Params;
   /** 'onData' callback assignment */
-  readonly onData?: OnData<Data>;
+  readonly onData?: OnData<Data, Params>;
   /** 'onError' callback assignment */
-  readonly onError?: OnError;
+  readonly onError?: OnError<Data, Params>;
   /** retries 'errRetryCb' callback assignment */
   readonly errRetryCb?: ErrRetryCb;
   /** awaiting resolve callback, if the lifecycle is being awaited on */
