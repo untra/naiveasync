@@ -51,7 +51,7 @@ export type Controllerable<State> = React.ComponentType<
   ControllableProps<State>
 >;
 
-export const timeoutRejection = 'timeout';
+export const timeoutRejection = "timeout";
 
 /**
  * A managed async function () => Promise and identifier, with factory-made selectors, dispatch actions, and other goodies
