@@ -22,13 +22,13 @@ import {
   AsyncState,
   ErrRetryCb,
   isAsyncAction,
-  naiveAsyncEmoji,
-  NaiveAsyncFunction,
+  asyncableEmoji,
   naiveAsyncInitialMeta,
   naiveAsyncInitialState,
-  NaiveAsyncSlice,
+  AsyncableSlice,
   OnData,
   OnError,
+  AsyncableOptions,
 } from "./actions";
 import { KeyedCache } from "./keyedcache";
 import { $from, $toMiddleware } from "./observables";
@@ -51,6 +51,8 @@ export type Controllerable<State> = React.ComponentType<
   ControllableProps<State>
 >;
 
+export const timeoutRejection = 'timeout';
+
 /**
  * A managed async function () => Promise and identifier, with factory-made selectors, dispatch actions, and other goodies
  * @interface AsyncLifecycle
@@ -61,9 +63,9 @@ export interface AsyncLifecycle<Data, Params> {
   /** The identifier of the async state that owns this */
   readonly id: string;
   /** The asynchronous operation */
-  readonly operation: NaiveAsyncFunction<Data, Params>;
+  readonly operation: AsyncFunction<Data, Params>;
   /** Returns the `AsyncState` instance owned by this manager. */
-  readonly selector: (state: NaiveAsyncSlice) => AsyncState<Data, Params>;
+  readonly selector: (state: AsyncableSlice) => AsyncState<Data, Params>;
   /** Action creator that resets the state for this asyncOperation, triggers the associated `AsyncOperation` when dispatched, passing any parameters directly through. */
   readonly call: AsyncActionCreator<Params>;
   /** Action creator that triggers the associated `AsyncOperation` when dispatched, reusing the last remaining params. Does not reset data or error states, making it useful for polling data. */
@@ -93,7 +95,7 @@ export interface AsyncLifecycle<Data, Params> {
    * Toggling will reset the memo.
    */
   readonly memoized: (enabled: boolean) => AsyncLifecycle<Data, Params>;
-  /** Meta toggle to throttle the promise for N milliseconds (execute this function at most once every N milliseconds.) */
+  /** Meta toggle to throttle the promise for N milliseconds (execute this function at most once every N milliseconds.) (a small throttle is good if the lifecycle is widely used) */
   readonly throttle: (throttle: number) => AsyncLifecycle<Data, Params>;
   /** Meta toggle to debounce the promise for N milliseconds (execute this function only if N milliseconds have passed without it being called.) (good for search) */
   readonly debounce: (debounce: number) => AsyncLifecycle<Data, Params>;
@@ -122,29 +124,31 @@ export interface AsyncLifecycle<Data, Params> {
   readonly awaitResolve: () => Promise<Data>;
   /** Returns a promise that awaits operation reject (resolves to data or rejects with errors). Useful for testing. */
   readonly awaitReject: () => Promise<Data>;
+  /** Returns a promise that awaits operation reject (resolves to data or rejects with errors). Useful for testing. */
+  readonly dataDepends: (dataDepends: string) => AsyncLifecycle<Data, Params>;
 }
 
 /** the initial slice state for use in a redux store */
-export const naiveAsyncInitialSlice = { [naiveAsyncEmoji]: {} };
+export const naiveAsyncInitialSlice = { [asyncableEmoji]: {} };
 
 /** a reducer to plug into your redux combineReducers */
-export const naiveAsyncReducer: Reducer<NaiveAsyncSlice> = (
+export const naiveAsyncReducer: Reducer<AsyncableSlice> = (
   state = naiveAsyncInitialSlice,
   action: AnyAction
 ) => {
   // only process managed actions
   if (isAsyncAction(action)) {
-    const name = action[naiveAsyncEmoji].name;
-    const currentState = state[naiveAsyncEmoji] || {};
-    const nextState = { ...state, [naiveAsyncEmoji]: { ...currentState } };
+    const name = action[asyncableEmoji].name;
+    const currentState = state[asyncableEmoji] || {};
+    const nextState = { ...state, [asyncableEmoji]: { ...currentState } };
     // aside from the destroy action,
-    if (action[naiveAsyncEmoji].phase === "destroy") {
-      delete nextState[naiveAsyncEmoji][name];
+    if (action[asyncableEmoji].phase === "destroy") {
+      delete nextState[asyncableEmoji][name];
       cache.remove(name);
       metaCache.remove(name);
     } else {
-      nextState[naiveAsyncEmoji][name] = asyncStateReducer(
-        nextState[naiveAsyncEmoji][name],
+      nextState[asyncableEmoji][name] = asyncStateReducer(
+        nextState[asyncableEmoji][name],
         action
       );
     }
@@ -156,7 +160,7 @@ export const naiveAsyncReducer: Reducer<NaiveAsyncSlice> = (
 export const combinedAsyncableReducer: Reducer<{ [index: string]: any }> = (
   state = {},
   action: AnyAction
-) => naiveAsyncReducer(state as NaiveAsyncSlice, action)[naiveAsyncEmoji];
+) => naiveAsyncReducer(state as AsyncableSlice, action)[asyncableEmoji];
 
 const matchCallOrSyncOrDestroy =
   (asyncLifeCycle: AsyncLifecycle<any, any>) => (action: AnyAction) => {
@@ -192,7 +196,7 @@ const resolveObservableAs = (
 };
 
 const operationWithMeta = (
-  operation: NaiveAsyncFunction<any, any>,
+  operation: AsyncFunction<any, any>,
   payload: any,
   meta: AsyncMeta<any, any>
 ) => {
@@ -200,11 +204,41 @@ const operationWithMeta = (
   if (!isNaN(timeout) && timeout > 0) {
     const timeoutRejectPromise = new Promise((_, reject) =>
       // eslint-disable-next-line prefer-promise-reject-errors
-      setTimeout(() => reject(`timeout`), timeout)
+      setTimeout(() => reject(timeoutRejection), timeout)
     );
-    return Promise.race([operation(payload), timeoutRejectPromise]);
+    return Promise.race([
+      pauseUntilDataDependsOn(payload, meta, operation),
+      timeoutRejectPromise,
+    ]);
   }
-  return operation(payload);
+  // if other lifecycles first depend on data, await those first
+  return pauseUntilDataDependsOn(payload, meta, operation);
+};
+
+// if anything first depends on this data, do not resolve until callbacks invoked
+const pauseUntilDataDependsOn = <T extends any>(
+  value: T,
+  meta: AsyncMeta<any, any>,
+  operation: AsyncFunction<any, any>
+): Promise<T> => {
+  if (meta.dataDepends) {
+    const dependsMeta = {
+      ...naiveAsyncInitialMeta,
+      ...metaCache.get(meta.dataDepends),
+    };
+    if (dependsMeta.dataCount) {
+      return Promise.resolve(value);
+    } else {
+      let awaitData: (value: T) => void = (t: T) => t;
+      const awaitedPromise = new Promise<T>((resolve) => {
+        awaitData = resolve;
+      }).then(() => value);
+      const awaitResolve = [...dependsMeta.awaitResolve, awaitData];
+      metaCache.set(meta.dataDepends, { ...dependsMeta, awaitResolve });
+      return awaitedPromise;
+    }
+  }
+  return operation(value);
 };
 
 const observableFromAsyncLifeCycle = (
@@ -236,16 +270,16 @@ const observableFromAsyncLifeCycle = (
     }
   });
 
-const AsyncableEpicOnPhase = (
+const asyncableEpicOnPhase = (
   action$: Observable<Action<any>>,
   phase: AsyncPhase,
   reuseParams: boolean
 ): Observable<Action> => {
   const phaseMatcher = asyncActionMatcher(undefined, phase);
   const mergeMapAction = (action: AsyncAction<any>) => {
-    const name = action[naiveAsyncEmoji].name;
+    const name = action[asyncableEmoji].name;
     const meta = { ...naiveAsyncInitialMeta, ...metaCache.get(name) };
-    const { memo, lastParams } = meta;
+    const { memo, lastParams, traceDispatch } = meta;
     const now = Date.now();
     const payload =
       reuseParams && action.payload === undefined ? lastParams : action.payload;
@@ -257,6 +291,11 @@ const AsyncableEpicOnPhase = (
         `No lifecycle found for dispatched action ${action.type} ${name}`
       );
       return new Observable<never>();
+    }
+    // if the dispatched action should trace, log a trace (experimental)
+    if (traceDispatch) {
+      // eslint-disable-next-line no-console
+      console.trace(action);
     }
     // if using a memoized record
     if (memo) {
@@ -283,7 +322,7 @@ const responseDispatchOnPhase = (
 ): Observable<Action> => {
   const phaseMatcher = asyncActionMatcher(undefined, phase);
   const mergeMapDataAction = (action: AsyncAction<any>) => {
-    const name = action[naiveAsyncEmoji].name;
+    const name = action[asyncableEmoji].name;
     const meta: AsyncMeta<any, any> = {
       ...naiveAsyncInitialMeta,
       ...metaCache.get(name),
@@ -296,13 +335,17 @@ const responseDispatchOnPhase = (
     if (phase === "error" && meta.onError) {
       meta.onError(action.payload, meta.lastParams || {}, dispatch);
     }
-    // onData
+    // awaitResolve
     if (phase === "data" && meta.awaitResolve) {
-      meta.awaitResolve(action.payload);
+      meta.awaitResolve.forEach((wait) => {
+        wait(action.payload);
+      });
     }
-    // onError
+    // awaitReject
     if (phase === "error" && meta.awaitReject) {
-      meta.awaitReject(action.payload);
+      meta.awaitReject.forEach((wait) => {
+        wait(action.payload);
+      });
     }
     // memoize
     if (phase === "data" && meta.memo) {
@@ -324,9 +367,9 @@ const responseDispatchOnPhase = (
     const dataCount = phase === "data" ? meta.dataCount + 1 : 0;
     const errorCount = phase === "error" ? meta.errorCount + 1 : 0;
     const awaitResolve =
-      meta.awaitResolve && phase === "data" ? undefined : meta.awaitResolve;
+      meta.awaitResolve && phase === "data" ? [] : meta.awaitResolve;
     const awaitReject =
-      meta.awaitReject && phase === "error" ? undefined : meta.awaitReject;
+      meta.awaitReject && phase === "error" ? [] : meta.awaitReject;
     const record = Date.now() - meta.lastCalled;
     metaCache.set(name, {
       ...meta,
@@ -352,8 +395,8 @@ const responseDispatchOnPhase = (
 export const naiveAsyncMiddleware: Middleware = (store) => {
   const action$: Subject<Action> = new Subject();
   const middleware = $toMiddleware(action$);
-  AsyncableEpicOnPhase(action$, "call", false).subscribe(store.dispatch);
-  AsyncableEpicOnPhase(action$, "sync", true).subscribe(store.dispatch);
+  asyncableEpicOnPhase(action$, "call", false).subscribe(store.dispatch);
+  asyncableEpicOnPhase(action$, "sync", true).subscribe(store.dispatch);
   responseDispatchOnPhase(action$, "data", store.dispatch).subscribe(
     store.dispatch
   );
@@ -366,11 +409,11 @@ export const naiveAsyncMiddleware: Middleware = (store) => {
   return middleware(store);
 };
 
-const selectFunction = (id: string) => (state: NaiveAsyncSlice) => {
-  const substate: any = state[naiveAsyncEmoji];
+const selectFunction = (id: string) => (state: AsyncableSlice) => {
+  const substate: any = state[asyncableEmoji];
   if (substate) {
-    if (naiveAsyncEmoji in substate) {
-      return substate[naiveAsyncEmoji][id] || naiveAsyncInitialState;
+    if (asyncableEmoji in substate) {
+      return substate[asyncableEmoji][id] || naiveAsyncInitialState;
     }
     return substate[id] || naiveAsyncInitialState;
   }
@@ -378,10 +421,10 @@ const selectFunction = (id: string) => (state: NaiveAsyncSlice) => {
 };
 
 const retryOperation = <Params extends {}, Data>(
-  operation: AsyncFunction<Params, Data>,
+  operation: AsyncFunction<Data, Params>,
   errRetryCb: ErrRetryCb,
   retries = 0
-): AsyncFunction<Params, Data> => {
+): AsyncFunction<Data, Params> => {
   if (retries <= 0) {
     return operation;
   }
@@ -409,23 +452,24 @@ export const findLifecycleById = (
 };
 
 /**
- * wraps a NaiveAsyncFunction and a unique identifier to provide a redux store managed lifecycle
- * that manages the given async operation
+ * wraps a AsyncFunction and a unique identifier to provide a redux store managed lifecycle
+ * This structure manages the provided async function
  * @template Data
  * @template Params
- * @param {NaiveAsyncFunction<Data, Params>} operation
+ * @param {AsyncFunction<Data, Params>} operation
  * @param {string} id
  * @returns {AsyncLifecycle<Data, Params>}
  */
 export const asyncLifecycle = <Data, Params extends {}>(
   id: string,
-  operation: NaiveAsyncFunction<Data, Params>
+  operation: AsyncFunction<Data, Params>,
+  options?: AsyncableOptions
 ): AsyncLifecycle<Data, Params> => {
   const existing = id && cache.get(id);
   if (existing) {
     return existing;
   }
-  const factory = asyncActionCreatorFactory(id);
+  const factory = asyncActionCreatorFactory(id, options || {});
   const lifecycle: AsyncLifecycle<Data, Params> = {
     id,
     operation,
@@ -504,39 +548,69 @@ export const asyncLifecycle = <Data, Params extends {}>(
       const awaitedPromise = new Promise<Data>((resolve) => {
         awaitResolve = resolve;
       });
-      const meta = { ...thisMeta, ...{ awaitResolve } };
+      const meta = {
+        ...thisMeta,
+        awaitResolve: [...(thisMeta?.awaitReject || []), awaitResolve],
+      };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return awaitedPromise;
     },
     awaitReject: async () => {
       const thisMeta = metaCache.get(id);
-      let awaitReject: (reason?: any) => void = () => null;
-      const mockData = {} as Data;
+      let awaitReject: (err?: any) => void = () => null;
       const awaitedPromise = new Promise<Data>((_resolve, reject) => {
         awaitReject = reject;
       });
-      const meta = { ...thisMeta, ...{ awaitReject } };
+      const meta = {
+        ...thisMeta,
+        awaitReject: [...(thisMeta?.awaitReject || []), awaitReject],
+      };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return awaitedPromise;
     },
+    dataDepends: (dataDepends: string) => {
+      const thisMeta = metaCache.get(id);
+      const meta = {
+        ...thisMeta,
+        dataDepends,
+      };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      return lifecycle;
+    },
   };
+  // cache the created lifecycle
   cache.set(id, lifecycle);
+  metaCache.set(id, { ...naiveAsyncInitialMeta, ...options });
+  metaCache.get(id);
+  // apply certain lifecycle options posthoc
+  if (options?.debounce) {
+    lifecycle.debounce(options.debounce);
+  }
+  if (options?.throttle) {
+    lifecycle.throttle(options.throttle);
+  }
+  if (options?.timeout) {
+    lifecycle.timeout(options.timeout);
+  }
+  if (options?.dataDepends) {
+    lifecycle.dataDepends(options.dataDepends);
+  }
   return lifecycle;
 };
 
 /**
- * Wraps a NaiveAsyncFunction and a unique identifier to provide a redux store managed lifecycle
+ * Wraps a AsyncFunction and a unique identifier to provide a redux store managed lifecycle
  * that manages the given async operation, recognized by the given id
  * @template Data
  * @template Params
  * @deprecated favor asyncLifecycle instead
- * @param {NaiveAsyncFunction<Data, Params>} operation
+ * @param {AsyncFunction<Data, Params>} operation
  * @param {string} id
  * @returns {AsyncLifecycle<Data, Params>}
  */
 export const naiveAsyncLifecycle = <Data, Params extends {}>(
   id: string,
-  operation: AsyncFunction<Params, Data>
+  operation: AsyncFunction<Data, Params>
 ): AsyncLifecycle<Data, Params> => asyncLifecycle(id, operation);
 
 /**
@@ -548,16 +622,16 @@ export const naiveAsyncLifecycle = <Data, Params extends {}>(
  * @param {Middleware} middleware
  * @return {*}  {Controllerable<State>}
  */
-export const createControllableContext = <State extends NaiveAsyncSlice>(
+export const createControllableContext = <State extends AsyncableSlice>(
   reducer: Reducer<State>,
   middleware: Middleware
 ): Controllerable<State> => {
-  const Controllable = <State extends NaiveAsyncSlice>(
+  const Controllable = <State extends AsyncableSlice>(
     props: ControllableProps<State>
   ) => {
     const store = useStore();
     const dp = useDispatch();
-    const [state, setState] = useState<NaiveAsyncSlice>(
+    const [state, setState] = useState<AsyncableSlice>(
       reducer(undefined, { type: "" })
     );
     const internalDispatch: Dispatch<AnyAction> = <A extends Action>(
