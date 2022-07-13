@@ -124,7 +124,7 @@ export interface AsyncLifecycle<Data, Params> {
   readonly awaitResolve: () => Promise<Data>;
   /** Returns a promise that awaits operation reject (resolves to data or rejects with errors). Useful for testing. */
   readonly awaitReject: () => Promise<Data>;
-  /** Returns a promise that awaits operation reject (resolves to data or rejects with errors). Useful for testing. */
+  /** Pauses execution of the operation until the lifecycle with the given id has returned data. Only looks if data was returned once, not necesarilly that the lifecycle has data in it's state (experimental) */
   readonly dataDepends: (dataDepends: string) => AsyncLifecycle<Data, Params>;
 }
 
