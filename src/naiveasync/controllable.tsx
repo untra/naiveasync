@@ -227,7 +227,7 @@ const pauseUntilDataDependsOn = <T extends any>(
       ...metaCache.get(meta.dataDepends),
     };
     if (dependsMeta.dataCount) {
-      return Promise.resolve(value);
+      return operation(value);
     } else {
       let awaitData: (value: T) => void = (t: T) => t;
       const awaitedPromise = new Promise<T>((resolve) => {
@@ -235,7 +235,7 @@ const pauseUntilDataDependsOn = <T extends any>(
       }).then(() => value);
       const awaitResolve = [...dependsMeta.awaitResolve, awaitData];
       metaCache.set(meta.dataDepends, { ...dependsMeta, awaitResolve });
-      return awaitedPromise;
+      return awaitedPromise.then((value) => operation(value));
     }
   }
   return operation(value);
