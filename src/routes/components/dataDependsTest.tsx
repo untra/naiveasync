@@ -24,11 +24,17 @@ const requiredLifecycle: AsyncLifecycle<{}, {}> = asyncLifecycle(
 const dependsLifecycle: AsyncLifecycle<{}, {}> = asyncLifecycle(
   "25_DEPENDS_TEST",
   resolveMedium
-).dataDepends(requiredLifecycle.id);
+).dataDepends([requiredLifecycle.id]);
+
+const dependsDoubleLifecycle: AsyncLifecycle<{}, {}> = asyncLifecycle(
+  "25_DOUBLE_DEPENDS_TEST",
+  resolveMedium
+).dataDepends([requiredLifecycle.id, dependsLifecycle.id]);
 
 interface MP {
   dependstate: AsyncState<{}, {}>;
   requiredstate: AsyncState<{}, {}>;
+  dependsDoublestate: AsyncState<{}, {}>;
 }
 
 interface DP {
@@ -40,6 +46,7 @@ type Props = MP & DP;
 const DependsTestComponent: React.FC<Props> = ({
   dependstate,
   requiredstate,
+  dependsDoublestate,
 }) => {
   const dispatch = useDispatch();
   const dependssync = (params: {}) => dispatch(dependsLifecycle.sync(params));
@@ -48,29 +55,14 @@ const DependsTestComponent: React.FC<Props> = ({
   const requiredsync = (params: {}) => dispatch(requiredLifecycle.sync(params));
   const requiredcall = (params: {}) => dispatch(requiredLifecycle.call(params));
   const requiredreset = () => dispatch(requiredLifecycle.reset());
+  const dependsDoubleSync = (params: {}) =>
+    dispatch(dependsDoubleLifecycle.sync(params));
+  const dependsDoubleCall = (params: {}) =>
+    dispatch(dependsDoubleLifecycle.call(params));
+  const dependsDoubleReset = () => dispatch(dependsDoubleLifecycle.reset());
 
   return (
     <div>
-      <div>
-        <h4>Dependendant State</h4>
-        <p>status: {JSON.stringify(dependstate.status)}</p>
-        <p>params: {JSON.stringify(dependstate.params)}</p>
-        <p>error: {JSON.stringify(dependstate.error)}</p>
-        <p>data: {JSON.stringify(dependstate.data)}</p>
-        <button onClick={() => dependscall({})}>call</button>
-        <button
-          style={{ backgroundColor: "cyan" }}
-          onClick={() => dependssync({})}
-        >
-          sync
-        </button>
-        <button
-          style={{ backgroundColor: "yellow" }}
-          onClick={() => dependsreset()}
-        >
-          reset
-        </button>
-      </div>
       <div>
         <h4>Required State</h4>
         <p>status: {JSON.stringify(requiredstate.status)}</p>
@@ -91,6 +83,50 @@ const DependsTestComponent: React.FC<Props> = ({
           reset
         </button>
       </div>
+      <div>
+        <h4>
+          Dependendant State <i>(needs required)</i>
+        </h4>
+        <p>status: {JSON.stringify(dependstate.status)}</p>
+        <p>params: {JSON.stringify(dependstate.params)}</p>
+        <p>error: {JSON.stringify(dependstate.error)}</p>
+        <p>data: {JSON.stringify(dependstate.data)}</p>
+        <button onClick={() => dependscall({})}>call</button>
+        <button
+          style={{ backgroundColor: "cyan" }}
+          onClick={() => dependssync({})}
+        >
+          sync
+        </button>
+        <button
+          style={{ backgroundColor: "yellow" }}
+          onClick={() => dependsreset()}
+        >
+          reset
+        </button>
+      </div>
+      <div>
+        <h4>
+          Double Dependent State <i>(needs required and dependent)</i>
+        </h4>
+        <p>status: {JSON.stringify(dependsDoublestate.status)}</p>
+        <p>params: {JSON.stringify(dependsDoublestate.params)}</p>
+        <p>error: {JSON.stringify(dependsDoublestate.error)}</p>
+        <p>data: {JSON.stringify(dependsDoublestate.data)}</p>
+        <button onClick={() => dependsDoubleCall({})}>call</button>
+        <button
+          style={{ backgroundColor: "cyan" }}
+          onClick={() => dependsDoubleSync({})}
+        >
+          sync
+        </button>
+        <button
+          style={{ backgroundColor: "yellow" }}
+          onClick={() => dependsDoubleReset()}
+        >
+          reset
+        </button>
+      </div>
     </div>
   );
 };
@@ -98,6 +134,7 @@ const DependsTestComponent: React.FC<Props> = ({
 const mapStateToProps = (state: never): MP => ({
   dependstate: dependsLifecycle.selector(state),
   requiredstate: requiredLifecycle.selector(state),
+  dependsDoublestate: dependsDoubleLifecycle.selector(state),
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<AnyAction>): DP => ({

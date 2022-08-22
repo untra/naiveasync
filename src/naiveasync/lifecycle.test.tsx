@@ -209,10 +209,11 @@ describe("lifecycle", () => {
     const lcRequired = asyncLifecycle(v4(), async () => quickResolve(dataz));
     const lcDepends = asyncLifecycle(v4(), async () =>
       quickResolve(dataz)
-    ).dataDepends(lcRequired.id);
+    ).dataDepends([lcRequired.id]);
     const opSpy = jest.spyOn(lcDepends, "operation");
     store.dispatch(lcDepends.sync({}));
-    expect(lcDepends.meta().dataDepends).toBe(lcRequired.id);
+    expect(lcDepends.meta().dataDepends).toHaveLength(1);
+    expect(lcDepends.meta().dataDepends[0]).toBe(lcRequired.id);
     expect(lcRequired.meta().awaitResolve.length).toBe(1);
     expect(opSpy).toHaveBeenCalledTimes(0);
     store.dispatch(lcRequired.sync({}));
@@ -227,7 +228,7 @@ describe("lifecycle", () => {
 
   it(`a lifecycle with dataDependsOn and a timeout will timeout`, async () => {
     const lcDepends = asyncLifecycle(v4(), async () => quickResolve(dataz))
-      .dataDepends(v4()) // doesn't exist wont resolve
+      .dataDepends([v4()]) // doesn't exist wont resolve
       .timeout(1000);
     store.dispatch(lcDepends.sync({}));
     const reject = await lcDepends.awaitReject().catch((e) => e);

@@ -358,7 +358,7 @@ export interface AsyncMeta<Data, Params> {
   /** will invoke console.trace when calls are dispatched. */
   readonly traceDispatch: boolean;
   /** 'dataDepends' assignment */
-  readonly dataDepends: string;
+  readonly dataDepends: string[];
 }
 
 /**
@@ -382,7 +382,7 @@ export interface AsyncableOptions {
   /** modifies dispatched actions to invoke console.trace when dispatched. (experimental) */
   readonly traceDispatch?: boolean;
   /** modifies dispatched actions to pause Invocations of the Asyncfunction until the lifecycle with the given id. (experimental)  */
-  readonly dataDepends?: string;
+  readonly dataDepends?: string[];
 }
 
 export const naiveAsyncInitialMeta = Object.freeze({
@@ -402,7 +402,7 @@ export const naiveAsyncInitialMeta = Object.freeze({
   subscribe: 0,
   subscribeInterval: undefined,
   traceDispatch: false,
-  dataDepends: "",
+  dataDepends: [],
   awaitResolve: [],
   awaitReject: [],
 }) as AsyncMeta<any, any>;

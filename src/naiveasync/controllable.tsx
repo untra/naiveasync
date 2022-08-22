@@ -125,7 +125,7 @@ export interface AsyncLifecycle<Data, Params> {
   /** Returns a promise that awaits operation reject (resolves to data or rejects with errors). Useful for testing. */
   readonly awaitReject: () => Promise<Data>;
   /** Pauses execution of the operation until the lifecycle with the given id has returned data. Only looks if data was returned once, not necesarilly that the lifecycle has data in it's state (experimental) */
-  readonly dataDepends: (dataDepends: string) => AsyncLifecycle<Data, Params>;
+  readonly dataDepends: (dataDepends: string[]) => AsyncLifecycle<Data, Params>;
 }
 
 /** the initial slice state for use in a redux store */
@@ -221,20 +221,21 @@ const pauseUntilDataDependsOn = <T extends any>(
   meta: AsyncMeta<any, any>,
   operation: AsyncFunction<any, any>
 ): Promise<T> => {
-  if (meta.dataDepends) {
+  // for-of loop with a continue; wait for the first call still missing data
+  for (const depends of meta.dataDepends) {
     const dependsMeta = {
       ...naiveAsyncInitialMeta,
-      ...metaCache.get(meta.dataDepends),
+      ...metaCache.get(depends),
     };
     if (dependsMeta.dataCount) {
-      return operation(value);
+      continue;
     } else {
       let awaitData: (value: T) => void = (t: T) => t;
       const awaitedPromise = new Promise<T>((resolve) => {
         awaitData = resolve;
       }).then(() => value);
       const awaitResolve = [...dependsMeta.awaitResolve, awaitData];
-      metaCache.set(meta.dataDepends, { ...dependsMeta, awaitResolve });
+      metaCache.set(depends, { ...dependsMeta, awaitResolve });
       return awaitedPromise.then((value) => operation(value));
     }
   }
@@ -568,7 +569,7 @@ export const asyncLifecycle = <Data, Params extends {}>(
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return awaitedPromise;
     },
-    dataDepends: (dataDepends: string) => {
+    dataDepends: (dataDepends: string[]) => {
       const thisMeta = metaCache.get(id);
       const meta = {
         ...thisMeta,
