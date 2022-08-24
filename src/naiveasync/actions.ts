@@ -2,7 +2,9 @@
 import { Dispatch } from "redux";
 import { KeyedCache } from "./keyedcache";
 
-/** 🔁  */
+/** 🔁
+ * @deprecated favor asyncableEmoji
+ */
 export const naiveAsyncEmoji = "🔁";
 
 /** 🔁  */
@@ -23,15 +25,17 @@ export type AsyncPhase =
 interface AsyncPostmark {
   name: string;
   phase: AsyncPhase;
+  trace?: string;
 }
 
-/** a function that takes a singular params object P, returning a Promise<D> */
-export type NaiveAsyncFunction<Data, Params> = (
-  params: Params
-) => Promise<Data>;
+/** a function that takes a singular params object P, returning a Promise<D>. This is an async javascript function. */
+export type AsyncFunction<Data, Params> = (params: Params) => Promise<Data>;
 
-/** a function that takes a singular params object P, returning a Promise<D> */
-export type AsyncFunction<Params, Data> = (params: Params) => Promise<Data>;
+/**
+ * a function that takes a singular params object P, returning a Promise<D>
+ * @deprecated favor AsyncFunction instead
+ */
+export type NaiveAsyncFunction<Data, Params> = AsyncFunction<Data, Params>;
 
 /**
  * A typical redux action, templating a payload
@@ -64,7 +68,7 @@ export interface AnyAction {
 export interface AsyncAction<Payload> extends Action<Payload> {
   readonly type: string;
   readonly payload: Payload;
-  readonly [naiveAsyncEmoji]: AsyncPostmark;
+  readonly [asyncableEmoji]: AsyncPostmark;
 }
 
 /**
@@ -73,58 +77,58 @@ export interface AsyncAction<Payload> extends Action<Payload> {
  * @returns {action is AsyncAction<any>}
  */
 export const isAsyncAction = (action: AnyAction): action is AsyncAction<any> =>
-  naiveAsyncEmoji in action;
+  asyncableEmoji in action;
 
 const asyncActionMatchesPhase = (
   action: AsyncAction<any>,
   phase?: AsyncPhase
-): boolean => !!(!phase || action[naiveAsyncEmoji].phase === phase);
+): boolean => !!(!phase || action[asyncableEmoji].phase === phase);
 
 const asyncActionMatchesOperation = (
   action: AsyncAction<any>,
-  operation?: NaiveAsyncFunction<any, any>
+  operation?: AsyncFunction<any, any>
 ): boolean =>
   !operation ||
-  !!(operation.name && operation.name === action[naiveAsyncEmoji].name);
+  !!(operation.name && operation.name === action[asyncableEmoji].name);
 
 /**
  * an action matcher typeguard for a given operation and phase
  * @export
  * @template Data
  * @template Params
- * @param {(NaiveAsyncFunction<Data, Params> | undefined)} operation
+ * @param {(AsyncFunction<Data, Params> | undefined)} operation
  * @param {AsyncPhase | undefined} phase
  * @returns {(action: AnyAction) => action is AsyncAction<any>}
  */
 export function asyncActionMatcher<Data extends any, Params extends {}>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
+  operation: AsyncFunction<Data, Params> | undefined,
   phase: "call"
 ): (action: AnyAction) => action is AsyncAction<Params>;
 
 export function asyncActionMatcher<Data, Params extends {}>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
+  operation: AsyncFunction<Data, Params> | undefined,
   phase: "sync"
 ): (action: AnyAction) => action is AsyncAction<Params>;
 
 export function asyncActionMatcher<Data, Params extends {}>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
+  operation: AsyncFunction<Data, Params> | undefined,
   phase: "data"
 ): (action: AnyAction) => action is AsyncAction<Data>;
 
 export function asyncActionMatcher<Data, Params extends {}>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
+  operation: AsyncFunction<Data, Params> | undefined,
   phase: "error"
 ): (action: AnyAction) => action is AsyncAction<string>;
 export function asyncActionMatcher<Data, Params extends {}>(
-  operation: NaiveAsyncFunction<Data, Params> | undefined,
+  operation: AsyncFunction<Data, Params> | undefined,
   phase: "reset"
 ): (action: AnyAction) => action is AsyncAction<{}>;
 export function asyncActionMatcher<Data, Params>(
-  operation?: NaiveAsyncFunction<Data, Params>,
+  operation?: AsyncFunction<Data, Params>,
   phase?: AsyncPhase
 ): (action: AnyAction) => action is AsyncAction<Params>;
 export function asyncActionMatcher<Data, Params>(
-  operation?: NaiveAsyncFunction<Data, Params>,
+  operation?: AsyncFunction<Data, Params>,
   phase?: AsyncPhase
 ) {
   return (action: AnyAction) =>
@@ -145,20 +149,40 @@ export type AsyncActionCreator<Payload> = (payload?: Payload) => {
   readonly match: (action: Action<any>) => action is AsyncAction<Payload>;
 };
 
+/** removes undefined fields from an object. */
+const definedObject = <T extends Record<string, any>>(obj: T): T => {
+  Object.keys(obj).forEach((key) => {
+    if (obj[key] === undefined) {
+      delete obj[key];
+    }
+  });
+  return obj;
+};
+
+/**
+ *
+ * @param name creates actions that take in a parameter. uses options passed at lifecycle creation
+ * @param options
+ */
 export const asyncActionCreatorFactory =
-  (name: string) =>
+  (name: string, options: AsyncableOptions) =>
   <Payload>(phase: AsyncPhase): AsyncActionCreator<Payload> => {
-    const type = `${naiveAsyncEmoji}/${name}/${phase}`;
-    const postmark = { name, phase };
+    const type = `${asyncableEmoji}/${name}/${phase}`;
+    const postmark = () =>
+      definedObject({
+        name,
+        phase,
+        trace: (options.traceDispatch && Error().stack) || undefined,
+      });
     const guard = asyncActionMatcher(undefined, phase);
     const match = (action: Action<Payload>): action is AsyncAction<Payload> =>
-      guard(action) && action[naiveAsyncEmoji].name === name;
+      guard(action) && action[asyncableEmoji].name === name;
     const actionCreator: AsyncActionCreator<Payload> = (payload?: Payload) => ({
       type,
-      postmark,
+      postmark: postmark(),
       match,
       payload,
-      [naiveAsyncEmoji]: postmark,
+      [asyncableEmoji]: postmark(),
     });
     return actionCreator;
   };
@@ -167,18 +191,15 @@ export const asyncActionCreatorFactory =
  * Any redux store that implements usage of AsyncableState keyed to the AsyncableSymbol, use to typeguard implementations
  * @export
  * @interface AsyncableSlice
- * @deprecated favor AsyncableSlice instead
  */
-export interface NaiveAsyncSlice {
-  [naiveAsyncEmoji]: { [key: string]: AsyncState<any, any> };
+export interface AsyncableSlice {
+  [asyncableEmoji]: { [key: string]: AsyncState<any, any> };
 }
 
 /**
- * Any redux store that implements usage of AsyncableState keyed to the AsyncableSymbol, use to typeguard implementations
- * @export
- * @interface AsyncableSlice
+ * @deprecated favor AsyncableSlice instead
  */
-export type AsyncableSlice = NaiveAsyncSlice;
+export type NaiveAsyncSlice = AsyncableSlice;
 
 export interface Gettable {
   get: (a: any) => any;
@@ -222,7 +243,7 @@ interface DoneAsyncState<Data, Params> {
 }
 
 /**
- * The state of a NaiveAsyncFunction, encompassing status, params, error, data
+ * The state of a AsyncFunction, encompassing status, params, error, data
  */
 export type AsyncState<Data, Params> =
   | InitialAsyncState
@@ -231,7 +252,7 @@ export type AsyncState<Data, Params> =
   | DoneAsyncState<Data, Params>;
 
 /**
- * The state of a NaiveAsyncFunction, encompassing status, params, error, data
+ * The state of a AsyncFunction, encompassing status, params, error, data
  * @deprecated favor AsyncState instead
  */
 export type NaiveAsyncState<Data, Params> = AsyncState<Data, Params>;
@@ -243,21 +264,24 @@ export type NaiveAsyncState<Data, Params> = AsyncState<Data, Params>;
  */
 export const isAsyncState = <D, P>(state: {}): state is AsyncState<D, P> =>
   state !== null &&
+  state !== undefined &&
   "status" in state &&
   "error" in state &&
   "data" in state &&
   "params" in state;
 
 /** the initial state of a naiveasync operation */
-export const naiveAsyncInitialState = Object.freeze({
+export const asyncInitialState = Object.freeze({
   status: "",
   error: "",
   params: {},
   data: null,
 }) as InitialAsyncState;
 
+export const naiveAsyncInitialState = asyncInitialState;
+
 type OnCb = () => void;
-type OnData1<Data> = (data: Data) => void;
+export type OnData1<Data> = (data: Data) => void;
 type OnData2<Data, Params> = (data: Data, params: Params) => void;
 type OnData3<Data, Params> = (
   data: Data,
@@ -305,7 +329,7 @@ export interface AsyncMeta<Data, Params> {
   readonly retries: number;
   /** 'subscribe' assignment (experimental) */
   readonly subscribe: number;
-  /** 'subscribe' assignment (experimental) */
+  /** 'subscribe' interval assignment (experimental) */
   readonly subscribeInterval: any;
   /** 'timeout' assignment. starts at NaN if not yet assigned. */
   readonly timeout: number;
@@ -321,6 +345,10 @@ export interface AsyncMeta<Data, Params> {
   readonly memo?: KeyedCache<Data>;
   /** the last params used to call this operation */
   readonly lastParams?: Params;
+  /** the last result when this operation resolved.*/
+  readonly lastData?: Data;
+  /** the last error when this operation rejected.*/
+  readonly lastError?: string;
   /** 'onData' callback assignment */
   readonly onData?: OnData<Data, Params>;
   /** 'onError' callback assignment */
@@ -328,9 +356,43 @@ export interface AsyncMeta<Data, Params> {
   /** retries 'errRetryCb' callback assignment */
   readonly errRetryCb?: ErrRetryCb;
   /** awaiting resolve callback, if the lifecycle is being awaited on */
-  readonly awaitResolve?: (value: Data) => void;
+  readonly awaitResolve?: OnData1<Data>;
   /** awaiting reject callback, if the lifecycle is being awaited on */
-  readonly awaitReject?: (reason?: string) => void;
+  readonly awaitReject?: OnError1;
+  /** will invoke console.trace when calls are dispatched. */
+  readonly traceDispatch: boolean;
+  /** 'dataDepends' assignment for lifecycles requiring data. */
+  readonly dataDepends: string[];
+  /** inverse of 'dataDepends'; callback functions awaiting data */
+  readonly expectingData: Array<OnData1<Data>>;
+  /** 'resolveData' callback for when data has been received. (synchronous) */
+  readonly resolveData?: (data: Data) => void;
+  /** 'rejectError' callback for when error has been occured. (synchronous) */
+  readonly rejectError?: (error: Error) => void;
+}
+
+/**
+ * lifecycle options. These are stored in the .meta cache. Some options can only be set at lifecycle creation time.
+ *
+ * Async lifecycles manage a number of aspects of the operation and is configured execution.
+ * Some of these aspects are recorded in the meta cache, which are not associated with the redux store but used internally to control naiveasync operations.
+ * This selection is contextual from the instance when .meta() is called on the lifecycle.
+ * @export
+ * @interface AsyncMeta
+ * @template Data
+ * @template Params
+ */
+export interface AsyncableOptions {
+  /** 'debounce' assignment. Meta toggle to debounce the promise for N milliseconds (execute this function only if N milliseconds have passed without it being called.) (good for search) */
+  readonly debounce?: number;
+  /** 'throttle' assignment. Meta toggle to throttle the promise for N milliseconds (execute this function at most once every N milliseconds.) (a small throttle is good if the lifecycle is widely used) */
+  readonly throttle?: number;
+  /** 'timeout' assignment. Meta toggle to enable an N millisecond timeout of the promise, dispatching 'error' timeout if the request takes too long. (0 will disable) */
+  readonly timeout?: number;
+  /** modifies dispatched actions to invoke console.trace when dispatched. (experimental) */
+  readonly traceDispatch?: boolean;
+  /** modifies dispatched actions to pause Invocations of the Asyncfunction until the lifecycle with the given id. (experimental)  */
+  readonly dataDepends?: string[];
 }
 
 export const naiveAsyncInitialMeta = Object.freeze({
@@ -344,9 +406,18 @@ export const naiveAsyncInitialMeta = Object.freeze({
   onError: () => "noop",
   errRetryCb: () => "noop",
   lastParams: undefined,
+  lastData: null,
+  lastError: "",
   debounce: 0,
   throttle: 0,
   retries: 0,
   subscribe: 0,
   subscribeInterval: undefined,
+  traceDispatch: false,
+  dataDepends: [],
+  expectingData: [],
+  awaitResolve: undefined,
+  awaitReject: undefined,
+  resolveData: undefined,
+  rejectError: undefined,
 }) as AsyncMeta<any, any>;

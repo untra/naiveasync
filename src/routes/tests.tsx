@@ -23,6 +23,8 @@ import RandomNumberSync from "./components/RandomNumberSync";
 import ThrottleTest from "./components/throttleTest";
 import AssignTest from "./components/assignTest";
 import RetryTest from "./components/retryTest";
+import TraceTest from "./components/traceTest";
+import DataDependsTest from "./components/dataDependsTest";
 import SubscribeTest from "./components/subscribeTest";
 import TimeoutSync from "./components/timeout";
 import { mockResolve, slowReject } from "../utils/promise";
@@ -478,6 +480,12 @@ export default class Test extends React.Component {
 
           <h4>#23 retry test</h4>
           <RetryTest />
+
+          <h4>#24 trace</h4>
+          <TraceTest />
+
+          <h4>#25 data depends</h4>
+          <DataDependsTest />
         </div>
       </Provider>
     );

@@ -90,6 +90,7 @@ Some Terminology:
 * use a (very low > 1000 ms) `.throttle` on index calls, so multiple resources that need it but request slow can receive it on the same batch
 * sensitive calls that should not throw an error (eg. login / auth) can use `.onError` to dispatch emergency logout
 * calls to the api whose response is not likely to change can use `.memoize(true)`
+* set a lifecycle `dataDepends` to pause execution until data has come back on seperate lifecycles
 * testing utilities pair nicely with storybook
 * best served with typescript
 
@@ -99,6 +100,7 @@ Some Terminology:
 * use `mockInitialAsyncState, mockInflightAsyncState, mockErrorAsyncState, mockDoneAsyncState` to represent async states in mocks and storybook scenes
 * dispatch the lifecycle `.assign(state)` action to assign a specific state to the lifecycle. this is typically frowned upon in redux philosophy, but is really helpful in mocking state
 * when testing within async functions, use `await lifecycle.awaitResolve()` to pause test execution until the async operation next resolves. simmilarly use `await lifecycle.awaitReject()` to test rejection.
+* lifecycles can be passed options, and optionally passed `{ traceDispatch: true }` to add a stacktrace to dispatched actions, and to trace invocations of a lifecycle.
 
 ## 1.0.0 feature wishlist:
 
