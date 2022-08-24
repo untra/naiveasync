@@ -29,7 +29,7 @@
     "postpublish": "npm run deploy",
     "preversion": "npm run ci",
     "test": "npm run build && jest",
-    "build": "rm -rf dist && mkdir dist && cp src/index.html dist/index.html && tsc -p build.tsconfig.json",
+    "build": "rm -rf dist && mkdir dist && cp src/index.html dist/index.html && tsc -p build.tsconfig.json && npm run defs",
     "build:watch": "npm run build && tsc -p ./build.tsconfig.json --watch",
     "build:ts": "tsc -p tsconfig.json",
     "build:rs": "./node_modules/.bin/react-scripts build",

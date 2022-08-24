@@ -90,7 +90,7 @@ Some Terminology:
 * use a (very low > 1000 ms) `.throttle` on index calls, so multiple resources that need it but request slow can receive it on the same batch
 * sensitive calls that should not throw an error (eg. login / auth) can use `.onError` to dispatch emergency logout
 * calls to the api whose response is not likely to change can use `.memoize(true)`
-* set a lifecycle `dataDepends` to pause execution until data has come back on a seperate lifecycle
+* set a lifecycle `dataDepends` to pause execution until data has come back on seperate lifecycles
 * testing utilities pair nicely with storybook
 * best served with typescript
 

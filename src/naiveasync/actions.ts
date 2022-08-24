@@ -281,7 +281,7 @@ export const asyncInitialState = Object.freeze({
 export const naiveAsyncInitialState = asyncInitialState;
 
 type OnCb = () => void;
-type OnData1<Data> = (data: Data) => void;
+export type OnData1<Data> = (data: Data) => void;
 type OnData2<Data, Params> = (data: Data, params: Params) => void;
 type OnData3<Data, Params> = (
   data: Data,
@@ -345,6 +345,10 @@ export interface AsyncMeta<Data, Params> {
   readonly memo?: KeyedCache<Data>;
   /** the last params used to call this operation */
   readonly lastParams?: Params;
+  /** the last result when this operation resolved.*/
+  readonly lastData?: Data;
+  /** the last error when this operation rejected.*/
+  readonly lastError?: string;
   /** 'onData' callback assignment */
   readonly onData?: OnData<Data, Params>;
   /** 'onError' callback assignment */
@@ -352,13 +356,19 @@ export interface AsyncMeta<Data, Params> {
   /** retries 'errRetryCb' callback assignment */
   readonly errRetryCb?: ErrRetryCb;
   /** awaiting resolve callback, if the lifecycle is being awaited on */
-  readonly awaitResolve: Array<OnData1<Data>>;
+  readonly awaitResolve?: OnData1<Data>;
   /** awaiting reject callback, if the lifecycle is being awaited on */
-  readonly awaitReject: OnError1[];
+  readonly awaitReject?: OnError1;
   /** will invoke console.trace when calls are dispatched. */
   readonly traceDispatch: boolean;
-  /** 'dataDepends' assignment */
+  /** 'dataDepends' assignment for lifecycles requiring data. */
   readonly dataDepends: string[];
+  /** inverse of 'dataDepends'; callback functions awaiting data */
+  readonly expectingData: Array<OnData1<Data>>;
+  /** 'resolveData' callback for when data has been received. (synchronous) */
+  readonly resolveData?: (data: Data) => void;
+  /** 'rejectError' callback for when error has been occured. (synchronous) */
+  readonly rejectError?: (error: Error) => void;
 }
 
 /**
@@ -396,6 +406,8 @@ export const naiveAsyncInitialMeta = Object.freeze({
   onError: () => "noop",
   errRetryCb: () => "noop",
   lastParams: undefined,
+  lastData: null,
+  lastError: "",
   debounce: 0,
   throttle: 0,
   retries: 0,
@@ -403,6 +415,9 @@ export const naiveAsyncInitialMeta = Object.freeze({
   subscribeInterval: undefined,
   traceDispatch: false,
   dataDepends: [],
-  awaitResolve: [],
-  awaitReject: [],
+  expectingData: [],
+  awaitResolve: undefined,
+  awaitReject: undefined,
+  resolveData: undefined,
+  rejectError: undefined,
 }) as AsyncMeta<any, any>;
