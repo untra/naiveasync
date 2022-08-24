@@ -29,6 +29,7 @@ import {
   OnData,
   OnError,
   AsyncableOptions,
+  OnData1,
 } from "./actions";
 import { KeyedCache } from "./keyedcache";
 import { $from, $toMiddleware } from "./observables";
@@ -120,12 +121,16 @@ export interface AsyncLifecycle<Data, Params> {
   readonly meta: () => AsyncMeta<Data, Params>;
   /** Utility action to assign the provided AsyncState to the redux store. Its use in testing is encouraged, its use in prod is not. */
   readonly assign: AsyncActionCreator<AsyncState<Data, Params>>;
-  /** Returns a promise that awaits operation resolve (resolves to data or rejects with errors). Useful for testing. */
+  /** Returns a promise that awaits for the next operation resolve (resolves to data or rejects with errors). Useful for testing. */
   readonly awaitResolve: () => Promise<Data>;
-  /** Returns a promise that awaits operation reject (resolves to data or rejects with errors). Useful for testing. */
+  /** Returns a promise that awaits the next operation rejection (resolves to data or rejects with errors). Useful for testing. */
   readonly awaitReject: () => Promise<Data>;
   /** Pauses execution of the operation until the lifecycle with the given id has returned data. Only looks if data was returned once, not necesarilly that the lifecycle has data in it's state (experimental) */
   readonly dataDepends: (dataDepends: string[]) => AsyncLifecycle<Data, Params>;
+  /** Returns a . */
+  readonly resolveData: () => Promise<Data>;
+  /** a callback for when an error rejects. Will wait until there is data. */
+  readonly rejectError: () => Promise<string>;
 }
 
 /** the initial slice state for use in a redux store */
@@ -207,41 +212,42 @@ const operationWithMeta = (
       setTimeout(() => reject(timeoutRejection), timeout)
     );
     return Promise.race([
-      pauseUntilDataDependsOn(payload, meta, operation),
+      decoratedOperation(payload, meta, operation),
       timeoutRejectPromise,
     ]);
   }
   // if other lifecycles first depend on data, await those first
-  return pauseUntilDataDependsOn(payload, meta, operation);
+  return decoratedOperation(payload, meta, operation);
 };
 
 // if anything first depends on this data, do not resolve until callbacks invoked
-const pauseUntilDataDependsOn = <T extends any>(
+const decoratedOperation = <T extends any>(
   value: T,
   meta: AsyncMeta<any, any>,
   operation: AsyncFunction<any, any>
 ): Promise<T> => {
-  // for-of loop with a continue; wait for the first call still missing data
+  // for-of loop with a continue; wait for the first lifecycle still missing data
   for (const depends of meta.dataDepends) {
     const dependsMeta = {
       ...naiveAsyncInitialMeta,
       ...metaCache.get(depends),
     };
-    if (dependsMeta.dataCount) {
+    if (dependsMeta.lastData) {
       continue;
     } else {
       let awaitData: (value: T) => void = (t: T) => t;
       const awaitedPromise = new Promise<T>((resolve) => {
         awaitData = resolve;
       }).then(() => value);
-      const awaitResolve = [...dependsMeta.awaitResolve, awaitData];
-      metaCache.set(depends, { ...dependsMeta, awaitResolve });
+      const expectingData = [...dependsMeta.expectingData, awaitData];
+      metaCache.set(depends, { ...dependsMeta, expectingData });
       return awaitedPromise.then((value) => operation(value));
     }
   }
   return operation(value);
 };
 
+/** from a dispatched action$ observable for a given lifecycle, call the operation and dispatch the redux actions */
 const observableFromAsyncLifeCycle = (
   action$: Observable<Action<any>>,
   asyncLifeCycle: AsyncLifecycle<any, any>,
@@ -271,6 +277,7 @@ const observableFromAsyncLifeCycle = (
     }
   });
 
+/**  */
 const asyncableEpicOnPhase = (
   action$: Observable<Action<any>>,
   phase: AsyncPhase,
@@ -328,9 +335,17 @@ const responseDispatchOnPhase = (
       ...naiveAsyncInitialMeta,
       ...metaCache.get(name),
     };
+    // resolveData
+    if (phase === "data" && meta.resolveData) {
+      meta.resolveData(action.payload);
+    }
     // onData
     if (phase === "data" && meta.onData) {
       meta.onData(action.payload, meta.lastParams || {}, dispatch);
+    }
+    // rejectError
+    if (phase === "error" && meta.rejectError) {
+      meta.rejectError(action.payload);
     }
     // onError
     if (phase === "error" && meta.onError) {
@@ -338,21 +353,17 @@ const responseDispatchOnPhase = (
     }
     // awaitResolve
     if (phase === "data" && meta.awaitResolve) {
-      meta.awaitResolve.forEach((wait) => {
-        wait(action.payload);
-      });
+      meta.awaitResolve(action.payload);
     }
     // awaitReject
     if (phase === "error" && meta.awaitReject) {
-      meta.awaitReject.forEach((wait) => {
-        wait(action.payload);
-      });
+      meta.awaitReject(action.payload);
     }
     // memoize
     if (phase === "data" && meta.memo) {
       meta.memo.set(JSON.stringify(meta.lastParams), action.payload);
     }
-    // subscirbe
+    // subscribe
     if (phase === "subscribe") {
       const actionAsyncLifecycle = cache.get(name);
       const subscribe: number = action.payload;
@@ -364,14 +375,21 @@ const responseDispatchOnPhase = (
       metaCache.set(name, { ...meta, subscribe, subscribeInterval });
       return new Observable<never>();
     }
+    // expectingData (dataDepends)
+    meta.expectingData.forEach((cb) => cb(action.payload));
 
+    const resolveData = phase === "data" ? undefined : meta.resolveData;
+    const rejectError = phase === "error" ? undefined : meta.rejectError;
     const dataCount = phase === "data" ? meta.dataCount + 1 : 0;
     const errorCount = phase === "error" ? meta.errorCount + 1 : 0;
     const awaitResolve =
-      meta.awaitResolve && phase === "data" ? [] : meta.awaitResolve;
+      meta.awaitResolve && phase === "data" ? undefined : meta.awaitResolve;
     const awaitReject =
-      meta.awaitReject && phase === "error" ? [] : meta.awaitReject;
+      meta.awaitReject && phase === "error" ? undefined : meta.awaitReject;
     const record = Date.now() - meta.lastCalled;
+    const expectingData: Array<OnData1<any>> =
+      phase === "data" ? [] : meta.expectingData;
+    const lastData = phase === "data" ? action.payload : meta.lastData;
     metaCache.set(name, {
       ...meta,
       dataCount,
@@ -379,6 +397,10 @@ const responseDispatchOnPhase = (
       record,
       awaitResolve,
       awaitReject,
+      resolveData,
+      rejectError,
+      expectingData,
+      lastData,
     });
     return new Observable<never>();
   };
@@ -551,7 +573,7 @@ export const asyncLifecycle = <Data, Params extends {}>(
       });
       const meta = {
         ...thisMeta,
-        awaitResolve: [...(thisMeta?.awaitReject || []), awaitResolve],
+        awaitResolve,
       };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return awaitedPromise;
@@ -564,7 +586,7 @@ export const asyncLifecycle = <Data, Params extends {}>(
       });
       const meta = {
         ...thisMeta,
-        awaitReject: [...(thisMeta?.awaitReject || []), awaitReject],
+        awaitReject,
       };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return awaitedPromise;
@@ -577,6 +599,38 @@ export const asyncLifecycle = <Data, Params extends {}>(
       };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return lifecycle;
+    },
+    resolveData: async () => {
+      const thisMeta = metaCache.get(id);
+      const lastData = thisMeta?.lastData;
+
+      if (lastData) {
+        return Promise.resolve(lastData);
+      } else {
+        let resolveData: (value: Data) => void = () => null;
+        const awaitedPromise = new Promise<Data>((resolve) => {
+          resolveData = resolve;
+        });
+        const meta = { ...thisMeta, ...{ resolveData } };
+        metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+        return awaitedPromise;
+      }
+    },
+    rejectError: async () => {
+      const thisMeta = metaCache.get(id);
+      const lastError = thisMeta?.lastError;
+
+      if (lastError) {
+        return Promise.reject(lastError);
+      } else {
+        let rejectError: (value: Error) => void = () => null;
+        const awaitedRejection = new Promise<string>((_resolve, reject) => {
+          rejectError = reject;
+        });
+        const meta = { ...thisMeta, ...{ rejectError } };
+        metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+        return awaitedRejection;
+      }
     },
   };
   // cache the created lifecycle

@@ -214,14 +214,19 @@ describe("lifecycle", () => {
     store.dispatch(lcDepends.sync({}));
     expect(lcDepends.meta().dataDepends).toHaveLength(1);
     expect(lcDepends.meta().dataDepends[0]).toBe(lcRequired.id);
-    expect(lcRequired.meta().awaitResolve.length).toBe(1);
+    expect(lcRequired.meta().expectingData).toHaveLength(1);
     expect(opSpy).toHaveBeenCalledTimes(0);
+    // when the required function resolves
     store.dispatch(lcRequired.sync({}));
+    await lcRequired.awaitResolve();
+    expect(lcRequired.meta().expectingData).toHaveLength(0);
+    expect(lcRequired.meta().dataCount).toBe(1);
     await lcDepends.awaitResolve();
     expect(opSpy).toHaveBeenCalledTimes(1);
-    expect(lcRequired.meta().awaitResolve.length).toBe(0);
-    expect(lcRequired.meta().dataCount).toBe(1);
+
+    // when called already with data, doesn't retrigger operation
     store.dispatch(lcDepends.sync({}));
+    expect(lcRequired.meta().expectingData).toHaveLength(0);
     await lcDepends.awaitResolve();
     expect(opSpy).toHaveBeenCalledTimes(2);
   });
@@ -241,5 +246,48 @@ describe("lifecycle", () => {
     });
     expect(lcDepends.sync().postmark.trace).toContain(__filename);
     expect(lcDepends.call().postmark.trace).toContain(__dirname);
+  });
+
+  it("resolveData should resolve with expected data", async () => {
+    // given
+    const paramz = v4();
+    const dataz = { output: "success" };
+    const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
+      quickResolve(dataz)
+    );
+    expect(lc.meta().resolveData).toBeFalsy();
+    // then
+    let didResolve = false;
+    lc.resolveData().then((data) => {
+      expect(data).toEqual(dataz);
+      didResolve = true;
+    });
+    // when
+    expect(lc.meta().resolveData).toBeTruthy();
+    // any assertions before we have data 👆
+    store.dispatch(lc.sync({ paramz }));
+    await lc.awaitResolve();
+    expect(didResolve).toBeTruthy();
+    expect(lc.meta().resolveData).toBeFalsy();
+  });
+
+  it.skip("rejectError should reject with the error", async () => {
+    // given
+    const err = "rejection will be swift";
+    const paramz = v4();
+    const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
+      quickReject(new Error(err))
+    );
+    expect(lc.meta().rejectError).toBeFalsy();
+    // then
+    expect(lc.rejectError().catch((error) => error.message)).resolves.toMatch(
+      err
+    );
+    // when
+    expect(lc.meta().rejectError).toBeTruthy();
+    store.dispatch(lc.sync({ paramz }));
+    await lc.awaitReject();
+    expect(lc.meta().rejectError).toBeFalsy();
+    expect(lc.meta().lastError).toEqual(err);
   });
 });
