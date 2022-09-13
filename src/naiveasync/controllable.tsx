@@ -30,6 +30,7 @@ import {
   OnError,
   AsyncableOptions,
   OnData1,
+  AsyncActionCreatorFactory,
 } from "./actions";
 import { KeyedCache } from "./keyedcache";
 import { $from, $toMiddleware } from "./observables";
@@ -107,7 +108,7 @@ export interface AsyncLifecycle<Data, Params> {
     retries: number,
     errRetryCb?: ErrRetryCb
   ) => AsyncLifecycle<Data, Params>;
-  /** (still in development) Meta toggle to enable a millisecond (sync) repeat of the operation with its previously supplied params. (0 will disable) */
+  /** Meta toggle to enable a millisecond (sync) repeat of the operation with its previously supplied params. (0 will disable) */
   readonly subscribe: AsyncActionCreator<number>;
   /** Assign a callback function to be called when the 'data' event is dispatched. */
   readonly onData: (
@@ -129,9 +130,207 @@ export interface AsyncLifecycle<Data, Params> {
   readonly dataDepends: (dataDepends: string[]) => AsyncLifecycle<Data, Params>;
   /** Returns a . */
   readonly resolveData: () => Promise<Data>;
-  /** a callback for when an error rejects. Will wait until there is data. */
+  /** A callback for when an error rejects. Will wait until there is data. */
   readonly rejectError: () => Promise<string>;
+  /** Applies options to the lifecycle, calling the operations automatically. */
+  readonly options: (options: AsyncableOptions) => AsyncLifecycle<Data, Params>;
+  /** Invalidates the cache; re-creates the lifecycle in cache and resets it's meta. Applies new options or keeps previous settings if not supplied. Good for testing after mocking / spied function mutation, but likely poison for calling at runtime. */
+  readonly invalidate: (
+    options?: AsyncableOptions
+  ) => AsyncLifecycle<Data, Params>;
 }
+
+/** Do not export this. Function is big and expensive. */
+const newLifecycleFromFactory = <Data, Params>(
+  id: string,
+  operation: AsyncFunction<Data, Params>,
+  factory: AsyncActionCreatorFactory
+): AsyncLifecycle<Data, Params> => {
+  const lifecycle: AsyncLifecycle<Data, Params> = {
+    id,
+    operation,
+    selector: selectFunction(id),
+    call: factory<Params>("call"),
+    sync: factory<Params | undefined>("sync"),
+    destroy: factory<undefined>("destroy"),
+    data: factory<Data>("data"),
+    error: factory<string>("error"),
+    done: factory<undefined>("done"),
+    reset: factory<undefined>("reset"),
+    assign: factory<AsyncState<Data, Params>>("assign"),
+    subscribe: factory<number>("subscribe"),
+    memoized: (enabled: boolean) => {
+      const memo = enabled ? new KeyedCache<any>() : undefined;
+      const meta = { ...metaCache.get(id), memo };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      return lifecycle;
+    },
+    onData: (onData: OnData<Data, Params>) => {
+      const meta = { ...metaCache.get(id), ...{ onData } };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      return lifecycle;
+    },
+    onError: (onError: OnError<Data, Params>) => {
+      const meta = { ...metaCache.get(id), ...{ onError } };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      return lifecycle;
+    },
+    timeout: (timeout: number) => {
+      const meta = { ...metaCache.get(id), ...{ timeout } };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      return lifecycle;
+    },
+    throttle: (throttle: number) => {
+      const thisMeta = metaCache.get(id);
+      const meta = { ...thisMeta, ...{ throttle } };
+      const operation = lodashThrottle(
+        lifecycle.operation,
+        throttle
+      ) as AsyncFunction<any, any>;
+      const updatedLifecycle = { ...lifecycle, operation };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      cache.set(id, updatedLifecycle);
+      return updatedLifecycle;
+    },
+    debounce: (debounce: number) => {
+      const thisMeta = metaCache.get(id);
+      const meta = { ...thisMeta, ...{ debounce } };
+      const operation = lodashDebounce(lifecycle.operation, debounce, {
+        leading: false,
+        trailing: true,
+      }) as AsyncFunction<any, any>;
+      const updatedLifecycle = { ...lifecycle, operation };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      cache.set(id, updatedLifecycle);
+      return updatedLifecycle;
+    },
+    retries: (retries: number, errRetryCb: ErrRetryCb = () => "noop") => {
+      const thisMeta = metaCache.get(id);
+      const meta = { ...thisMeta, ...{ retries, errRetryCb } };
+      const operation = retryOperation(
+        lifecycle.operation,
+        errRetryCb,
+        retries
+      );
+      const updatedLifecycle = { ...lifecycle, operation };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      cache.set(id, updatedLifecycle);
+      return updatedLifecycle;
+    },
+    meta: () => ({ ...naiveAsyncInitialMeta, ...metaCache.get(id) }),
+    awaitResolve: async () => {
+      const thisMeta = metaCache.get(id);
+      let awaitResolve: (value: Data) => void = () => null;
+      const awaitedPromise = new Promise<Data>((resolve) => {
+        awaitResolve = resolve;
+      });
+      const meta = {
+        ...thisMeta,
+        awaitResolve,
+      };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      return awaitedPromise;
+    },
+    awaitReject: async () => {
+      const thisMeta = metaCache.get(id);
+      let awaitReject: (err?: any) => void = () => null;
+      const awaitedPromise = new Promise<Data>((_resolve, reject) => {
+        awaitReject = reject;
+      });
+      const meta = {
+        ...thisMeta,
+        awaitReject,
+      };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      return awaitedPromise;
+    },
+    dataDepends: (dataDepends: string[]) => {
+      const thisMeta = metaCache.get(id);
+      const meta = {
+        ...thisMeta,
+        dataDepends,
+      };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+      return lifecycle;
+    },
+    resolveData: async () => {
+      const thisMeta = metaCache.get(id);
+      const lastData = thisMeta?.lastData;
+
+      if (lastData) {
+        return Promise.resolve(lastData);
+      } else {
+        let resolveData: (value: Data) => void = () => null;
+        const awaitedPromise = new Promise<Data>((resolve) => {
+          resolveData = resolve;
+        });
+        const meta = { ...thisMeta, ...{ resolveData } };
+        metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+        return awaitedPromise;
+      }
+    },
+    rejectError: async () => {
+      const thisMeta = metaCache.get(id);
+      const lastError = thisMeta?.lastError;
+
+      if (lastError) {
+        return Promise.reject(lastError);
+      } else {
+        let rejectError: (value: Error) => void = () => null;
+        const awaitedRejection = new Promise<string>((_resolve, reject) => {
+          rejectError = reject;
+        });
+        const meta = { ...thisMeta, ...{ rejectError } };
+        metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
+        return awaitedRejection;
+      }
+    },
+    options: (options: AsyncableOptions) => {
+      const thisMeta = metaCache.get(id) || naiveAsyncInitialMeta;
+      if (options?.debounce) {
+        lifecycle.debounce(options.debounce);
+      }
+      if (options?.throttle) {
+        lifecycle.throttle(options.throttle);
+      }
+      if (options?.timeout) {
+        lifecycle.timeout(options.timeout);
+      }
+      if (options?.dataDepends) {
+        lifecycle.dataDepends(options.dataDepends);
+      }
+      metaCache.set(id, { ...thisMeta, ...options });
+      return lifecycle;
+    },
+    invalidate: (options?: AsyncableOptions) => {
+      const thisMeta = metaCache.get(id);
+      const newOptions: AsyncableOptions = options || {
+        traceDispatch: thisMeta?.traceDispatch,
+        timeout: thisMeta?.timeout,
+        debounce: thisMeta?.debounce,
+        throttle: thisMeta?.throttle,
+        dataDepends: thisMeta?.dataDepends,
+      };
+      const factory = asyncActionCreatorFactory(id, newOptions);
+      const newLifecycle = {
+        ...lifecycle,
+        call: factory<Params>("call"),
+        sync: factory<Params | undefined>("sync"),
+        destroy: factory<undefined>("destroy"),
+        data: factory<Data>("data"),
+        error: factory<string>("error"),
+        done: factory<undefined>("done"),
+        reset: factory<undefined>("reset"),
+        assign: factory<AsyncState<Data, Params>>("assign"),
+        subscribe: factory<number>("subscribe"),
+      };
+      cache.set(id, newLifecycle);
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...newOptions });
+      return newLifecycle;
+    },
+  };
+  return lifecycle;
+};
 
 /** the initial slice state for use in a redux store */
 export const naiveAsyncInitialSlice = { [asyncableEmoji]: {} };
@@ -443,7 +642,7 @@ const selectFunction = (id: string) => (state: AsyncableSlice) => {
   return naiveAsyncInitialState;
 };
 
-const retryOperation = <Params extends {}, Data>(
+const retryOperation = <Data, Params>(
   operation: AsyncFunction<Data, Params>,
   errRetryCb: ErrRetryCb,
   retries = 0
@@ -493,162 +692,14 @@ export const asyncLifecycle = <Data, Params extends {}>(
     return existing;
   }
   const factory = asyncActionCreatorFactory(id, options || {});
-  const lifecycle: AsyncLifecycle<Data, Params> = {
-    id,
-    operation,
-    selector: selectFunction(id),
-    call: factory<Params>("call"),
-    sync: factory<Params | undefined>("sync"),
-    destroy: factory<undefined>("destroy"),
-    data: factory<Data>("data"),
-    error: factory<string>("error"),
-    done: factory<undefined>("done"),
-    reset: factory<undefined>("reset"),
-    assign: factory<AsyncState<Data, Params>>("assign"),
-    subscribe: factory<number>("subscribe"),
-    memoized: (enabled: boolean) => {
-      const memo = enabled ? new KeyedCache<any>() : undefined;
-      const meta = { ...metaCache.get(id), memo };
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      return lifecycle;
-    },
-    onData: (onData: OnData<Data, Params>) => {
-      const meta = { ...metaCache.get(id), ...{ onData } };
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      return lifecycle;
-    },
-    onError: (onError: OnError<Data, Params>) => {
-      const meta = { ...metaCache.get(id), ...{ onError } };
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      return lifecycle;
-    },
-    timeout: (timeout: number) => {
-      const meta = { ...metaCache.get(id), ...{ timeout } };
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      return lifecycle;
-    },
-    throttle: (throttle: number) => {
-      const thisMeta = metaCache.get(id);
-      const meta = { ...thisMeta, ...{ throttle } };
-      const operation = lodashThrottle(
-        lifecycle.operation,
-        throttle
-      ) as AsyncFunction<any, any>;
-      const updatedLifecycle = { ...lifecycle, operation };
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      cache.set(id, updatedLifecycle);
-      return updatedLifecycle;
-    },
-    debounce: (debounce: number) => {
-      const thisMeta = metaCache.get(id);
-      const meta = { ...thisMeta, ...{ debounce } };
-      const operation = lodashDebounce(lifecycle.operation, debounce, {
-        leading: false,
-        trailing: true,
-      }) as AsyncFunction<any, any>;
-      const updatedLifecycle = { ...lifecycle, operation };
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      cache.set(id, updatedLifecycle);
-      return updatedLifecycle;
-    },
-    retries: (retries: number, errRetryCb: ErrRetryCb = () => "noop") => {
-      const thisMeta = metaCache.get(id);
-      const meta = { ...thisMeta, ...{ retries, errRetryCb } };
-      const operation = retryOperation(
-        lifecycle.operation,
-        errRetryCb,
-        retries
-      );
-      const updatedLifecycle = { ...lifecycle, operation };
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      cache.set(id, updatedLifecycle);
-      return updatedLifecycle;
-    },
-    meta: () => ({ ...naiveAsyncInitialMeta, ...metaCache.get(id) }),
-    awaitResolve: async () => {
-      const thisMeta = metaCache.get(id);
-      let awaitResolve: (value: Data) => void = () => null;
-      const awaitedPromise = new Promise<Data>((resolve) => {
-        awaitResolve = resolve;
-      });
-      const meta = {
-        ...thisMeta,
-        awaitResolve,
-      };
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      return awaitedPromise;
-    },
-    awaitReject: async () => {
-      const thisMeta = metaCache.get(id);
-      let awaitReject: (err?: any) => void = () => null;
-      const awaitedPromise = new Promise<Data>((_resolve, reject) => {
-        awaitReject = reject;
-      });
-      const meta = {
-        ...thisMeta,
-        awaitReject,
-      };
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      return awaitedPromise;
-    },
-    dataDepends: (dataDepends: string[]) => {
-      const thisMeta = metaCache.get(id);
-      const meta = {
-        ...thisMeta,
-        dataDepends,
-      };
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-      return lifecycle;
-    },
-    resolveData: async () => {
-      const thisMeta = metaCache.get(id);
-      const lastData = thisMeta?.lastData;
-
-      if (lastData) {
-        return Promise.resolve(lastData);
-      } else {
-        let resolveData: (value: Data) => void = () => null;
-        const awaitedPromise = new Promise<Data>((resolve) => {
-          resolveData = resolve;
-        });
-        const meta = { ...thisMeta, ...{ resolveData } };
-        metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-        return awaitedPromise;
-      }
-    },
-    rejectError: async () => {
-      const thisMeta = metaCache.get(id);
-      const lastError = thisMeta?.lastError;
-
-      if (lastError) {
-        return Promise.reject(lastError);
-      } else {
-        let rejectError: (value: Error) => void = () => null;
-        const awaitedRejection = new Promise<string>((_resolve, reject) => {
-          rejectError = reject;
-        });
-        const meta = { ...thisMeta, ...{ rejectError } };
-        metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
-        return awaitedRejection;
-      }
-    },
-  };
+  const lifecycle = newLifecycleFromFactory(id, operation, factory);
   // cache the created lifecycle
   cache.set(id, lifecycle);
   metaCache.set(id, { ...naiveAsyncInitialMeta, ...options });
   metaCache.get(id);
-  // apply certain lifecycle options posthoc
-  if (options?.debounce) {
-    lifecycle.debounce(options.debounce);
-  }
-  if (options?.throttle) {
-    lifecycle.throttle(options.throttle);
-  }
-  if (options?.timeout) {
-    lifecycle.timeout(options.timeout);
-  }
-  if (options?.dataDepends) {
-    lifecycle.dataDepends(options.dataDepends);
+  // apply certain lifecycle options post-hoc
+  if (options) {
+    lifecycle.options(options);
   }
   return lifecycle;
 };

@@ -103,7 +103,7 @@ const noop = () => Promise.resolve({});
  * @returns {React.ReactElement<NaiveAsyncComponentProps<Data, Params>>}
  */
 
-export const NaiveAsync = <Data, Params extends {}>(
+export const NaiveAsync = <Data, Params>(
   props: NaiveAsyncComponentProps<Data, Params>
 ): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> => {
   const {
