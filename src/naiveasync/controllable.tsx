@@ -128,9 +128,9 @@ export interface AsyncLifecycle<Data, Params> {
   readonly awaitReject: () => Promise<Data>;
   /** Pauses execution of the operation until the lifecycle with the given id has returned data. Only looks if data was returned once, not necesarilly that the lifecycle has data in it's state (experimental) */
   readonly dataDepends: (dataDepends: string[]) => AsyncLifecycle<Data, Params>;
-  /** Returns a . */
+  /** A callback for when an data resolves. Will wait until data state occurs. */
   readonly resolveData: () => Promise<Data>;
-  /** A callback for when an error rejects. Will wait until there is data. */
+  /** A callback for when an error rejects. Will wait until an error state occurs. */
   readonly rejectError: () => Promise<string>;
   /** Applies options to the lifecycle, calling the operations automatically. */
   readonly options: (options: AsyncableOptions) => AsyncLifecycle<Data, Params>;
@@ -312,8 +312,10 @@ const newLifecycleFromFactory = <Data, Params>(
         dataDepends: thisMeta?.dataDepends,
       };
       const factory = asyncActionCreatorFactory(id, newOptions);
+      const operation = thisMeta?.operationCopy || lifecycle.operation;
       const newLifecycle = {
         ...lifecycle,
+        operation,
         call: factory<Params>("call"),
         sync: factory<Params | undefined>("sync"),
         destroy: factory<undefined>("destroy"),
@@ -325,7 +327,11 @@ const newLifecycleFromFactory = <Data, Params>(
         subscribe: factory<number>("subscribe"),
       };
       cache.set(id, newLifecycle);
-      metaCache.set(id, { ...naiveAsyncInitialMeta, ...newOptions });
+      metaCache.set(id, {
+        ...naiveAsyncInitialMeta,
+        ...newOptions,
+        operationCopy: operation,
+      });
       return newLifecycle;
     },
   };
@@ -693,9 +699,10 @@ export const asyncLifecycle = <Data, Params extends {}>(
   }
   const factory = asyncActionCreatorFactory(id, options || {});
   const lifecycle = newLifecycleFromFactory(id, operation, factory);
-  // cache the created lifecycle
+  // cache the created lifecycle and operation
   cache.set(id, lifecycle);
-  metaCache.set(id, { ...naiveAsyncInitialMeta, ...options });
+  const operationCopy = operation;
+  metaCache.set(id, { ...naiveAsyncInitialMeta, ...options, operationCopy });
   metaCache.get(id);
   // apply certain lifecycle options post-hoc
   if (options) {

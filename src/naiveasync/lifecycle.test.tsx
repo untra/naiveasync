@@ -298,6 +298,21 @@ describe("lifecycle", () => {
     expect(lc.meta().lastParams).toBeUndefined();
   });
 
+  it("invalidating the cache will reset a poisoned function", () => {
+    const name = v4();
+    const expectedType = `${asyncableEmoji}/${name}/call`;
+    let lc = asyncLifecycle(name, ({ paramz }: { paramz: string }) =>
+      quickResolve(dataz)
+    );
+    const spied = jest.spyOn(lc, "call");
+    const paramz = v4();
+    store.dispatch(lc.call({ paramz }));
+    expect(spied).toBeCalledTimes(1);
+    lc = lc.invalidate();
+    expect(lc.call({ paramz }).type).toEqual(expectedType);
+    expect(spied).toBeCalledTimes(1);
+  });
+
   it.skip("rejectError should reject with the error", async () => {
     // given
     const err = "rejection will be swift";

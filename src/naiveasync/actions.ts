@@ -363,6 +363,8 @@ export type AsyncMeta<Data, Params> = Required<AsyncableOptions> & {
   readonly resolveData?: (data: Data) => void;
   /** 'rejectError' callback for when error has been occurred. (synchronous) */
   readonly rejectError?: (error: Error) => void;
+  /** a copy of the original operation, used for recreating the lifecycle after cache invalidation */
+  readonly operationCopy?: AsyncFunction<Data, Params>;
 };
 
 /**
