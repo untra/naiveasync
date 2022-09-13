@@ -131,7 +131,7 @@ export function asyncActionMatcher<Data, Params>(
   operation?: AsyncFunction<Data, Params>,
   phase?: AsyncPhase
 ) {
-  return (action: AnyAction) =>
+  return (action: AnyAction): boolean =>
     isAsyncAction(action) &&
     asyncActionMatchesPhase(action, phase) &&
     asyncActionMatchesOperation(action, operation);

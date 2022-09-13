@@ -1,11 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import {
-  AnyAction,
-  AsyncMeta,
-  AsyncState,
-  NaiveAsyncFunction,
-} from "./actions";
+import { AnyAction, AsyncFunction, AsyncMeta, AsyncState } from "./actions";
 import {
   asyncLifecycle,
   AsyncLifecycle,
@@ -38,8 +33,8 @@ export interface AsyncComponentProps<Data, Params> {
 }
 
 export interface NaiveAsyncComponentProps<Data, Params> {
-  id?: string;
-  operation?: NaiveAsyncFunction<Data, Params>;
+  id: string;
+  operation: AsyncFunction<Data, Params>;
   autoParams?: Params;
   children: NaiveAsyncComponentChildren<Data, Params>;
 }
@@ -92,7 +87,7 @@ export const AsyncManaged: React.FC<LifecycleAsyncProps<any, any>> = <
   return children({ state, call, reset, destroy, sync, meta, subscribe });
 };
 
-const noop = () => Promise.resolve({});
+const noop: AsyncFunction<unknown, unknown> = () => Promise.resolve({});
 
 /**
  * The NaiveAsync tag accepts an operation and autoParams object of initial parameters to pass in.
@@ -103,7 +98,7 @@ const noop = () => Promise.resolve({});
  * @returns {React.ReactElement<NaiveAsyncComponentProps<Data, Params>>}
  */
 
-export const NaiveAsync = <Data, Params>(
+export const NaiveAsync = <Data, Params extends {}>(
   props: NaiveAsyncComponentProps<Data, Params>
 ): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> => {
   const {
@@ -114,7 +109,7 @@ export const NaiveAsync = <Data, Params>(
   } = props;
   const [state, setState] = useState({
     params: autoParams,
-    asyncLifeCycle: asyncLifecycle(id, operation),
+    asyncLifeCycle: asyncLifecycle(id, operation as any),
     AsyncControllable: createControllableContext(
       naiveAsyncReducer,
       naiveAsyncMiddleware
