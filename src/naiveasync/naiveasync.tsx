@@ -109,7 +109,7 @@ export const NaiveAsync = <Data, Params extends {}>(
   } = props;
   const [state, setState] = useState({
     params: autoParams,
-    asyncLifeCycle: asyncLifecycle(id, operation as any),
+    asyncLifeCycle: asyncLifecycle(id, operation),
     AsyncControllable: createControllableContext(
       naiveAsyncReducer,
       naiveAsyncMiddleware

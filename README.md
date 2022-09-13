@@ -99,8 +99,9 @@ Some Terminology:
 * use lifecycle `.meta()` to get the AsyncMeta, a snapshot printout of the metacache for this lifecycle, useful in testing
 * use `mockInitialAsyncState, mockInflightAsyncState, mockErrorAsyncState, mockDoneAsyncState` to represent async states in mocks and storybook scenes
 * dispatch the lifecycle `.assign(state)` action to assign a specific state to the lifecycle. this is typically frowned upon in redux philosophy, but is really helpful in mocking state
-* when testing within async functions, use `await lifecycle.awaitResolve()` to pause test execution until the async operation next resolves. simmilarly use `await lifecycle.awaitReject()` to test rejection.
-* lifecycles can be passed options, and optionally passed `{ traceDispatch: true }` to add a stacktrace to dispatched actions, and to trace invocations of a lifecycle.
+* when testing within async functions, use `await lifecycle.awaitResolve()` to pause test execution until the async operation next resolves. similarly use `await lifecycle.awaitReject()` to test rejection.
+* lifecycle's can be passed options, and optionally passed `{ traceDispatch: true }` to add a stacktrace to dispatched actions, and to trace invocations of a lifecycle.
+* call `.invalidate()` after you mock action dispatching functions on a lifecycle to keep the lifecycle fresh.
 
 ## 1.0.0 feature wishlist:
 
@@ -124,9 +125,13 @@ Some Terminology:
 * test support for immutablejs
 * test support as observable / generator
 
-## Simmilar but worse
+## How it works
 
-To achieve the simmilar goals as what react + redux + naiveasync can provide, heres a starting point for your other framework or whatever
+NaiveAsync maintains two caches of lifecycles and their meta properties (alongside syncing state to the redux). The `asyncLifecycle(id, async () => { ... })` first argument is an id that will be checked against a cache. As a result, that function _may_ return a reference to an existing lifecycle. A lifecycle can reset itself by calling `.invalidate()`.
+
+## Similar but worse
+
+To achieve the similar goals as what react + redux + naiveasync can provide, heres a starting point for your other framework or whatever
 
 - [angular](https://stackoverflow.com/a/24091953/1435958)
 - [svelte](https://svelte-recipes.netlify.app/components/)
