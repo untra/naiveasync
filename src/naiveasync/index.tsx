@@ -1,4 +1,8 @@
-export { naiveAsyncEmoji, naiveAsyncInitialState } from "./actions";
+export {
+  naiveAsyncEmoji,
+  naiveAsyncInitialState,
+  asyncableEmoji,
+} from "./actions";
 export {
   naiveAsyncLifecycle,
   naiveAsyncMiddleware,
@@ -12,6 +16,9 @@ export type {
   NaiveAsyncState,
   NaiveAsyncFunction,
   AsyncState,
+  AsyncableOptions,
+  AsyncableSlice,
+  InitialAsyncState,
 } from "./actions";
 export type { AsyncLifecycle } from "./controllable";
 export {
