@@ -50,7 +50,7 @@ const MemoizedComponent: React.FC<Props> = ({ state, select }) => {
   const status = `status: ${state.status}`;
   const error = `error: ${state.error}`;
   const params = `params: ${JSON.stringify(state.params)}`;
-  const assignOnData = (onData?: OnData<IconResp>) => {
+  const assignOnData = (onData?: OnData<IconResp, IconParams>) => {
     if (onData) {
       setOnDataType(onData.name);
       ondataLifecycle.onData(onData);

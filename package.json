@@ -1,6 +1,6 @@
 {
   "name": "@untra/naiveasync",
-  "version": "0.5.2",
+  "version": "0.6.2",
   "description": "An Opinionated and Painless React & Redux promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/untra/naiveasync.git"
+    "url": "git+https://github.com/stackhawk/naiveasync.git"
   },
   "homepage": "https://naiveasync.untra.io/",
   "jest": {
@@ -29,7 +29,7 @@
     "postpublish": "npm run deploy",
     "preversion": "npm run ci",
     "test": "npm run build && jest",
-    "build": "rm -rf dist && mkdir dist && cp src/index.html dist/index.html && tsc -p build.tsconfig.json",
+    "build": "rm -rf dist && mkdir dist && cp src/index.html dist/index.html && tsc -p build.tsconfig.json && npm run defs",
     "build:watch": "npm run build && tsc -p ./build.tsconfig.json --watch",
     "build:ts": "tsc -p tsconfig.json",
     "build:rs": "./node_modules/.bin/react-scripts build",
@@ -40,7 +40,7 @@
     "ci": "npm run build && npm run lint && npm run test",
     "ci2": "npm run lint && npm run build && npm run cover",
     "start": "./node_modules/.bin/react-scripts start",
-    "deploy": "./node_modules/.bin/gh-pages -d ./build",
+    "deploy": "echo \"deploy not enabled from this project.\"",
     "predeploy": "npm run build:site && npm run docs",
     "prettier:format": "prettier --write \"./src/**/*.{ts,tsx}\"",
     "watch": "./node_modules/.bin/webpack-dev-server dist/src/index.js",
@@ -54,8 +54,8 @@
   "peerDependencies": {
     "lodash.debounce": "^4.x.x",
     "lodash.throttle": "^4.x.x",
-    "react": "^16.x.x",
-    "redux": "^4.x.x",
+    "react": "=>16.x.x",
+    "redux": "=>4.x.x",
     "rxjs": "^6.x.x"
   },
   "devDependencies": {
@@ -63,9 +63,11 @@
     "@babel/preset-env": "7.15.8",
     "@babel/preset-react": "^7.9.4",
     "@babel/preset-typescript": "^7.9.0",
+    "@cypress/browserify-preprocessor": "^1.1.0",
+    "@cypress/webpack-preprocessor": "^5.9.1",
     "@reactivex/rxjs": "^6.6.7",
     "@types/chai": "^4.2.11",
-    "@types/jest": "^27.0.2",
+    "@types/jest": "^24.0.25",
     "@types/lodash": "^4.14.151",
     "@types/lodash.debounce": "^4.0.6",
     "@types/lodash.throttle": "^4.1.6",
@@ -73,7 +75,7 @@
     "@types/node": "^10.17.21",
     "@types/react": "^16.9.35",
     "@types/react-dom": "^16.9.8",
-    "@types/react-highlight": "^0.12.1",
+    "@types/react-highlight": "0.12.1",
     "@types/react-redux": "^7.1.8",
     "@types/react-router-dom": "4.3.3",
     "@types/uuid": "^8.3.1",
@@ -94,7 +96,7 @@
     "eslint-plugin-unused-imports": "^1.1.5",
     "gh-pages": "^2.2.0",
     "html-loader": "^0.5.5",
-    "html-webpack-plugin": "^3.2.0",
+    "html-webpack-plugin": "^5.5.0",
     "jest": "^27.3.1",
     "jest-environment-jsdom": "^27.0.6",
     "lodash.debounce": "^4.0.8",
