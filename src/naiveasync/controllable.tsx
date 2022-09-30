@@ -426,6 +426,7 @@ const operationWithMeta = (
 };
 
 // if anything first depends on this data, do not resolve until callbacks invoked
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-constraint
 const decoratedOperation = <T extends any>(
   value: T,
   meta: AsyncMeta<any, any>,
