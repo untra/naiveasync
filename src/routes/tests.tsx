@@ -8,7 +8,7 @@ import React from "react";
 /* eslint-disable prefer-promise-reject-errors */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Provider } from "react-redux";
-import * as packagejson from "../../package.json";
+import packagejson from "../../package.json";
 import { AsyncState } from "../naiveasync/actions";
 import { asyncLifecycle, NaiveAsync } from "../naiveasync/index";
 import { Async } from "../naiveasync/naiveasync";
@@ -26,6 +26,8 @@ import RetryTest from "./components/retryTest";
 import SubscribeTest from "./components/subscribeTest";
 import TimeoutSync from "./components/timeout";
 import { mockResolve, slowReject } from "../utils/promise";
+
+const version = packagejson.version;
 
 const emojiView = (state: AsyncState<any, {}>) => (
   <p>
@@ -54,7 +56,7 @@ const callableView = (state: AsyncState<any, {}>, call: ({}) => any) => (
   </button>
 );
 
-const slowResolve = <T extends any>(val: T): Promise<T> =>
+const slowResolve = <T extends {}>(val: T): Promise<T> =>
   new Promise((resolve) => {
     const timeMS = Math.random() * 4000;
     setTimeout(() => resolve(val), timeMS);
@@ -129,7 +131,7 @@ export default class Test extends React.Component {
           <h3>
             View the test results at <a href={thatCypressPage}>Cypress.io</a>
           </h3>
-          <h4>version {packagejson.version}</h4>
+          <h4>version {version}</h4>
           <p>
             This page is a demonstration of the NaiveTable component used in a
             variety of ways:
