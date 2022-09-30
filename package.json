@@ -63,7 +63,7 @@
     "@babel/preset-env": "7.15.8",
     "@babel/preset-react": "^7.9.4",
     "@babel/preset-typescript": "^7.9.0",
-    "@cypress/browserify-preprocessor": "^1.1.0",
+    "@cypress/browserify-preprocessor": "^3.0.2",
     "@cypress/webpack-preprocessor": "^5.9.1",
     "@reactivex/rxjs": "^6.6.7",
     "@types/chai": "^4.2.11",
