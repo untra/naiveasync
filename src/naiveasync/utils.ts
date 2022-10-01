@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ChangeEvent } from "react";
 import { naiveAsyncInitialState, AsyncState } from "./actions";
 
 /**
@@ -64,3 +65,21 @@ export const mockedAsyncStates: <D, P extends {}>(
   mockErrorAsyncState(error),
   mockDoneAsyncState(data, params),
 ];
+
+export const handleChangeEvent =
+  (handler: (s: string) => void) => (e: ChangeEvent) => {
+    const element = e.currentTarget as HTMLInputElement;
+    handler(element.value);
+    return;
+  };
+
+export const handleChangeNumberEvent =
+  (handler: (s: number) => void) => (e: ChangeEvent) => {
+    const element = e.currentTarget as HTMLInputElement;
+    const value = parseInt(element.value, 10);
+    if (isNaN(value)) {
+      return;
+    }
+    handler(value);
+    return;
+  };

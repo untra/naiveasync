@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import Highlight from "react-highlight";
 // tslint:disable-next-line: no-implicit-dependencies
@@ -7,11 +7,9 @@ import { Provider } from "react-redux";
 import { Link } from "react-router-dom";
 import packageJSON from "../../package.json";
 // tslint:disable-next-line: ordered-imports no-implicit-dependencies
-import {
-  NaiveAsync,
-  naiveAsyncInitialState,
-  NaiveAsyncState,
-} from "../naiveasync";
+import { Async, asyncLifecycle, naiveAsyncInitialState } from "../naiveasync";
+import { AsyncComponentChildrenProps } from "../naiveasync/naiveasync";
+import { handleChangeEvent } from "../naiveasync/utils";
 import { createConnectedStore } from "../utils/store";
 
 interface DataValue {
@@ -19,7 +17,7 @@ interface DataValue {
 }
 
 interface ParamsValue {
-  foo: string;
+  [index: string]: string;
 }
 
 const version = packageJSON.version;
@@ -59,26 +57,52 @@ const asyncOperation = (params: ParamsValue): Promise<DataValue> =>
     }, time);
   });
 
-const asyncableView = (
-  state: NaiveAsyncState<DataValue, ParamsValue>,
-  call: (params: ParamsValue) => void
-) => (
-  <div>
-    <h2>status: {state.status}</h2>
-    <h2>params: {JSON.stringify(state.params)}</h2>
-    <h2>error: {state.error}</h2>
-    <h2>data: {JSON.stringify(state.data)}</h2>
-    <button onClick={() => call({ foo: "foo" })}>
-      <p>foo</p>
-    </button>
-    <button onClick={() => call({ foo: "bar" })}>
-      <p>bar</p>
-    </button>
-    <button onClick={() => call({ foo: "baz" })}>
-      <p>baz</p>
-    </button>
-  </div>
+const asyncInputLifecycle = asyncLifecycle(
+  "asyncInputOperation",
+  asyncOperation
 );
+
+const AsyncableView =
+  (props: { initialKey: string; initialValue: string }) =>
+  (lcProps: AsyncComponentChildrenProps<DataValue, ParamsValue>) => {
+    const { state, call, sync, reset } = lcProps;
+    const { initialValue, initialKey } = props;
+    const [key, setKey] = useState(initialKey);
+    const [value, setValue] = useState(initialValue);
+    const params = { [key]: value };
+    return (
+      <div>
+        <h2>status: {state.status}</h2>
+        <h2>params: {JSON.stringify(state.params)}</h2>
+        <h2>error: {state.error}</h2>
+        <h2>data: {JSON.stringify(state.data)}</h2>
+        <div>
+          <input
+            type="text"
+            name="key"
+            value={key}
+            onChange={handleChangeEvent(setKey)}
+          />
+          :
+          <input
+            type="text"
+            name="value"
+            value={value}
+            onChange={handleChangeEvent(setValue)}
+          />
+        </div>
+        <button onClick={() => call(params)}>
+          <p>call</p>
+        </button>
+        <button onClick={() => sync(params)}>
+          <p>sync</p>
+        </button>
+        <button onClick={() => reset()}>
+          <p>reset</p>
+        </button>
+      </div>
+    );
+  };
 
 const lifecycleflowimage =
   "https://naiveasync.untra.io/images/naiveasync-flow.png";
@@ -108,28 +132,25 @@ export default class Home extends React.Component<{}> {
               <a href="https://www.npmjs.com/package/@untra/naiveasync">NPM</a>{" "}
               - <a href="https://naiveasync.untra.io/docs">Docs</a>
             </h3>
-            <NaiveAsync id="asyncOp" operation={asyncOperation}>
-              {asyncableView}
-            </NaiveAsync>
+            <Async lifecycle={asyncInputLifecycle}>
+              {AsyncableView({ initialKey: "foo", initialValue: "bar" })}
+            </Async>
             <p>
               NaiveAsync is a React Component that wraps a{" "}
               <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">
                 promise
               </a>{" "}
               and exposes an abstraction to invoke the promise and access it
-              with a straightforward abstraction.
+              with a straightforward abstraction for use with redux.
             </p>
             <p>
-              Child Components rendered in a NaiveAsync component have access to
-              a <code>state</code> and a <code>call</code> function.
+              Child Components rendered in a Async component have access to a
+              variety of functions, including <code>call</code>,{" "}
+              <code>sync</code>, <code>reset</code>, <code>subscribe</code>, and
+              a <code>state</code> object.
             </p>
             <p>NaiveAsync takes three arguments:</p>
             <ul>
-              <li>
-                <strong>operation:</strong>
-                <code>{`(params) => Promise`}</code> the operation takes in
-                params and returns a promise
-              </li>
               <li>
                 <strong>id:</strong>
                 <code>{`string`}</code> optional string identifier under which
@@ -137,10 +158,16 @@ export default class Home extends React.Component<{}> {
                 use the function name.
               </li>
               <li>
-                <strong>autoParams:</strong>
-                <code>{`Params`}</code> optional params object that, if
-                provided, will be used to invoke the operation on component
-                mount.
+                <strong>operation:</strong>
+                <code>{`(params) => Promise`}</code> the operation takes in
+                params and returns a promise
+              </li>
+              <li>
+                <strong>options:</strong>
+                <code>{`AsyncOptions`}</code> optional behaviors for a lifecycle
+                to enable changes to execution, including <code>subscribe</code>
+                , <code>throttle</code>, <code>debounce</code> and{" "}
+                <code>timeout</code>.
               </li>
             </ul>
             <Highlight className="tsx">
@@ -148,8 +175,19 @@ export default class Home extends React.Component<{}> {
 import React from "react";
 import { NaiveAsync } from "@untra/naiveasync";
 // NaiveAsync builds its own standard set of reducers and redux store
-// or perhaps written more terseley
-<NaiveAsync id="asyncOp" operation={asyncoperation}>{ asyncableView }</NaiveAsync>
+const asyncOperation = (params: ParamsValue): Promise<DataValue> =>
+  new Promise((resolve, reject) => {
+    const r = Math.random();
+    const time = r * 1000;
+
+    setTimeout(() => {
+      if (r < 0.8) {
+        resolve({ value: \`success! \${params.foo} \${time}\` });
+      }
+      reject(new Error("an error was thrown"));
+    }, time);
+  });
+<Async id="asyncOp" operation={asyncoperation}>{ asyncableView }</NaiveAsync>
 `}
             </Highlight>
 
