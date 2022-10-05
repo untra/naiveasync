@@ -131,7 +131,7 @@ export function asyncActionMatcher<Data, Params>(
   operation?: AsyncFunction<Data, Params>,
   phase?: AsyncPhase
 ) {
-  return (action: AnyAction) =>
+  return (action: AnyAction): boolean =>
     isAsyncAction(action) &&
     asyncActionMatchesPhase(action, phase) &&
     asyncActionMatchesOperation(action, operation);
@@ -159,13 +159,17 @@ const definedObject = <T extends Record<string, any>>(obj: T): T => {
   return obj;
 };
 
+export type AsyncActionCreatorFactory = <Payload>(
+  phase: AsyncPhase
+) => AsyncActionCreator<Payload>;
+
 /**
  *
  * @param name creates actions that take in a parameter. uses options passed at lifecycle creation
  * @param options
  */
 export const asyncActionCreatorFactory =
-  (name: string, options: AsyncableOptions) =>
+  (name: string, options: AsyncableOptions): AsyncActionCreatorFactory =>
   <Payload>(phase: AsyncPhase): AsyncActionCreator<Payload> => {
     const type = `${asyncableEmoji}/${name}/${phase}`;
     const postmark = () =>
@@ -312,7 +316,7 @@ export type ErrRetryCb = OnCb | ErrRetry1 | ErrRetry2;
 /**
  * Meta information representative of a lifecycle, useful for testing.
  *
- * Async lifecycles manage a number of aspects of the operation and is configured execution.
+ * AsyncLifecycle's manage a number of aspects of the operation and is configured execution.
  * Some of these aspects are recorded in the meta cache, which are not associated with the redux store but used internally to control naiveasync operations.
  * This selection is contextual from the instance when .meta() is called on the lifecycle.
  * @export
@@ -320,19 +324,13 @@ export type ErrRetryCb = OnCb | ErrRetry1 | ErrRetry2;
  * @template Data
  * @template Params
  */
-export interface AsyncMeta<Data, Params> {
-  /** 'debounce' assignment */
-  readonly debounce: number;
-  /** 'throttle' assignment */
-  readonly throttle: number;
+export type AsyncMeta<Data, Params> = Required<AsyncableOptions> & {
   /** 'retries' assignment */
   readonly retries: number;
   /** 'subscribe' assignment (experimental) */
   readonly subscribe: number;
   /** 'subscribe' interval assignment (experimental) */
   readonly subscribeInterval: any;
-  /** 'timeout' assignment. starts at NaN if not yet assigned. */
-  readonly timeout: number;
   /** time in ms the operation took to run. starts as NaN if not yet called. */
   readonly record: number;
   /** timestamp when the operation was last run */
@@ -359,17 +357,15 @@ export interface AsyncMeta<Data, Params> {
   readonly awaitResolve?: OnData1<Data>;
   /** awaiting reject callback, if the lifecycle is being awaited on */
   readonly awaitReject?: OnError1;
-  /** will invoke console.trace when calls are dispatched. */
-  readonly traceDispatch: boolean;
-  /** 'dataDepends' assignment for lifecycles requiring data. */
-  readonly dataDepends: string[];
   /** inverse of 'dataDepends'; callback functions awaiting data */
   readonly expectingData: Array<OnData1<Data>>;
   /** 'resolveData' callback for when data has been received. (synchronous) */
   readonly resolveData?: (data: Data) => void;
-  /** 'rejectError' callback for when error has been occured. (synchronous) */
+  /** 'rejectError' callback for when error has been occurred. (synchronous) */
   readonly rejectError?: (error: Error) => void;
-}
+  /** a copy of the original operation, used for recreating the lifecycle after cache invalidation */
+  readonly operationCopy?: AsyncFunction<Data, Params>;
+};
 
 /**
  * lifecycle options. These are stored in the .meta cache. Some options can only be set at lifecycle creation time.

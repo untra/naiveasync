@@ -271,6 +271,48 @@ describe("lifecycle", () => {
     expect(lc.meta().resolveData).toBeFalsy();
   });
 
+  it("accepts options and will apply them", () => {
+    const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
+      quickResolve(dataz)
+    );
+    const timeout = 10000;
+    const debounce = 600;
+    const throttle = 100;
+    lc.options({ timeout, throttle, debounce });
+    const meta = lc.meta();
+    expect(meta.timeout).toBe(timeout);
+    expect(meta.debounce).toBe(debounce);
+    expect(meta.throttle).toBe(throttle);
+  });
+
+  it("will invalidate the cache when needed", () => {
+    const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
+      quickResolve(dataz)
+    );
+    const paramz = v4();
+    store.dispatch(lc.sync({ paramz }));
+    expect(lc.meta().lastCalled).not.toEqual(0);
+    expect(lc.meta().lastParams).toEqual({ paramz });
+    lc.invalidate({ traceDispatch: true });
+    expect(lc.meta().lastCalled).toBe(0);
+    expect(lc.meta().lastParams).toBeUndefined();
+  });
+
+  it("invalidating the cache will reset a poisoned function", () => {
+    const name = v4();
+    const expectedType = `${asyncableEmoji}/${name}/call`;
+    let lc = asyncLifecycle(name, ({ paramz }: { paramz: string }) =>
+      quickResolve(dataz)
+    );
+    const spied = jest.spyOn(lc, "call");
+    const paramz = v4();
+    store.dispatch(lc.call({ paramz }));
+    expect(spied).toBeCalledTimes(1);
+    lc = lc.invalidate();
+    expect(lc.call({ paramz }).type).toEqual(expectedType);
+    expect(spied).toBeCalledTimes(1);
+  });
+
   it.skip("rejectError should reject with the error", async () => {
     // given
     const err = "rejection will be swift";

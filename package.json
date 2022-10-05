@@ -1,6 +1,6 @@
 {
   "name": "@stackhawk/naiveasync",
-  "version": "0.6.0",
+  "version": "0.6.2",
   "description": "An Opinionated and Painless React & Redux promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
@@ -96,7 +96,7 @@
     "eslint-plugin-unused-imports": "^1.1.5",
     "gh-pages": "^2.2.0",
     "html-loader": "^0.5.5",
-    "html-webpack-plugin": "^3.2.0",
+    "html-webpack-plugin": "^5.5.0",
     "jest": "^27.3.1",
     "jest-environment-jsdom": "^27.0.6",
     "lodash.debounce": "^4.0.8",
