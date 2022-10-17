@@ -13,7 +13,7 @@ type NaiveAsyncComponentChildren<Data, Params> = (
   state: AsyncState<Data, Params>,
   call: (params: Params) => void
 ) => JSX.Element;
-interface AsyncComponentChildrenProps<D, P> {
+export interface AsyncComponentChildrenProps<D, P> {
   state: AsyncState<D, P>;
   meta: AsyncMeta<D, P>;
   call: (params: P) => void;
