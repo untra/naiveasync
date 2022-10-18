@@ -100,29 +100,11 @@ const asyncActionMatchesOperation = (
  * @param {AsyncPhase | undefined} phase
  * @returns {(action: AnyAction) => action is AsyncAction<any>}
  */
-export function asyncActionMatcher<Data extends any, Params extends {}>(
+export function asyncActionMatcher<Data, Params extends {}>(
   operation: AsyncFunction<Data, Params> | undefined,
-  phase: "call"
+  phase: "call" | "sync" | "data" | "reset"
 ): (action: AnyAction) => action is AsyncAction<Params>;
 
-export function asyncActionMatcher<Data, Params extends {}>(
-  operation: AsyncFunction<Data, Params> | undefined,
-  phase: "sync"
-): (action: AnyAction) => action is AsyncAction<Params>;
-
-export function asyncActionMatcher<Data, Params extends {}>(
-  operation: AsyncFunction<Data, Params> | undefined,
-  phase: "data"
-): (action: AnyAction) => action is AsyncAction<Data>;
-
-export function asyncActionMatcher<Data, Params extends {}>(
-  operation: AsyncFunction<Data, Params> | undefined,
-  phase: "error"
-): (action: AnyAction) => action is AsyncAction<string>;
-export function asyncActionMatcher<Data, Params extends {}>(
-  operation: AsyncFunction<Data, Params> | undefined,
-  phase: "reset"
-): (action: AnyAction) => action is AsyncAction<{}>;
 export function asyncActionMatcher<Data, Params>(
   operation?: AsyncFunction<Data, Params>,
   phase?: AsyncPhase
