@@ -1,11 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import lodashDebounce from "lodash.debounce";
 import lodashThrottle from "lodash.throttle";
-import * as React from "react";
-// tslint:disable-next-line: no-duplicate-imports
-import { useState } from "react";
-// tslint:disable-next-line: no-implicit-dependencies
-import { Provider, useDispatch, useStore } from "react-redux";
 import { Action, Dispatch, Middleware, Reducer } from "redux";
 import { Observable, Subject, Subscription } from "rxjs";
 // tslint:disable-next-line: no-submodule-imports
@@ -39,19 +34,6 @@ import { asyncStateReducer } from "./reducer";
 const cache = new KeyedCache<AsyncLifecycle<any, any>>();
 
 const metaCache = new KeyedCache<AsyncMeta<any, any>>();
-
-type ControllableChildren<State> = (
-  state: State,
-  dispatch: <A extends AnyAction>(action: A) => void
-) => React.ReactNode;
-
-interface ControllableProps<State> {
-  children: ControllableChildren<State>;
-}
-
-export type Controllerable<State> = React.ComponentType<
-  ControllableProps<State>
->;
 
 export const timeoutRejection = "timeout";
 
@@ -137,6 +119,14 @@ export interface AsyncLifecycle<Data, Params> {
   /** Invalidates the cache; re-creates the lifecycle in cache and resets it's meta. Applies new options or keeps previous settings if not supplied. Good for testing after mocking / spied function mutation, but likely poison for calling at runtime. */
   readonly invalidate: (
     options?: AsyncableOptions
+  ) => AsyncLifecycle<Data, Params>;
+  /**
+   * Supply an AbortController to potentially cancel the next invocation of the async operation.
+   * A cancelled operation will not set any state when AbortError is reported
+   * See the MDN documentation
+   */
+  readonly abortController: (
+    abortController: AbortController
   ) => AsyncLifecycle<Data, Params>;
 }
 
@@ -234,8 +224,8 @@ const newLifecycleFromFactory = <Data, Params>(
     awaitReject: async () => {
       const thisMeta = metaCache.get(id);
       let awaitReject: (err?: any) => void = () => null;
-      const awaitedPromise = new Promise<Data>((_resolve, reject) => {
-        awaitReject = reject;
+      const awaitedPromise = new Promise<Data>((resolve) => {
+        awaitReject = resolve;
       });
       const meta = {
         ...thisMeta,
@@ -300,6 +290,15 @@ const newLifecycleFromFactory = <Data, Params>(
         lifecycle.dataDepends(options.dataDepends);
       }
       metaCache.set(id, { ...thisMeta, ...options });
+      return lifecycle;
+    },
+    abortController: (abortController: AbortController) => {
+      const thisMeta = metaCache.get(id);
+      const meta = {
+        ...thisMeta,
+        abortController,
+      };
+      metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
       return lifecycle;
     },
     invalidate: (options?: AsyncableOptions) => {
@@ -407,6 +406,7 @@ const resolveObservableAs = (
 
 const operationWithMeta = (
   operation: AsyncFunction<any, any>,
+  id: string,
   payload: any,
   meta: AsyncMeta<any, any>
 ) => {
@@ -417,22 +417,23 @@ const operationWithMeta = (
       setTimeout(() => reject(timeoutRejection), timeout)
     );
     return Promise.race([
-      decoratedOperation(payload, meta, operation),
+      decoratedOperation(payload, id, meta, operation),
       timeoutRejectPromise,
     ]);
   }
   // if other lifecycles first depend on data, await those first
-  return decoratedOperation(payload, meta, operation);
+  return decoratedOperation(payload, id, meta, operation);
 };
 
 // if anything first depends on this data, do not resolve until callbacks invoked
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-constraint
 const decoratedOperation = <T extends any>(
   value: T,
+  id: string,
   meta: AsyncMeta<any, any>,
   operation: AsyncFunction<any, any>
 ): Promise<T> => {
-  // for-of loop with a continue; wait for the first lifecycle still missing data
+  // wait for the first lifecycle still missing data to continue
   for (const depends of meta.dataDepends) {
     const dependsMeta = {
       ...naiveAsyncInitialMeta,
@@ -450,6 +451,11 @@ const decoratedOperation = <T extends any>(
       return awaitedPromise.then((value) => operation(value));
     }
   }
+  // cancel the current promise and reset the abortController if that's possible
+  if (meta.abortController && !meta.abortController.signal.aborted) {
+    meta.abortController.abort();
+    metaCache.set(id, { ...meta, abortController: undefined });
+  }
   return operation(value);
 };
 
@@ -464,7 +470,7 @@ const observableFromAsyncLifeCycle = (
     const { id, operation, data, error, done } = asyncLifeCycle;
     try {
       const subscription: Subscription = $from(
-        operationWithMeta(operation, payload, meta)
+        operationWithMeta(operation, id, payload, meta)
       ).subscribe(
         (nextData: any) => subscriber.next(data(nextData)),
         (err: string | undefined) => subscriber.next(error(err)),
@@ -576,7 +582,10 @@ const responseDispatchOnPhase = (
       clearInterval(meta?.subscribeInterval);
       const subscribeInterval =
         actionAsyncLifecycle && subscribe > 0
-          ? setInterval(() => dispatch(actionAsyncLifecycle.sync()), subscribe)
+          ? setInterval(() => {
+              metaCache.get(name)?.abortController?.abort();
+              dispatch(actionAsyncLifecycle.sync());
+            }, subscribe)
           : undefined;
       metaCache.set(name, { ...meta, subscribe, subscribeInterval });
       return new Observable<never>();
@@ -596,6 +605,8 @@ const responseDispatchOnPhase = (
     const expectingData: Array<OnData1<any>> =
       phase === "data" ? [] : meta.expectingData;
     const lastData = phase === "data" ? action.payload : meta.lastData;
+    const lastError = phase === "error" ? `${action.payload}` : meta.lastError;
+    const abortController = phase === "done" ? undefined : meta.abortController;
     metaCache.set(name, {
       ...meta,
       dataCount,
@@ -607,6 +618,8 @@ const responseDispatchOnPhase = (
       rejectError,
       expectingData,
       lastData,
+      lastError,
+      abortController,
     });
     return new Observable<never>();
   };
@@ -726,44 +739,3 @@ export const naiveAsyncLifecycle = <Data, Params extends {}>(
   id: string,
   operation: AsyncFunction<Data, Params>
 ): AsyncLifecycle<Data, Params> => asyncLifecycle(id, operation);
-
-/**
- * Creates a controllable context, wrapping the provided reducer and middleware around dispatched actions.
- *
- * @export
- * @template State
- * @param {Reducer<State>} reducer
- * @param {Middleware} middleware
- * @return {*}  {Controllerable<State>}
- */
-export const createControllableContext = <State extends AsyncableSlice>(
-  reducer: Reducer<State>,
-  middleware: Middleware
-): Controllerable<State> => {
-  const Controllable = <State extends AsyncableSlice>(
-    props: ControllableProps<State>
-  ) => {
-    const store = useStore();
-    const dp = useDispatch();
-    const [state, setState] = useState<AsyncableSlice>(
-      reducer(undefined, { type: "" })
-    );
-    const internalDispatch: Dispatch<AnyAction> = <A extends Action>(
-      action: A
-    ) => {
-      const dispatchedAction = dp(action);
-      setState(reducer(store.getState(), dispatchedAction));
-      return dp(dispatchedAction);
-    };
-    const dispatch = middleware({
-      dispatch: internalDispatch, // dispatches loading states
-      getState: () => state,
-    })(internalDispatch); // dispatches done and error states
-    return (
-      <Provider store={store}>
-        {props.children(state as State, dispatch)}
-      </Provider>
-    );
-  };
-  return Controllable;
-};
