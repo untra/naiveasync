@@ -9,13 +9,19 @@
 
 **NaiveAsync** is a variety of utilities for cleanly turning promises into state for react components, managed in a redux store. It is a straightforward React functional module that can be used to quickly turn an asynchronous function into a managed and cached lifecycle object that can represent components in various states. 
 
-Real quick: an [async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function) can be specified with the `async function` keyword, or can be understand to be a _function that returns a promise_ or `() => Promise`. Typescript makes this abundantly clear.
+Real quick: an [async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function) can be specified with the `async function` keyword, or can be understand to be a _function that returns a promise_ aka `() => Promise`. Typescript makes this abundantly clear.
 
 NaiveAsync will autogenerate your redux selectors, dispatch operations, and provide a managed lifecycle object you can control around your async operations for use in react components.
 
-The AsyncLifecycle will turn an async function into a state object to render child components with, redux action creators, selectors, and reducers to manage the promise state in redux, with a bunch of other tools for combining operation wiring. It even provides test shapes and mock interfaces
+The AsyncLifecycle turns an async function into a stateful object to render child components with, redux action creators, selectors, and reducers to manage the promise state in redux, with a bunch of other tools for combining operation wiring. It even provides test shapes and mock interfaces.
 
 _basically its a swiss army knife that does all your redux for you and makes your storybook better_
+
+To invoke your promise, you dispatch either `.call()` or `.sync()` to your redux store. The difference is subtle:
+
+* use **.call()** to reset the state of the lifecycle as you dispatch the promise. Good for: _create, update, delete operations, tests and dynamic operations_
+
+* use **.sync()** to repeat the promise, but retain the existing state. Good for: _get, indexes, subscriptions, and searches, idempotent operations_
 
 ## Usage
 
