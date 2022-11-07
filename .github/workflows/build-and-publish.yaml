@@ -18,9 +18,20 @@ jobs:
   build-project:
     runs-on: kc-biodome-arm64
     steps:
-
+      ### Biodome setup
+      - name: Biodome job setup
+        uses: ./../../../../home/runner/.github/actions/biodome-setup
+        with:
+          workflow-cache-paths: |
+            dist/
+            node_modules/
+      - name: Biodome CI Commands
+        run: biodome ci save-secrets
       ### Build steps
       - name: Install Dependencies
         run: npm install
       - name: Run tests
         run: npm run ci
+      - name: failure
+        if: (success() || failure() || cancelled()) && github.ref_name != 'main'
+        run: sleep 10000
