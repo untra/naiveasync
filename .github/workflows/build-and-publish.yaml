@@ -32,6 +32,3 @@ jobs:
         run: npm install
       - name: Run tests
         run: npm run ci
-      - name: failure
-        if: (success() || failure() || cancelled()) && github.ref_name != 'main'
-        run: sleep 180
