@@ -1,0 +1,32 @@
+name: Deploy to Prod
+on:
+  workflow_dispatch:
+    branches: [ main ]
+
+concurrency:
+  group: prod-deploy
+
+jobs:
+  prod-deploy:
+    if: contains( github.ref, 'refs/tags')
+    runs-on: kc-biodome-amd64
+    steps:
+      - name: Biodome job setup
+        uses: ./../../../../home/runner/.github/actions/biodome-setup
+      - name: Pull Secrets
+        run: biodome ci save-secrets
+      - name: Generate Github token
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ env.GITHUB_APP_ID }}
+          private_key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+      - name: Wait for approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ steps.generate_token.outputs.token }}
+          approvers: engineering
+          minimum-approvals: 2
+          issue-title: "Deploying ${{ github.ref_name }} to prod"
+      - name: NPM Publish
+        run: npm publish --access restricted
