@@ -1,0 +1,2 @@
+secrets:
+  STACKHAWK_NPM_AUTH_TOKEN: /raptor/npmjs/token-rw
