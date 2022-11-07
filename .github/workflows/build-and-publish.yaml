@@ -1,0 +1,36 @@
+name: NaiveAsync Build
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'VERSION'
+      - 'README.md'
+  pull_request:
+    branches:
+      - main
+jobs:
+
+  build-project:
+    runs-on: kc-biodome-arm64
+    steps:
+      ### Biodome setup
+      - name: Biodome job setup
+        uses: ./../../../../home/runner/.github/actions/biodome-setup
+        with:
+          workflow-cache-paths: |
+            node_modules/
+      - name: Biodome CI Commands
+        run: biodome ci save-secrets
+
+      ### Build steps
+      - name: Install Dependencies
+        run: npm install
+      - name: Run tests
+        run: npm run ci
+      - name: Package that
+        run: ./scripts/package.sh
