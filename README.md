@@ -90,13 +90,14 @@ Some Terminology:
 
 ## Recommended usage with REST APIs
 
-* use `.OnData` to dispatch a .sync indexing calls on create, update and destory 
+* use `.OnData` to dispatch a .sync indexing calls on create, update and destroy
 * use `.debounce` on search calls, to ensure that the underlying operation is not repeated
 * use a 2 - 6 seconds `.subscribe` for live dashboards and gentle api usage.
 * use a (very low > 1000 ms) `.throttle` on index calls, so multiple resources that need it but request slow can receive it on the same batch
 * sensitive calls that should not throw an error (eg. login / auth) can use `.onError` to dispatch emergency logout
 * calls to the api whose response is not likely to change can use `.memoize(true)`
-* set a lifecycle `dataDepends` to pause execution until data has come back on seperate lifecycles
+* set a lifecycle `dataDepends` to pause execution until data has come back on separate lifecycles
+* subscribed calls that should cancel awaiting lifecycles should implement `AbortController` for the promise if possible.
 * testing utilities pair nicely with storybook
 * best served with typescript
 
@@ -128,12 +129,13 @@ Some Terminology:
   * ~~throttle number~~
   * ~~error retry bool~~
   * ~~data retry bool~~
+* ~~AbortController support~~
 * test support for immutablejs
 * test support as observable / generator
 
 ## How it works
 
-NaiveAsync maintains two caches of lifecycles and their meta properties (alongside syncing state to the redux). The `asyncLifecycle(id, async () => { ... })` first argument is an id that will be checked against a cache. As a result, that function _may_ return a reference to an existing lifecycle. A lifecycle can reset itself by calling `.invalidate()`.
+NaiveAsync maintains two caches of lifecycles and their meta properties (three if you include the redux state). The `asyncLifecycle(id, async () => { ... })` first argument is an id that will be checked against a cache. As a result, that function _may_ return a reference to an existing lifecycle. A lifecycle can reset itself by calling `.invalidate()`.
 
 ## Similar but worse
 
