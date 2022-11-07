@@ -1,7 +1,7 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { Store } from "redux";
 import { asyncLifecycle } from ".";
-import { quickReject, quickResolve } from "../utils/promise";
+import { quickReject, quickResolve, slowResolve } from "../utils/promise";
 import { createConnectedStore } from "../utils/store";
 import { asyncableEmoji } from "./actions";
 import { v4 } from "uuid";
@@ -17,7 +17,7 @@ const err = "mock err";
 const dataz = { output: "success" };
 
 describe("store", () => {
-  it(`should be connected with the middleare`, () => {
+  it(`should be connected with the middleware`, () => {
     const store = createConnectedStore();
     const state = store.getState();
     expect(state).toHaveProperty(asyncableEmoji);
@@ -313,23 +313,67 @@ describe("lifecycle", () => {
     expect(spied).toBeCalledTimes(1);
   });
 
-  it.skip("rejectError should reject with the error", async () => {
+  it("abortController can cancel the operation", async () => {
+    const name = v4();
+    let abortcontroller = new AbortController();
+    const lc = asyncLifecycle(name, ({ paramz }: { paramz: string }) => {
+      expect(lc.meta().abortController).toBeUndefined();
+      abortcontroller = new AbortController();
+      lc.abortController(abortcontroller);
+      return quickResolve(dataz);
+    });
+    const paramz = v4();
+    store.dispatch(lc.call({ paramz }));
+    expect(lc.meta().abortController).toBeTruthy();
+    expect(lc.meta().abortController?.signal.aborted).toBeFalsy();
+    // extra delay because we need the lifecycle to reach the 'done' state
+    await lc.resolveData();
+    await slowResolve({});
+    expect(lc.meta().abortController?.signal.aborted).toBeFalsy();
+    store.dispatch(lc.call({ paramz }));
+    abortcontroller.abort();
+    expect(lc.meta().abortController?.signal.aborted).toBeTruthy();
+  });
+
+  it("abortController applied to a subscription will cancel oversubscribed calls", async () => {
+    const name = v4();
+    const paramz = v4();
+    let abortcontroller = new AbortController();
+    const lc = asyncLifecycle(name, ({ paramz }: { paramz: string }) => {
+      abortcontroller = new AbortController();
+      abortcontroller.signal.addEventListener("abort", () => {
+        expect(lc.meta().abortController?.signal.aborted).toBeTruthy();
+      });
+      lc.abortController(abortcontroller);
+      return quickResolve(dataz);
+    });
+    store.dispatch(lc.call({ paramz }));
+    store.dispatch(lc.subscribe(20));
+    // pardon the intentionally repetitive
+    // eslint-disable-next-line no-console
+    for (let i = 1; i <= 10; i++) {
+      expect(abortcontroller.signal.aborted).toBeFalsy();
+      const v = await lc.awaitResolve();
+      expect(lc.meta().dataCount).toEqual(i);
+    }
+  });
+
+  it("rejectError should reject with the error", async () => {
     // given
     const err = "rejection will be swift";
+    const expectedErr = `Error: ${err}`;
     const paramz = v4();
     const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
       quickReject(new Error(err))
     );
     expect(lc.meta().rejectError).toBeFalsy();
     // then
-    expect(lc.rejectError().catch((error) => error.message)).resolves.toMatch(
-      err
-    );
-    // when
-    expect(lc.meta().rejectError).toBeTruthy();
     store.dispatch(lc.sync({ paramz }));
-    await lc.awaitReject();
+    const awaitedErr = await lc.awaitReject();
+    // when
+    expect(`${awaitedErr}`).toContain(err);
     expect(lc.meta().rejectError).toBeFalsy();
-    expect(lc.meta().lastError).toEqual(err);
+    expect(lc.selector(store.getState()).error).toEqual(err);
+    expect(lc.meta().lastError).toEqual(expectedErr);
   });
 });

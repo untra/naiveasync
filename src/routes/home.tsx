@@ -190,12 +190,33 @@ const asyncOperation = (params: ParamsValue): Promise<DataValue> =>
 <Async id="asyncOp" operation={asyncoperation}>{ asyncableView }</NaiveAsync>
 `}
             </Highlight>
-
+            <h2>Calling your promise</h2>
+            To invoke your async function, you dispatch either{" "}
+            <code>{`.call()`}</code> or <code>{`.sync()`}</code> from the
+            lifecycle to your redux store. The difference is subtle:
+            <ul>
+              <li>
+                use <b>.call()</b> to reset the state of the lifecycle as you
+                call the promise. Good for:
+                <i>
+                  create, update, delete operations, tests and dynamic
+                  operations.
+                </i>
+              </li>
+              <li>
+                use <b>.sync()</b> to call the promise again, with new
+                parameters if provided, and retain the existing state. Good for:
+                <i>
+                  get, indexes, subscriptions, and searches, idempotent
+                  operations
+                </i>
+              </li>
+            </ul>
             <h2>naiveAsyncLifecycle(asyncOperation, id)</h2>
-            <img alt={"the naiveasync lifecycle"} src={lifecycleflowimage} />
+            <img alt={"the asyncLifecycle"} src={lifecycleflowimage} />
             <p>
               the core of the async lifecycle management comes from{" "}
-              <code>{`naiveAsyncLifecycle`}</code>. This is available as its own
+              <code>{`asyncLifecycle`}</code>. This is available as its own
               function and can be used for fine-grained control in react
               components.
             </p>
@@ -203,7 +224,6 @@ const asyncOperation = (params: ParamsValue): Promise<DataValue> =>
             const data : Data = {};
             return data;
           })`}</code>
-
             <p>
               the{" "}
               <code>
