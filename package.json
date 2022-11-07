@@ -44,11 +44,7 @@
     "predeploy": "npm run build:site && npm run docs",
     "prettier:format": "prettier --write \"./src/**/*.{ts,tsx}\"",
     "watch": "./node_modules/.bin/webpack-dev-server dist/src/index.js",
-    "serve:watch": "./node_modules/.bin/webpack --config webpack.config.js --mode development",
-    "cypress:test": "./node_modules/.bin/cypress run --record ",
-    "cypress:run": "./node_modules/.bin/cypress run",
-    "cypress:open": "./node_modules/.bin/cypress open",
-    "build:test": "./node_modules/.bin/webpack --output-filename out.js --entry ./cypress/integration/test.spec.ts"
+    "serve:watch": "./node_modules/.bin/webpack --config webpack.config.js --mode development"
   },
   "license": "MIT",
   "peerDependencies": {
@@ -63,8 +59,6 @@
     "@babel/preset-env": "7.15.8",
     "@babel/preset-react": "^7.9.4",
     "@babel/preset-typescript": "^7.9.0",
-    "@cypress/browserify-preprocessor": "^3.0.2",
-    "@cypress/webpack-preprocessor": "^5.9.1",
     "@reactivex/rxjs": "^6.6.7",
     "@types/chai": "^4.2.11",
     "@types/jest": "^24.0.25",
@@ -84,7 +78,6 @@
     "babel-loader": "^8.1.0",
     "chai": "^4.2.0",
     "css-loader": "^3.5.3",
-    "cypress": "^9.5.4",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.25.2",
