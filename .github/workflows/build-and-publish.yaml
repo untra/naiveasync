@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+      - feature/abortController-tests
     paths-ignore:
       - 'VERSION'
       - 'README.md'
@@ -34,4 +35,4 @@ jobs:
         run: npm run ci
       - name: failure
         if: (success() || failure() || cancelled()) && github.ref_name != 'main'
-        run: sleep 10000
+        run: sleep 180
