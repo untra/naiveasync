@@ -9,7 +9,7 @@ concurrency:
 jobs:
   prod-deploy:
     if: contains( github.ref, 'refs/tags')
-    runs-on: kc-biodome-amd64
+    runs-on: biodome-amd64
     steps:
       - name: Biodome job setup
         uses: ./../../../../home/runner/.github/actions/biodome-setup
@@ -28,5 +28,11 @@ jobs:
           approvers: engineering
           minimum-approvals: 2
           issue-title: "Deploying ${{ github.ref_name }} to prod"
+      - name: Install Dependencies
+        run: npm install
+      - name: Run Tests
+        run: npm run ci
+      - name: Typescript Definitions
+        run: npm run defs
       - name: NPM Publish
         run: npm publish --access restricted

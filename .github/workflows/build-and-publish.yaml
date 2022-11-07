@@ -17,7 +17,7 @@ on:
 jobs:
 
   build-project:
-    runs-on: kc-biodome-arm64
+    runs-on: biodome-arm64
     steps:
       ### Biodome setup
       - name: Biodome job setup
