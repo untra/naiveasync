@@ -1,13 +1,72 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import { AnyAction, AsyncFunction, AsyncMeta, AsyncState } from "./actions";
+import {
+  AnyAction,
+  AsyncableSlice,
+  AsyncFunction,
+  AsyncMeta,
+  AsyncState,
+} from "./actions";
+import { useStore, useDispatch, Provider } from "react-redux";
+import { Middleware, Reducer, Action, Dispatch } from "redux";
 import {
   asyncLifecycle,
   AsyncLifecycle,
-  createControllableContext,
   naiveAsyncMiddleware,
   naiveAsyncReducer,
 } from "./controllable";
+
+type ControllableChildren<State> = (
+  state: State,
+  dispatch: <A extends AnyAction>(action: A) => void
+) => React.ReactNode;
+
+interface ControllableProps<State> {
+  children: ControllableChildren<State>;
+}
+
+export type Controllable<State> = React.ComponentType<ControllableProps<State>>;
+
+/**
+ * Creates a controllable context, wrapping the provided reducer and middleware around dispatched actions.
+ *
+ * @export
+ * @template State
+ * @param {Reducer<State>} reducer
+ * @param {Middleware} middleware
+ * @return {*}  {Controllerable<State>}
+ */
+export const createControllableContext = <State extends AsyncableSlice>(
+  reducer: Reducer<State>,
+  middleware: Middleware
+): Controllable<State> => {
+  const Controllable = <State extends AsyncableSlice>(
+    props: ControllableProps<State>
+  ) => {
+    const store = useStore();
+    const dp = useDispatch();
+    const [state, setState] = useState<AsyncableSlice>(
+      reducer(undefined, { type: "" })
+    );
+    const internalDispatch: Dispatch<AnyAction> = <A extends Action>(
+      action: A
+    ) => {
+      const dispatchedAction = dp(action);
+      setState(reducer(store.getState(), dispatchedAction));
+      return dp(dispatchedAction);
+    };
+    const dispatch = middleware({
+      dispatch: internalDispatch, // dispatches loading states
+      getState: () => state,
+    })(internalDispatch); // dispatches done and error states
+    return (
+      <Provider store={store}>
+        {props.children(state as State, dispatch)}
+      </Provider>
+    );
+  };
+  return Controllable;
+};
 
 type NaiveAsyncComponentChildren<Data, Params> = (
   state: AsyncState<Data, Params>,

@@ -38,7 +38,7 @@ export type AsyncFunction<Data, Params> = (params: Params) => Promise<Data>;
 export type NaiveAsyncFunction<Data, Params> = AsyncFunction<Data, Params>;
 
 /**
- * A typical redux action, templating a payload
+ * A typical redux action with a templated a payload
  * @export
  * @interface Action
  * @template Payload
@@ -59,7 +59,7 @@ export interface AnyAction {
 }
 
 /**
- * AsyncAction<Payload> is an action tracking an asychronous process (one we manage)
+ * AsyncAction<Payload> is an action tracking an asynchronous process (one we manage)
  * @export
  * @interface AsyncAction
  * @extends {Action<Payload>}
@@ -274,6 +274,7 @@ type OnData3<Data, Params> = (
   params: Params,
   dispatch: Dispatch<AnyAction>
 ) => void;
+export type AbortCb = (reason: string) => void;
 type OnError1 = (error: string) => void;
 type OnError2<Params> = (error: string, params: Params) => void;
 type OnError3<Params> = (
@@ -321,6 +322,8 @@ export type AsyncMeta<Data, Params> = Required<AsyncableOptions> & {
   readonly dataCount: number;
   /** number of times error was returned */
   readonly errorCount: number;
+  /** provided abortController to cancel the current operation. Cleared when the operation is done. */
+  readonly abortController?: AbortController;
   /** the memoize cache, if its enabled */
   readonly memo?: KeyedCache<Data>;
   /** the last params used to call this operation */
@@ -352,7 +355,7 @@ export type AsyncMeta<Data, Params> = Required<AsyncableOptions> & {
 /**
  * lifecycle options. These are stored in the .meta cache. Some options can only be set at lifecycle creation time.
  *
- * Async lifecycles manage a number of aspects of the operation and is configured execution.
+ * Async Lifecycle's manage a number of aspects of the operation and is configured execution.
  * Some of these aspects are recorded in the meta cache, which are not associated with the redux store but used internally to control naiveasync operations.
  * This selection is contextual from the instance when .meta() is called on the lifecycle.
  * @export
@@ -373,13 +376,14 @@ export interface AsyncableOptions {
   readonly dataDepends?: string[];
 }
 
-export const naiveAsyncInitialMeta = Object.freeze({
+export const naiveAsyncInitialMeta: AsyncMeta<any, any> = Object.freeze({
   timeout: NaN,
   record: NaN,
   dataCount: 0,
   errorCount: 0,
   lastCalled: 0,
   memo: undefined,
+  abortController: undefined,
   onData: () => "noop",
   onError: () => "noop",
   errRetryCb: () => "noop",
@@ -398,4 +402,4 @@ export const naiveAsyncInitialMeta = Object.freeze({
   awaitReject: undefined,
   resolveData: undefined,
   rejectError: undefined,
-}) as AsyncMeta<any, any>;
+});
