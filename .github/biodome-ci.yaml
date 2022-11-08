@@ -1,2 +1,4 @@
 secrets:
+  GITHUB_APP_ID: /github/runner/github-app-id
+  GITHUB_APP_PRIVATE_KEY: /github/runner/github-app-private-key
   STACKHAWK_NPM_AUTH_TOKEN: /raptor/npmjs/token-rw
