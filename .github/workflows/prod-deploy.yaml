@@ -34,5 +34,5 @@ jobs:
         run: npm run ci
       - name: Typescript Definitions
         run: npm run defs
-      - name: NPM Publish
+      - name: npm Publish
         run: npm publish --access restricted
