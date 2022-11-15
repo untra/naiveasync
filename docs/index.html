@@ -21,9 +21,9 @@
 <p><em>basically its a swiss army knife that does all your redux for you and makes your storybook better</em></p>
 <p>To invoke your promise, you dispatch either <code>.call()</code> or <code>.sync()</code> to your redux store. The difference is subtle:</p>
 <ul>
-<li><p>use <strong>.call()</strong> to reset the state of the lifecycle as you dispatch the promise. Good for: <em>create, update, delete operations, tests and dynamic operations</em></p>
+<li><p>use <strong>.call()</strong> to call the promise and reset the state of the lifecycle immediately. Good for when you want the current data invalidated ASAP before any data is returned.  For example: <em>create, update, delete operations, tests and dynamic operations.</em></p>
 </li>
-<li><p>use <strong>.sync()</strong> to repeat the promise, but retain the existing state. Good for: <em>get, indexes, subscriptions, and searches, idempotent operations</em></p>
+<li><p>use <strong>.sync()</strong> to call the promise and retain the existing state of the lifecycle until data is returned.  Note that as a convenience, subsequent <code>sync</code> invocations without parameters will reuse the last specified parameters.  Good for: <em>get, indexes, subscriptions, and searches, idempotent operations</em></p>
 </li>
 </ul>
 
