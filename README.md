@@ -19,10 +19,10 @@ _basically its a swiss army knife that does all your redux for you and makes you
 
 To invoke your promise, you dispatch either `.call()` or `.sync()` to your redux store. The difference is subtle:
 
-* use **.call()** to reset the state of the lifecycle as you dispatch the promise. Good for: _create, update, delete operations, tests and dynamic operations_
+* use **.call()** to call the promise and reset the state of the lifecycle immediately. Good for when you want the current data invalidated ASAP before any data is returned.  For example: _create, update, delete operations, tests and dynamic operations._
 
-* use **.sync()** to repeat the promise, but retain the existing state. Good for: _get, indexes, subscriptions, and searches, idempotent operations_
-
+* use **.sync()** to call the promise and retain the existing state of the lifecycle until data is returned.  Note that as a convenience, subsequent `sync` invocations without parameters will reuse the last specified parameters.  Good for: _get, indexes, subscriptions, and searches, idempotent operations_
+ 
 ## Usage
 
 NaiveAsync is a variety of utilities. At its core are two main tools though:
