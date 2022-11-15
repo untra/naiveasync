@@ -1,6 +1,6 @@
 {
   "name": "@untra/naiveasync",
-  "version": "0.6.4",
+  "version": "0.6.6",
   "description": "An Opinionated and Painless React & Redux promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stackhawk/naiveasync.git"
+    "url": "git+https://github.com/untra/naiveasync.git"
   },
   "homepage": "https://naiveasync.untra.io/",
   "jest": {
@@ -26,7 +26,6 @@
   "scripts": {
     "postversion": "git push && git push --tags",
     "prepublishOnly": "npm run ci && npm run defs",
-    "postpublish": "npm run deploy",
     "preversion": "npm run ci",
     "test": "npm run build && jest",
     "build": "rm -rf dist && mkdir dist && cp src/index.html dist/index.html && tsc -p build.tsconfig.json && npm run defs",
