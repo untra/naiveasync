@@ -186,7 +186,7 @@ const newLifecycleFromFactory = <Data, Params>(
       const thisMeta = metaCache.get(id);
       const meta = { ...thisMeta, ...{ debounce } };
       const operation = lodashDebounce(lifecycle.operation, debounce, {
-        leading: false,
+        leading: true,
         trailing: true,
       }) as AsyncFunction<any, any>;
       const updatedLifecycle = { ...lifecycle, operation };

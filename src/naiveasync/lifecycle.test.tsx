@@ -376,4 +376,24 @@ describe("lifecycle", () => {
     expect(lc.selector(store.getState()).error).toEqual(err);
     expect(lc.meta().lastError).toEqual(expectedErr);
   });
+
+  it("debounce works on the first try", async () => {
+    const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
+      quickResolve(dataz)
+    ).debounce(200);
+    const paramz = v4();
+    store.dispatch(lc.sync({ paramz }));
+    const resolved = await lc.awaitResolve();
+    expect(resolved).not.toBeNull();
+  });
+
+  it("throttle works on the first try", async () => {
+    const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
+      quickResolve(dataz)
+    ).throttle(200);
+    const paramz = v4();
+    store.dispatch(lc.sync({ paramz }));
+    const resolved = await lc.awaitResolve();
+    expect(resolved).not.toBeNull();
+  });
 });
