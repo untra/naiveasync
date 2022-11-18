@@ -196,16 +196,19 @@ const asyncOperation = (params: ParamsValue): Promise<DataValue> =>
             lifecycle to your redux store. The difference is subtle:
             <ul>
               <li>
-                use <b>.call()</b> to reset the state of the lifecycle as you
-                call the promise. Good for:
+                use <b>.call()</b> to call the promise and reset the state of
+                the lifecycle immediately. Good for when you want the current
+                data invalidated ASAP before any data is returned. For example:
                 <i>
                   create, update, delete operations, tests and dynamic
                   operations.
                 </i>
               </li>
               <li>
-                use <b>.sync()</b> to call the promise again, with new
-                parameters if provided, and retain the existing state. Good for:
+                use <b>.sync()</b> to call the promise but retain the existing
+                state of the lifecycle until data is returned. Note that as a
+                convenience, subsequent `sync` invocations without parameters
+                will reuse the last specified parameters. Good for:
                 <i>
                   get, indexes, subscriptions, and searches, idempotent
                   operations
@@ -261,8 +264,8 @@ const asyncOperation = (params: ParamsValue): Promise<DataValue> =>
                 </code>{" "}
                 Action creator that triggers the associated{" "}
                 <code>AsyncOperation</code> when dispatched, passing{" "}
-                <code>params</code> into the operation. Resets its state when
-                called again.
+                <code>params</code> into the operation. Resets its state
+                immediately when called.
               </li>
               <li>
                 <code>
@@ -270,8 +273,9 @@ const asyncOperation = (params: ParamsValue): Promise<DataValue> =>
                 </code>{" "}
                 Action creator that triggers the associated `AsyncOperation`
                 when dispatched, reusing the last employed params if none are
-                provided. Does not reset data or error states, making it useful
-                for polling / repeated operations.
+                provided. Does not reset data or error states until data is
+                returned, making it useful for polling / repeated "read/get"
+                operations.
               </li>
               <li>
                 <code>
