@@ -4,7 +4,7 @@
     "type": "git",
     "url": "git+https://github.com/stackhawk/naiveasync.git"
   },
-  "version": "0.6.6",
+  "version": "0.7.0",
   "description": "An Opinionated and Painless React & Redux promise wrapper",
   "main": "./dist/src/naiveasync/index.js",
   "types": "./dist/src/naiveasync/index.d.ts",
