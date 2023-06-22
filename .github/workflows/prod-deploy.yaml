@@ -12,7 +12,7 @@ jobs:
     runs-on: biodome-amd64
     steps:
       - name: Biodome job setup
-        uses: ./../../../../home/runner/.github/actions/biodome-setup
+        uses: ./../../../../home/runner/.github/actions/biodome-setup-v2
       - name: Pull Secrets
         run: biodome ci save-secrets
       - name: Generate Github token

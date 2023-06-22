@@ -20,11 +20,9 @@ jobs:
     steps:
       ### Biodome setup
       - name: Biodome job setup
-        uses: ./../../../../home/runner/.github/actions/biodome-setup
-        with:
-          workflow-cache-paths: |
-            dist/
-            node_modules/
+        uses: ./../../../../home/runner/.github/actions/biodome-setup-v2
+      - name: Resolve cache
+        run: biodome ci restore-cache
       - name: Biodome CI Commands
         run: biodome ci save-secrets
       ### Build steps
@@ -32,3 +30,6 @@ jobs:
         run: npm install
       - name: Run tests
         run: npm run ci
+      - name: Persist cache
+        if: always()
+        run: biodome ci persist-cache
