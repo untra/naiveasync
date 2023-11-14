@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2016",
-    "module": "commonjs",
+    "target": "esnext",
+    "module": "esnext",
     "jsx": "react",
     "resolveJsonModule": true,
     "strict": true,
@@ -10,7 +10,7 @@
     "lib": [
       "dom",
       "dom.iterable",
-      "es2016"
+      "esnext"
     ],
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
