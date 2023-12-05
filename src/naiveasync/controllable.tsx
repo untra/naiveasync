@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import lodashDebounce from "lodash.debounce";
-import lodashThrottle from "lodash.throttle";
+import { debounce as lodashDebounce, throttle as lodashThrottle } from "lodash";
 import { Action, Dispatch, Middleware, Reducer } from "redux";
 import { Observable, Subject, Subscription } from "rxjs";
 // tslint:disable-next-line: no-submodule-imports
