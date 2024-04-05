@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "target": "esnext",
     "module": "esnext",
     "jsx": "react",
     "resolveJsonModule": true,
@@ -21,7 +20,7 @@
     "noEmit": false
   },
   "include": [
-    "src/**/*"
+    "src/naiveasync/**/*"
   ],
   "exclude": [
     "**/*.js.*"

@@ -29,7 +29,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: Run tests
-        run: npm run ci
+        run: npm run ci compile
       - name: Persist cache
         if: always()
         run: biodome ci persist-cache
