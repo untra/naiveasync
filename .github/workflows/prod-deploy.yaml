@@ -33,6 +33,6 @@ jobs:
       - name: Run Tests
         run: npm run ci
       - name: Typescript Definitions
-        run: npm run defs
+        run: npm run compile
       - name: npm Publish
         run: npm publish --access restricted
