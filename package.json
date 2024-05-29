@@ -38,7 +38,7 @@
     "build:site": "npm run build:ts && npm run build:rs",
     "lint": "eslint src --ext .ts,.tsx,.js --ignore-path .gitignore",
     "docs": "mkdir -p build/docs && typedoc src/naiveasync --out build/docs",
-    "defs": "tsc -p types.tsconfig.json --declaration --outDir dist/ --emitDeclarationOnly",
+    "defs": "tsc -p tsconfig.types.json --declaration --outDir dist/ --emitDeclarationOnly",
     "ci": "npm run build && npm run lint && npm run test",
     "ci2": "npm run lint && npm run build && npm run cover",
     "start": "./node_modules/.bin/react-scripts start",
