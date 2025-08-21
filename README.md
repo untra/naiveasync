@@ -6,7 +6,8 @@
 * [npm package](https://www.npmjs.com/package/@untra/naiveasync)
 
 > _Simultaneously master redux and never have to write it ever again_
-> **Used for 5+ years in production at [StackHawk](https://www.stackhawk.com) and since replaced 🎉 this project is now archived!
+
+**Used for 5+ years in production at [StackHawk](https://www.stackhawk.com) and since replaced 🎉 this project is now archived!**
 
 **NaiveAsync** is a variety of utilities for cleanly turning promises into state for react components, managed in a redux store. It is a straightforward React functional module that can be used to quickly turn an asynchronous function into a managed and cached lifecycle object that can represent components in various states. 
 
