@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import { connect, useDispatch } from "react-redux";
 import { AnyAction, Dispatch } from "redux";
-import { asyncLifecycle, mockDoneAsyncState } from "../../naiveasync";
+import { asyncLifecycle, mockSuccessAsyncState } from "../../naiveasync";
 import { AsyncState } from "../../naiveasync/actions";
 import { slowResolve } from "../../utils/promise";
 
@@ -38,13 +38,13 @@ const AssignedComponent: React.FC<Props> = ({ state, select }) => {
     const icon = "🦅";
     const name = "assigned!";
     dispatch(
-      assignTestLifecycle.assign(mockDoneAsyncState({ icon, name }, {})),
+      assignTestLifecycle.assign(mockSuccessAsyncState({ icon, name }, {})),
     );
   }, [dispatch]);
 
   return (
     <div>
-      <i>(this component should appear in an initial "done" state)</i>
+      <i>(this component should appear in an initial "success" state)</i>
       <p>{display}</p>
       <p>{params}</p>
       <p>{error}</p>

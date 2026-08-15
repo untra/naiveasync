@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 // tslint:disable-next-line: no-implicit-dependencies
 import { connect, useDispatch } from "react-redux";
 import { AnyAction, Dispatch } from "redux";
-import { asyncLifecycle, mockDoneAsyncState } from "../../naiveasync";
+import { asyncLifecycle, mockSuccessAsyncState } from "../../naiveasync";
 import { AsyncState } from "../../naiveasync/actions";
 import { slowResolve } from "../../utils/promise";
 
@@ -38,7 +38,9 @@ const SubscribeComponent: React.FC<Props> = ({ state, select }) => {
     const icon = "🦅";
     const name = "assigned!";
     dispatch(
-      subscriptionTestLifecycle.assign(mockDoneAsyncState({ icon, name }, {})),
+      subscriptionTestLifecycle.assign(
+        mockSuccessAsyncState({ icon, name }, {}),
+      ),
     );
   }, [dispatch]);
   const sync = (params: any) =>

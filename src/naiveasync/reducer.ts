@@ -16,7 +16,7 @@ const callReducer: Reducer<AsyncState<any, any>, AnyAction> = (
   isAsyncAction(action) && action[asyncableEmoji].phase === "call"
     ? {
         ...state,
-        status: "inflight",
+        status: "pending",
         params: action.payload,
         data: null,
         error: "",
@@ -31,7 +31,7 @@ const syncReducer: Reducer<AsyncState<any, any>, AnyAction> = (
     const params = action.payload === undefined ? state.params : action.payload;
     return {
       ...state,
-      status: "inflight",
+      status: "pending",
       params,
     };
   }
@@ -70,14 +70,14 @@ const errorReducer: Reducer<AsyncState<any, any>, AnyAction> = (
   return state;
 };
 
-const doneReducer: Reducer<AsyncState<any, any>, AnyAction> = (
+const successReducer: Reducer<AsyncState<any, any>, AnyAction> = (
   state: AsyncState<any, any> = naiveAsyncInitialState,
   action: AnyAction,
 ) =>
-  isAsyncAction(action) && action[asyncableEmoji].phase === "done"
+  isAsyncAction(action) && action[asyncableEmoji].phase === "success"
     ? {
         ...state,
-        status: "done",
+        status: "success",
         error: "",
       }
     : state;
@@ -116,7 +116,7 @@ export const asyncStateReducer = chain(
   syncReducer,
   dataReducer,
   errorReducer,
-  doneReducer,
+  successReducer,
   resetReducer,
   assignReducer,
 );

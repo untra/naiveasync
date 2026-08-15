@@ -10,7 +10,7 @@ export type AsyncPhase =
   | "call"
   | "data"
   | "error"
-  | "done"
+  | "success"
   | "destroy"
   | "reset"
   | "sync"
@@ -178,7 +178,7 @@ export interface Gettable {
 export const isGettable = (x: any): x is Gettable =>
   "get" in x && typeof x.get === "function";
 
-export type AsyncableStateStatus = "" | "inflight" | "error" | "done";
+export type AsyncableStateStatus = "" | "pending" | "error" | "success";
 
 /** the initial state of a naiveasync operation */
 export interface InitialAsyncState {
@@ -188,9 +188,9 @@ export interface InitialAsyncState {
   data: null;
 }
 
-/** the inflight state of a naiveasync operation */
-interface InflightAsyncState<Data, Params> {
-  status: "inflight";
+/** the pending state of a naiveasync operation */
+interface PendingAsyncState<Data, Params> {
+  status: "pending";
   error: "" | string;
   params: {} | Params;
   data: null | Data;
@@ -204,9 +204,9 @@ interface ErrorAsyncState<Data, Params> {
   data: null | Data;
 }
 
-/** the done state of a naiveasync operation */
-interface DoneAsyncState<Data, Params> {
-  status: "done";
+/** the success state of a naiveasync operation */
+interface SuccessAsyncState<Data, Params> {
+  status: "success";
   error: "";
   params: {} | Params;
   data: Data;
@@ -217,9 +217,9 @@ interface DoneAsyncState<Data, Params> {
  */
 export type AsyncState<Data, Params> =
   | InitialAsyncState
-  | InflightAsyncState<Data, Params>
+  | PendingAsyncState<Data, Params>
   | ErrorAsyncState<Data, Params>
-  | DoneAsyncState<Data, Params>;
+  | SuccessAsyncState<Data, Params>;
 
 /**
  * isAsyncState typeGuards AsyncState<any>

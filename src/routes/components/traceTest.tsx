@@ -6,7 +6,7 @@ import {
   AsyncLifecycle,
   asyncLifecycle,
   AsyncState,
-  mockDoneAsyncState,
+  mockSuccessAsyncState,
 } from "../../naiveasync";
 
 const resolveSlow = <T extends {}>(val: T): Promise<T> =>
@@ -45,7 +45,9 @@ const TraceComponent: React.FC<Props> = ({ state, select }) => {
   useEffect(() => {
     const icon = "🦅";
     const name = "assigned!";
-    dispatch(retryTestLifecycle.assign(mockDoneAsyncState({ icon, name }, {})));
+    dispatch(
+      retryTestLifecycle.assign(mockSuccessAsyncState({ icon, name }, {})),
+    );
   }, [dispatch]);
   const sync = (params: {}) => dispatch(retryTestLifecycle.sync(params));
   const call = (params: {}) => dispatch(retryTestLifecycle.call(params));
