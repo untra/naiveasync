@@ -1,8 +1,0 @@
-{
-    "extends": "./build.tsconfig.json",
-    "compilerOptions": {
-    "outDir": "./dist/types",
-    "declaration": true,
-    "emitDeclarationOnly": true
-  }
-}
