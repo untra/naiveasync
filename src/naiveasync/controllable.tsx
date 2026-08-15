@@ -68,7 +68,7 @@ export interface AsyncLifecycle<Data, Params> {
   /** Action dispatched internally when the associated `AsyncOperation` emits an error (rejects) or throws an exception. */
   readonly error: AsyncActionCreator<string>;
   /** Action dispatched internally when the associated `AsyncOperation` completes (resolves, or emits all data in the case of an `Observable` or `AsyncIterable`). */
-  readonly done: AsyncActionCreator<undefined>;
+  readonly success: AsyncActionCreator<undefined>;
   /** Action dispatched internally when the associated `AsyncOperation` is reset to it's initialState. */
   readonly reset: AsyncActionCreator<undefined>;
   /**
@@ -144,7 +144,7 @@ const newLifecycleFromFactory = <Data, Params>(
     destroy: factory<undefined>("destroy"),
     data: factory<Data>("data"),
     error: factory<string>("error"),
-    done: factory<undefined>("done"),
+    success: factory<undefined>("success"),
     reset: factory<undefined>("reset"),
     assign: factory<AsyncState<Data, Params>>("assign"),
     subscribe: factory<number>("subscribe"),
@@ -319,7 +319,7 @@ const newLifecycleFromFactory = <Data, Params>(
         destroy: factory<undefined>("destroy"),
         data: factory<Data>("data"),
         error: factory<string>("error"),
-        done: factory<undefined>("done"),
+        success: factory<undefined>("success"),
         reset: factory<undefined>("reset"),
         assign: factory<AsyncState<Data, Params>>("assign"),
         subscribe: factory<number>("subscribe"),
@@ -391,12 +391,12 @@ const resolveObservableAs = (
   asyncLifeCycle: AsyncLifecycle<any, any>,
   value: any,
 ): Observable<Action<any>> => {
-  const { data, done } = asyncLifeCycle;
+  const { data, success } = asyncLifeCycle;
   return new Observable((subscriber) => {
     const subscription = $from(Promise.resolve(value)).subscribe(
       (nextData: any) => subscriber.next(data(nextData)),
       (err: any) => `noop ${err}`,
-      () => subscriber.next(done()),
+      () => subscriber.next(success()),
     );
     action$
       .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
@@ -466,14 +466,14 @@ const observableFromAsyncLifeCycle = (
   meta: AsyncMeta<any, any>,
 ): Observable<Action<any>> =>
   new Observable((subscriber) => {
-    const { id, operation, data, error, done } = asyncLifeCycle;
+    const { id, operation, data, error, success } = asyncLifeCycle;
     try {
       const subscription: Subscription = $from(
         operationWithMeta(operation, id, payload, meta),
       ).subscribe(
         (nextData: any) => subscriber.next(data(nextData)),
         (err: string | undefined) => subscriber.next(error(err)),
-        () => subscriber.next(done()),
+        () => subscriber.next(success()),
       );
       action$
         .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
@@ -602,7 +602,8 @@ const responseDispatchOnPhase = (
       phase === "data" ? [] : meta.expectingData;
     const lastData = phase === "data" ? action.payload : meta.lastData;
     const lastError = phase === "error" ? `${action.payload}` : meta.lastError;
-    const abortController = phase === "done" ? undefined : meta.abortController;
+    const abortController =
+      phase === "success" ? undefined : meta.abortController;
     metaCache.set(name, {
       ...meta,
       dataCount,

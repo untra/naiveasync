@@ -17,9 +17,9 @@ export {
 export type { AsyncLifecycle } from "./controllable";
 export { Async, NaiveAsync } from "./naiveasync";
 export {
-  mockDoneAsyncState,
   mockedAsyncStates,
   mockErrorAsyncState,
-  mockInflightAsyncState,
   mockInitialAsyncState,
+  mockPendingAsyncState,
+  mockSuccessAsyncState,
 } from "./utils";

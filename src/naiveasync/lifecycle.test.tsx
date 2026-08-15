@@ -5,9 +5,9 @@ import { createConnectedStore } from "../utils/store";
 import { asyncableEmoji } from "./actions";
 import { randomUUID as v4 } from "node:crypto";
 import {
-  mockDoneAsyncState,
+  mockSuccessAsyncState,
   mockErrorAsyncState,
-  mockInflightAsyncState,
+  mockPendingAsyncState,
   mockInitialAsyncState,
 } from "./utils";
 import { timeoutRejection } from "./controllable";
@@ -57,12 +57,12 @@ describe("lifecycle", () => {
     expect(asyncState).toHaveProperty("status");
     expect(asyncState).toHaveProperty("params");
 
-    // .assign done
-    store.dispatch(lc.assign(mockDoneAsyncState(data, params)));
+    // .assign success
+    store.dispatch(lc.assign(mockSuccessAsyncState(data, params)));
     asyncState = lc.selector(store.getState());
     expect(asyncState.data).toEqual(data);
     expect(asyncState.params).toEqual(params);
-    expect(asyncState.status).toEqual("done");
+    expect(asyncState.status).toEqual("success");
     expect(asyncState.error).toEqual("");
 
     // .assign error
@@ -73,12 +73,12 @@ describe("lifecycle", () => {
     expect(asyncState.status).toEqual("error");
     expect(asyncState.error).toEqual(error);
 
-    // .assign inflight
-    store.dispatch(lc.assign(mockInflightAsyncState(params)));
+    // .assign pending
+    store.dispatch(lc.assign(mockPendingAsyncState(params)));
     asyncState = lc.selector(store.getState());
     expect(asyncState.data).toEqual(null);
     expect(asyncState.params).toEqual(params);
-    expect(asyncState.status).toEqual("inflight");
+    expect(asyncState.status).toEqual("pending");
     expect(asyncState.error).toEqual("");
 
     // .assign initial
@@ -98,7 +98,7 @@ describe("lifecycle", () => {
     store.dispatch(lc.call({ paramz }));
     let state = store.getState();
     const asyncState = lc.selector(state);
-    expect(asyncState.status).toEqual("inflight");
+    expect(asyncState.status).toEqual("pending");
     expect(asyncState.params).toEqual({ paramz });
     expect(asyncState.error).toEqual("");
     expect(asyncState.data).toEqual(null);
@@ -108,7 +108,7 @@ describe("lifecycle", () => {
     expect(meta.dataCount).toEqual(1);
     expect(meta.lastParams).toEqual({ paramz });
     state = store.getState();
-    expect(lc.selector(state).status).toEqual("done");
+    expect(lc.selector(state).status).toEqual("success");
     expect(lc.selector(state).data).toEqual(dataz);
 
     jest.resetAllMocks();
@@ -129,7 +129,7 @@ describe("lifecycle", () => {
     store.dispatch(lc.sync());
     let state = store.getState();
     const asyncState = lc.selector(state);
-    expect(asyncState.status).toEqual("inflight");
+    expect(asyncState.status).toEqual("pending");
     expect(asyncState.params).toEqual({ paramz });
     expect(asyncState.error).toEqual("");
     expect(asyncState.data).toEqual(dataz);
@@ -139,7 +139,7 @@ describe("lifecycle", () => {
     expect(meta.dataCount).toEqual(2);
     expect(meta.lastParams).toEqual({ paramz });
     state = store.getState();
-    expect(lc.selector(state).status).toEqual("done");
+    expect(lc.selector(state).status).toEqual("success");
     expect(lc.selector(state).data).toEqual(dataz);
 
     jest.resetAllMocks();
@@ -160,7 +160,7 @@ describe("lifecycle", () => {
     store.dispatch(lc.sync({ paramz }));
     let state = store.getState();
     let asyncState = lc.selector(state);
-    expect(asyncState.status).toEqual("inflight");
+    expect(asyncState.status).toEqual("pending");
     expect(asyncState.params).toEqual({ paramz });
     expect(asyncState.error).toEqual(err);
     expect(asyncState.data).toEqual(null);
@@ -171,7 +171,7 @@ describe("lifecycle", () => {
     expect(meta.lastParams).toEqual({ paramz });
     state = store.getState();
     asyncState = lc.selector(state);
-    expect(asyncState.status).toEqual("done");
+    expect(asyncState.status).toEqual("success");
     expect(asyncState.data).toEqual(dataz);
     expect(asyncState.error).toEqual("");
     expect(asyncState.params).toEqual({ paramz });
@@ -325,7 +325,7 @@ describe("lifecycle", () => {
     store.dispatch(lc.call({ paramz }));
     expect(lc.meta().abortController).toBeTruthy();
     expect(lc.meta().abortController?.signal.aborted).toBeFalsy();
-    // extra delay because we need the lifecycle to reach the 'done' state
+    // extra delay because we need the lifecycle to reach the 'success' state
     await lc.resolveData();
     await slowResolve({});
     expect(lc.meta().abortController?.signal.aborted).toBeFalsy();

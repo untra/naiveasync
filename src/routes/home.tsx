@@ -24,25 +24,25 @@ interface ParamsValue {
 const version = packageJSON.version;
 
 const exampleInit = naiveAsyncInitialState;
-const exampleInflight = {
+const examplePending = {
   ...exampleInit,
-  status: "inflight",
+  status: "pending",
   params: {
     user: "admin",
     password: "hunter2",
   },
 };
 const exampleError = {
-  ...exampleInflight,
+  ...examplePending,
   status: "error",
   error: "kaboom typerror",
 };
-const exampleDone = {
-  ...exampleInflight,
-  status: "done",
+const exampleSuccess = {
+  ...examplePending,
+  status: "success",
   data: { "evil-secrets": "..." },
 };
-const examples = [exampleInit, exampleInflight, exampleError, exampleDone];
+const examples = [exampleInit, examplePending, exampleError, exampleSuccess];
 const pickedExample = examples[Math.floor(4 * Math.random())];
 
 const asyncOperation = (params: ParamsValue): Promise<DataValue> =>

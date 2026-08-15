@@ -61,7 +61,7 @@ ReactDOM.render(
 <Provider store={store}>
     <NaiveAsync operation={asyncOperation} id={"example"}>(state, call) => (
         state.data ? <h2>{state.data}</h2> :
-        state.status === 'inflight' ? <h2>loading...</h2> :
+        state.status === 'pending' ? <h2>loading...</h2> :
         <button onclick={call()}>call</button>
     )
     </NaiveAsync>
@@ -81,12 +81,27 @@ Some Terminology:
 * an `AsyncState` is an object of type
 ```ts
 {
-  status: '' | 'inflight' | 'error' | 'done'
+  status: '' | 'pending' | 'error' | 'success'
   error: string
   params: <P extends {}>
   data: null|D
 }
 ```
+
+## 2.0.0 breaking changes
+
+Status and lifecycle-event names now match **TanStack Query**.
+
+| 1.x | 2.0.0 |
+|---|---|
+| `status: 'inflight'` | `status: 'pending'` |
+| `status: 'done'` | `status: 'success'` |
+| `AsyncPhase` / action type `🔁/<id>/done` | `🔁/<id>/success` |
+| `lifecycle.done()` | `lifecycle.success()` |
+| `mockInflightAsyncState` | `mockPendingAsyncState` |
+| `mockDoneAsyncState` | `mockSuccessAsyncState` |
+
+There are no deprecated aliases — update every string comparison against `state.status` when upgrading.
 
 ## Recommended usage with REST APIs
 
@@ -104,7 +119,7 @@ Some Terminology:
 ## Recommended usage with Testing
 
 * use lifecycle `.meta()` to get the AsyncMeta, a snapshot printout of the metacache for this lifecycle, useful in testing
-* use `mockInitialAsyncState, mockInflightAsyncState, mockErrorAsyncState, mockDoneAsyncState` to represent async states in mocks and storybook scenes
+* use `mockInitialAsyncState, mockPendingAsyncState, mockErrorAsyncState, mockSuccessAsyncState` to represent async states in mocks and storybook scenes
 * dispatch the lifecycle `.assign(state)` action to assign a specific state to the lifecycle. this is typically frowned upon in redux philosophy, but is really helpful in mocking state
 * when testing within async functions, use `await lifecycle.awaitResolve()` to pause test execution until the async operation next resolves. similarly use `await lifecycle.awaitReject()` to test rejection.
 * lifecycle's can be passed options, and optionally passed `{ traceDispatch: true }` to add a stacktrace to dispatched actions, and to trace invocations of a lifecycle.

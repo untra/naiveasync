@@ -31,7 +31,7 @@ const version = packagejson.version;
 
 const emojiView = (state: AsyncState<any, {}>) => (
   <p>
-    {state.status === "inflight"
+    {state.status === "pending"
       ? "💬"
       : state.error
         ? "💥"
@@ -44,7 +44,7 @@ const emojiView = (state: AsyncState<any, {}>) => (
 
 const callableView = (state: AsyncState<any, {}>, call: ({}) => any) => (
   <button onClick={call}>
-    {state.status === "inflight"
+    {state.status === "pending"
       ? "💬"
       : state.error
         ? "💥"
