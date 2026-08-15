@@ -1,4 +1,4 @@
-name: NaiveAsync Build
+name: CI
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: ${{ github.ref_name != 'main' }}
@@ -8,28 +8,26 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'VERSION'
       - 'README.md'
   pull_request:
     branches:
       - main
+permissions:
+  contents: read
 jobs:
-
-  build-project:
-    runs-on: biodome-arm64
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x, 24.x]
     steps:
-      ### Biodome setup
-      - name: Biodome job setup
-        uses: ./../../../../home/runner/.github/actions/biodome-setup-v2
-      - name: Resolve cache
-        run: biodome ci restore-cache
-      - name: Biodome CI Commands
-        run: biodome ci save-secrets
-      ### Build steps
+      - uses: actions/checkout@v5
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
       - name: Install Dependencies
-        run: npm install
-      - name: Run tests
+        run: npm ci
+      - name: Build, Lint, and Test
         run: npm run ci
-      - name: Persist cache
-        if: always()
-        run: biodome ci persist-cache
