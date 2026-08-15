@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   applyMiddleware,
@@ -9,10 +8,11 @@ import {
   StoreEnhancer,
 } from "redux";
 import {
-  naiveAsyncEmoji,
+  AnyAction,
+  asyncableEmoji,
+  AsyncableSlice,
   naiveAsyncMiddleware,
   naiveAsyncReducer,
-  NaiveAsyncSlice,
 } from "../naiveasync";
 // the following resources are needed to specify a redux store with devtools enabled
 
@@ -30,15 +30,15 @@ const getEnhancers = () => {
   }
   return enhancers;
 };
-export const initialState: NaiveAsyncSlice = {
-  [naiveAsyncEmoji]: {},
+export const initialState: AsyncableSlice = {
+  [asyncableEmoji]: {},
 };
 const middlewares: Middleware[] = [naiveAsyncMiddleware];
 const enhancers: StoreEnhancer[] = getEnhancers();
 const composedEnhancers: StoreEnhancer = compose(
   applyMiddleware(...middlewares),
-  ...enhancers
+  ...enhancers,
 );
 
-export const createConnectedStore = (): Store =>
+export const createConnectedStore = (): Store<AsyncableSlice, AnyAction> =>
   createStore(naiveAsyncReducer, initialState, composedEnhancers);

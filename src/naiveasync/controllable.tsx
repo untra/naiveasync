@@ -87,17 +87,17 @@ export interface AsyncLifecycle<Data, Params> {
   /** Meta toggle to reattempt the promise N times, dispatching the last error on the final retry (0 will disable) */
   readonly retries: (
     retries: number,
-    errRetryCb?: ErrRetryCb
+    errRetryCb?: ErrRetryCb,
   ) => AsyncLifecycle<Data, Params>;
   /** Meta toggle to enable a millisecond (sync) repeat of the operation with its previously supplied params. (0 will disable) */
   readonly subscribe: AsyncActionCreator<number>;
   /** Assign a callback function to be called when the 'data' event is dispatched. */
   readonly onData: (
-    onData: OnData<Data, Params>
+    onData: OnData<Data, Params>,
   ) => AsyncLifecycle<Data, Params>;
   /** Assign a callback function to be called when the 'error' event is dispatched. */
   readonly onError: (
-    onError: OnError<Data, Params>
+    onError: OnError<Data, Params>,
   ) => AsyncLifecycle<Data, Params>;
   /** Selects the meta object, a snapshot of this lifecycles metaCache for debugging analysis. */
   readonly meta: () => AsyncMeta<Data, Params>;
@@ -117,7 +117,7 @@ export interface AsyncLifecycle<Data, Params> {
   readonly options: (options: AsyncableOptions) => AsyncLifecycle<Data, Params>;
   /** Invalidates the cache; re-creates the lifecycle in cache and resets it's meta. Applies new options or keeps previous settings if not supplied. Good for testing after mocking / spied function mutation, but likely poison for calling at runtime. */
   readonly invalidate: (
-    options?: AsyncableOptions
+    options?: AsyncableOptions,
   ) => AsyncLifecycle<Data, Params>;
   /**
    * Supply an AbortController to potentially cancel the next invocation of the async operation.
@@ -125,7 +125,7 @@ export interface AsyncLifecycle<Data, Params> {
    * See the MDN documentation
    */
   readonly abortController: (
-    abortController: AbortController
+    abortController: AbortController,
   ) => AsyncLifecycle<Data, Params>;
 }
 
@@ -133,7 +133,7 @@ export interface AsyncLifecycle<Data, Params> {
 const newLifecycleFromFactory = <Data, Params>(
   id: string,
   operation: AsyncFunction<Data, Params>,
-  factory: AsyncActionCreatorFactory
+  factory: AsyncActionCreatorFactory,
 ): AsyncLifecycle<Data, Params> => {
   const lifecycle: AsyncLifecycle<Data, Params> = {
     id,
@@ -174,7 +174,7 @@ const newLifecycleFromFactory = <Data, Params>(
       const meta = { ...thisMeta, ...{ throttle } };
       const operation = lodashThrottle(
         lifecycle.operation,
-        throttle
+        throttle,
       ) as AsyncFunction<any, any>;
       const updatedLifecycle = { ...lifecycle, operation };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
@@ -199,7 +199,7 @@ const newLifecycleFromFactory = <Data, Params>(
       const operation = retryOperation(
         lifecycle.operation,
         errRetryCb,
-        retries
+        retries,
       );
       const updatedLifecycle = { ...lifecycle, operation };
       metaCache.set(id, { ...naiveAsyncInitialMeta, ...meta });
@@ -340,9 +340,9 @@ const newLifecycleFromFactory = <Data, Params>(
 export const naiveAsyncInitialSlice = { [asyncableEmoji]: {} };
 
 /** a reducer to plug into your redux combineReducers */
-export const naiveAsyncReducer: Reducer<AsyncableSlice> = (
+export const naiveAsyncReducer: Reducer<AsyncableSlice, AnyAction> = (
   state = naiveAsyncInitialSlice,
-  action: AnyAction
+  action: AnyAction,
 ) => {
   // only process managed actions
   if (isAsyncAction(action)) {
@@ -357,7 +357,7 @@ export const naiveAsyncReducer: Reducer<AsyncableSlice> = (
     } else {
       nextState[asyncableEmoji][name] = asyncStateReducer(
         nextState[asyncableEmoji][name],
-        action
+        action,
       );
     }
     return nextState;
@@ -365,10 +365,11 @@ export const naiveAsyncReducer: Reducer<AsyncableSlice> = (
   return state;
 };
 
-export const combinedAsyncableReducer: Reducer<{ [index: string]: any }> = (
-  state = {},
-  action: AnyAction
-) => naiveAsyncReducer(state as AsyncableSlice, action)[asyncableEmoji];
+export const combinedAsyncableReducer: Reducer<
+  { [index: string]: any },
+  AnyAction
+> = (state = {}, action: AnyAction) =>
+  naiveAsyncReducer(state as AsyncableSlice, action)[asyncableEmoji];
 
 const matchCallOrSyncOrDestroy =
   (asyncLifeCycle: AsyncLifecycle<any, any>) => (action: AnyAction) => {
@@ -388,14 +389,14 @@ const matchCallOrSyncOrDestroy =
 const resolveObservableAs = (
   action$: Observable<Action<any>>,
   asyncLifeCycle: AsyncLifecycle<any, any>,
-  value: any
+  value: any,
 ): Observable<Action<any>> => {
   const { data, done } = asyncLifeCycle;
   return new Observable((subscriber) => {
     const subscription = $from(Promise.resolve(value)).subscribe(
       (nextData: any) => subscriber.next(data(nextData)),
       (err: any) => `noop ${err}`,
-      () => subscriber.next(done())
+      () => subscriber.next(done()),
     );
     action$
       .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
@@ -407,13 +408,12 @@ const operationWithMeta = (
   operation: AsyncFunction<any, any>,
   id: string,
   payload: any,
-  meta: AsyncMeta<any, any>
+  meta: AsyncMeta<any, any>,
 ) => {
   const { timeout } = meta;
   if (!isNaN(timeout) && timeout > 0) {
     const timeoutRejectPromise = new Promise((_, reject) =>
-      // eslint-disable-next-line prefer-promise-reject-errors
-      setTimeout(() => reject(timeoutRejection), timeout)
+      setTimeout(() => reject(timeoutRejection), timeout),
     );
     return Promise.race([
       decoratedOperation(payload, id, meta, operation),
@@ -430,7 +430,7 @@ const decoratedOperation = <T extends any>(
   value: T,
   id: string,
   meta: AsyncMeta<any, any>,
-  operation: AsyncFunction<any, any>
+  operation: AsyncFunction<any, any>,
 ): Promise<T> => {
   // wait for the first lifecycle still missing data to continue
   for (const depends of meta.dataDepends) {
@@ -463,26 +463,25 @@ const observableFromAsyncLifeCycle = (
   action$: Observable<Action<any>>,
   asyncLifeCycle: AsyncLifecycle<any, any>,
   payload: any,
-  meta: AsyncMeta<any, any>
+  meta: AsyncMeta<any, any>,
 ): Observable<Action<any>> =>
   new Observable((subscriber) => {
     const { id, operation, data, error, done } = asyncLifeCycle;
     try {
       const subscription: Subscription = $from(
-        operationWithMeta(operation, id, payload, meta)
+        operationWithMeta(operation, id, payload, meta),
       ).subscribe(
         (nextData: any) => subscriber.next(data(nextData)),
         (err: string | undefined) => subscriber.next(error(err)),
-        () => subscriber.next(done())
+        () => subscriber.next(done()),
       );
       action$
         .pipe(filter(matchCallOrSyncOrDestroy(asyncLifeCycle)), first())
         .subscribe(() => subscription.unsubscribe());
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.warn(
         `unexpected error calling observable from lifecycle ${id}`,
-        err
+        err,
       );
       subscriber.next(error(err as any));
     }
@@ -492,7 +491,7 @@ const observableFromAsyncLifeCycle = (
 const asyncableEpicOnPhase = (
   action$: Observable<Action<any>>,
   phase: AsyncPhase,
-  reuseParams: boolean
+  reuseParams: boolean,
 ): Observable<Action> => {
   const phaseMatcher = asyncActionMatcher(undefined, phase);
   const mergeMapAction = (action: AsyncAction<any>) => {
@@ -505,15 +504,13 @@ const asyncableEpicOnPhase = (
     const actionAsyncLifecycle = cache.get(name);
     // if the dispatched action doesn't have an assigned lifecycle
     if (!actionAsyncLifecycle) {
-      // eslint-disable-next-line no-console
       console.warn(
-        `No lifecycle found for dispatched action ${action.type} ${name}`
+        `No lifecycle found for dispatched action ${action.type} ${name}`,
       );
       return new Observable<never>();
     }
     // if the dispatched action should trace, log a trace (experimental)
     if (traceDispatch) {
-      // eslint-disable-next-line no-console
       console.trace(action);
     }
     // if using a memoized record
@@ -528,7 +525,7 @@ const asyncableEpicOnPhase = (
       action$,
       actionAsyncLifecycle,
       payload,
-      meta
+      meta,
     );
   };
   return action$.pipe(filter(phaseMatcher), mergeMap(mergeMapAction));
@@ -537,7 +534,7 @@ const asyncableEpicOnPhase = (
 const responseDispatchOnPhase = (
   action$: Observable<Action<any>>,
   phase: AsyncPhase,
-  dispatch: Dispatch<AnyAction>
+  dispatch: Dispatch<AnyAction>,
 ): Observable<Action> => {
   const phaseMatcher = asyncActionMatcher(undefined, phase);
   const mergeMapDataAction = (action: AsyncAction<any>) => {
@@ -624,7 +621,7 @@ const responseDispatchOnPhase = (
   };
   return action$.pipe(
     filter(phaseMatcher),
-    mergeMap(mergeMapDataAction)
+    mergeMap(mergeMapDataAction),
   ) as Observable<Action<any>>;
 };
 
@@ -639,13 +636,13 @@ export const naiveAsyncMiddleware: Middleware = (store) => {
   asyncableEpicOnPhase(action$, "call", false).subscribe(store.dispatch);
   asyncableEpicOnPhase(action$, "sync", true).subscribe(store.dispatch);
   responseDispatchOnPhase(action$, "data", store.dispatch).subscribe(
-    store.dispatch
+    store.dispatch,
   );
   responseDispatchOnPhase(action$, "error", store.dispatch).subscribe(
-    store.dispatch
+    store.dispatch,
   );
   responseDispatchOnPhase(action$, "subscribe", store.dispatch).subscribe(
-    store.dispatch
+    store.dispatch,
   );
   return middleware(store);
 };
@@ -664,7 +661,7 @@ const selectFunction = (id: string) => (state: AsyncableSlice) => {
 const retryOperation = <Data, Params>(
   operation: AsyncFunction<Data, Params>,
   errRetryCb: ErrRetryCb,
-  retries = 0
+  retries = 0,
 ): AsyncFunction<Data, Params> => {
   if (retries <= 0) {
     return operation;
@@ -683,7 +680,7 @@ const retryOperation = <Data, Params>(
  * @return {*}  {(AsyncLifecycle<any, any> | undefined)}
  */
 export const findLifecycleById = (
-  id: string
+  id: string,
 ): AsyncLifecycle<any, any> | undefined => {
   const existing = id && cache.get(id);
   if (existing) {
@@ -704,7 +701,7 @@ export const findLifecycleById = (
 export const asyncLifecycle = <Data, Params extends {}>(
   id: string,
   operation: AsyncFunction<Data, Params>,
-  options?: AsyncableOptions
+  options?: AsyncableOptions,
 ): AsyncLifecycle<Data, Params> => {
   const existing = id && cache.get(id);
   if (existing) {
@@ -723,18 +720,3 @@ export const asyncLifecycle = <Data, Params extends {}>(
   }
   return lifecycle;
 };
-
-/**
- * Wraps a AsyncFunction and a unique identifier to provide a redux store managed lifecycle
- * that manages the given async operation, recognized by the given id
- * @template Data
- * @template Params
- * @deprecated favor asyncLifecycle instead
- * @param {AsyncFunction<Data, Params>} operation
- * @param {string} id
- * @returns {AsyncLifecycle<Data, Params>}
- */
-export const naiveAsyncLifecycle = <Data, Params extends {}>(
-  id: string,
-  operation: AsyncFunction<Data, Params>
-): AsyncLifecycle<Data, Params> => asyncLifecycle(id, operation);

@@ -1,6 +1,6 @@
 export const mockResolve = <T extends {}>(
   val: T,
-  maxTime: number
+  maxTime: number,
 ): Promise<T> =>
   new Promise((resolve) => {
     const timeMS = Math.random() * maxTime;
@@ -9,7 +9,7 @@ export const mockResolve = <T extends {}>(
 
 export const mockReject = (
   err: Error | string,
-  maxTime: number
+  maxTime: number,
 ): Promise<never> =>
   new Promise((resolve, reject) => {
     const timeMS = Math.random() * maxTime;

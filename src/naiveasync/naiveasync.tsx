@@ -18,7 +18,7 @@ import {
 
 type ControllableChildren<State> = (
   state: State,
-  dispatch: <A extends AnyAction>(action: A) => void
+  dispatch: <A extends AnyAction>(action: A) => void,
 ) => React.ReactNode;
 
 interface ControllableProps<State> {
@@ -38,31 +38,29 @@ export type Controllable<State> = React.ComponentType<ControllableProps<State>>;
  */
 export const createControllableContext = <State extends AsyncableSlice>(
   reducer: Reducer<State>,
-  middleware: Middleware
+  middleware: Middleware,
 ): Controllable<State> => {
-  const Controllable = <State extends AsyncableSlice>(
-    props: ControllableProps<State>
+  const Controllable = <S extends AsyncableSlice>(
+    props: ControllableProps<S>,
   ) => {
     const store = useStore();
     const dp = useDispatch();
     const [state, setState] = useState<AsyncableSlice>(
-      reducer(undefined, { type: "" })
+      reducer(undefined, { type: "" }),
     );
     const internalDispatch: Dispatch<AnyAction> = <A extends Action>(
-      action: A
+      action: A,
     ) => {
       const dispatchedAction = dp(action);
-      setState(reducer(store.getState(), dispatchedAction));
+      setState(reducer(store.getState() as State, dispatchedAction));
       return dp(dispatchedAction);
     };
     const dispatch = middleware({
       dispatch: internalDispatch, // dispatches loading states
       getState: () => state,
-    })(internalDispatch); // dispatches done and error states
+    })(internalDispatch as (action: unknown) => unknown); // dispatches done and error states
     return (
-      <Provider store={store}>
-        {props.children(state as State, dispatch)}
-      </Provider>
+      <Provider store={store}>{props.children(state as S, dispatch)}</Provider>
     );
   };
   return Controllable;
@@ -70,7 +68,7 @@ export const createControllableContext = <State extends AsyncableSlice>(
 
 type NaiveAsyncComponentChildren<Data, Params> = (
   state: AsyncState<Data, Params>,
-  call: (params: Params) => void
+  call: (params: Params) => void,
 ) => JSX.Element;
 export interface AsyncComponentChildrenProps<D, P> {
   state: AsyncState<D, P>;
@@ -82,7 +80,7 @@ export interface AsyncComponentChildrenProps<D, P> {
   subscribe: (val: number) => void;
 }
 export type AsyncComponentChildren<Data, Params> = (
-  childrenProps: AsyncComponentChildrenProps<Data, Params>
+  childrenProps: AsyncComponentChildrenProps<Data, Params>,
 ) => JSX.Element;
 
 export interface AsyncComponentProps<Data, Params> {
@@ -119,9 +117,9 @@ export interface LifecycleAsyncProps<Data, Params> {
 
 const NaiveAsyncManaged: React.FC<NaiveLifecycleAsyncProps<any, any>> = <
   Data,
-  Params
+  Params,
 >(
-  props: NaiveLifecycleAsyncProps<Data, Params>
+  props: NaiveLifecycleAsyncProps<Data, Params>,
 ) => {
   const { call, params, children, state, destroy } = props;
   useEffect(() => {
@@ -137,9 +135,9 @@ const NaiveAsyncManaged: React.FC<NaiveLifecycleAsyncProps<any, any>> = <
 
 export const AsyncManaged: React.FC<LifecycleAsyncProps<any, any>> = <
   Data,
-  Params
+  Params,
 >(
-  props: LifecycleAsyncProps<Data, Params>
+  props: LifecycleAsyncProps<Data, Params>,
 ) => {
   const { call, children, state, destroy, reset, sync, meta, subscribe } =
     props;
@@ -158,7 +156,7 @@ const noop: AsyncFunction<unknown, unknown> = () => Promise.resolve({});
  */
 
 export const NaiveAsync = <Data, Params extends {}>(
-  props: NaiveAsyncComponentProps<Data, Params>
+  props: NaiveAsyncComponentProps<Data, Params>,
 ): React.ReactElement<NaiveAsyncComponentProps<Data, Params>> => {
   const {
     operation = noop,
@@ -171,7 +169,7 @@ export const NaiveAsync = <Data, Params extends {}>(
     asyncLifeCycle: asyncLifecycle(id, operation),
     AsyncControllable: createControllableContext(
       naiveAsyncReducer,
-      naiveAsyncMiddleware
+      naiveAsyncMiddleware,
     ),
   });
   const { params, asyncLifeCycle, AsyncControllable } = state;
@@ -210,7 +208,7 @@ export const NaiveAsync = <Data, Params extends {}>(
  */
 
 export const Async = <Data, Params extends {}>(
-  props: AsyncComponentProps<Data, Params>
+  props: AsyncComponentProps<Data, Params>,
 ): React.ReactElement<AsyncComponentProps<Data, Params>> => {
   const { children, lifecycle, initialState } = props;
   const [intervalTickle, setIntervalTickle] = useState(0);
@@ -218,13 +216,13 @@ export const Async = <Data, Params extends {}>(
     initState: initialState || undefined,
     Controllable: createControllableContext(
       naiveAsyncReducer,
-      naiveAsyncMiddleware
+      naiveAsyncMiddleware,
     ),
     subscribeInterval: undefined as any,
   });
   const assignState = (
     dispatch: (action: AnyAction) => void,
-    asyncState: AsyncState<Data, Params>
+    asyncState: AsyncState<Data, Params>,
   ) => {
     dispatch(assign(asyncState));
     setState({ ...state, initState: undefined });

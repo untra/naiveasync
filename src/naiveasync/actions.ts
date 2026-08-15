@@ -2,11 +2,6 @@
 import { Dispatch } from "redux";
 import { KeyedCache } from "./keyedcache";
 
-/** 🔁
- * @deprecated favor asyncableEmoji
- */
-export const naiveAsyncEmoji = "🔁";
-
 /** 🔁  */
 export const asyncableEmoji = "🔁";
 
@@ -30,12 +25,6 @@ interface AsyncPostmark {
 
 /** a function that takes a singular params object P, returning a Promise<D>. This is an async javascript function. */
 export type AsyncFunction<Data, Params> = (params: Params) => Promise<Data>;
-
-/**
- * a function that takes a singular params object P, returning a Promise<D>
- * @deprecated favor AsyncFunction instead
- */
-export type NaiveAsyncFunction<Data, Params> = AsyncFunction<Data, Params>;
 
 /**
  * A typical redux action with a templated a payload
@@ -81,12 +70,12 @@ export const isAsyncAction = (action: AnyAction): action is AsyncAction<any> =>
 
 const asyncActionMatchesPhase = (
   action: AsyncAction<any>,
-  phase?: AsyncPhase
+  phase?: AsyncPhase,
 ): boolean => !!(!phase || action[asyncableEmoji].phase === phase);
 
 const asyncActionMatchesOperation = (
   action: AsyncAction<any>,
-  operation?: AsyncFunction<any, any>
+  operation?: AsyncFunction<any, any>,
 ): boolean =>
   !operation ||
   !!(operation.name && operation.name === action[asyncableEmoji].name);
@@ -102,16 +91,16 @@ const asyncActionMatchesOperation = (
  */
 export function asyncActionMatcher<Data, Params extends {}>(
   operation: AsyncFunction<Data, Params> | undefined,
-  phase: "call" | "sync" | "data" | "reset"
+  phase: "call" | "sync" | "data" | "reset",
 ): (action: AnyAction) => action is AsyncAction<Params>;
 
 export function asyncActionMatcher<Data, Params>(
   operation?: AsyncFunction<Data, Params>,
-  phase?: AsyncPhase
+  phase?: AsyncPhase,
 ): (action: AnyAction) => action is AsyncAction<Params>;
 export function asyncActionMatcher<Data, Params>(
   operation?: AsyncFunction<Data, Params>,
-  phase?: AsyncPhase
+  phase?: AsyncPhase,
 ) {
   return (action: AnyAction): boolean =>
     isAsyncAction(action) &&
@@ -142,7 +131,7 @@ const definedObject = <T extends Record<string, any>>(obj: T): T => {
 };
 
 export type AsyncActionCreatorFactory = <Payload>(
-  phase: AsyncPhase
+  phase: AsyncPhase,
 ) => AsyncActionCreator<Payload>;
 
 /**
@@ -181,11 +170,6 @@ export const asyncActionCreatorFactory =
 export interface AsyncableSlice {
   [asyncableEmoji]: { [key: string]: AsyncState<any, any> };
 }
-
-/**
- * @deprecated favor AsyncableSlice instead
- */
-export type NaiveAsyncSlice = AsyncableSlice;
 
 export interface Gettable {
   get: (a: any) => any;
@@ -238,12 +222,6 @@ export type AsyncState<Data, Params> =
   | DoneAsyncState<Data, Params>;
 
 /**
- * The state of a AsyncFunction, encompassing status, params, error, data
- * @deprecated favor AsyncState instead
- */
-export type NaiveAsyncState<Data, Params> = AsyncState<Data, Params>;
-
-/**
  * isAsyncState typeGuards AsyncState<any>
  * @param {Object} state
  * @returns {state is AsyncState<any,any>}
@@ -272,7 +250,7 @@ type OnData2<Data, Params> = (data: Data, params: Params) => void;
 type OnData3<Data, Params> = (
   data: Data,
   params: Params,
-  dispatch: Dispatch<AnyAction>
+  dispatch: Dispatch<AnyAction>,
 ) => void;
 export type AbortCb = (reason: string) => void;
 type OnError1 = (error: string) => void;
@@ -280,20 +258,14 @@ type OnError2<Params> = (error: string, params: Params) => void;
 type OnError3<Params> = (
   error: string,
   params: Params,
-  dispatch: Dispatch<AnyAction>
+  dispatch: Dispatch<AnyAction>,
 ) => void;
 type ErrRetry1 = (error: any) => void;
 type ErrRetry2 = (error: any, retry: number) => void;
 export type OnError<_, Params> =
-  | OnCb
-  | OnError1
-  | OnError2<Params>
-  | OnError3<Params>;
+  OnCb | OnError1 | OnError2<Params> | OnError3<Params>;
 export type OnData<Data, Params> =
-  | OnCb
-  | OnData1<Data>
-  | OnData2<Data, Params>
-  | OnData3<Data, Params>;
+  OnCb | OnData1<Data> | OnData2<Data, Params> | OnData3<Data, Params>;
 export type ErrRetryCb = OnCb | ErrRetry1 | ErrRetry2;
 
 /**

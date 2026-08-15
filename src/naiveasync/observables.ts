@@ -60,14 +60,14 @@ interface StoreLike<S, A extends Action = AnyAction> {
 // )
 
 const isAsyncIterable = <Data>(
-  obj: AsyncIterable<Data> | any
+  obj: AsyncIterable<Data> | any,
 ): obj is AsyncIterable<Data> =>
   Symbol.asyncIterator in obj &&
   typeof obj[Symbol.asyncIterator] === "function";
 
 /** Internal. Converts an `AsyncIterable` to an `Observable` by piping its yield into the subscriber until the `AsyncIterable` is exhausted. */
 const $fromAsyncIterable = <Data>(
-  asyncIterable: AsyncIterable<Data>
+  asyncIterable: AsyncIterable<Data>,
 ): Observable<Data> =>
   new Observable<Data>(
     (subscriber) =>
@@ -83,12 +83,12 @@ const $fromAsyncIterable = <Data>(
         } catch (e) {
           subscriber.error(e);
         }
-      })()
+      })(),
   );
 
 /** Type guard that indicates whether an object has the crucial methods to behave like a Redux Store. */
 export const isStoreLike = (
-  maybeStoreLike: StoreLike<any, any> | any
+  maybeStoreLike: StoreLike<any, any> | any,
 ): maybeStoreLike is StoreLike<any, any> =>
   !!maybeStoreLike &&
   "subscribe" in maybeStoreLike &&
@@ -100,7 +100,7 @@ export const isStoreLike = (
 
 /** Function that converts `Store<S, A>` -> `SubjectLike<S, A>`. */
 const $fromStore = <S, A extends Action>(
-  store: StoreLike<S, A>
+  store: StoreLike<S, A>,
 ): SubjectLike<S, A> => {
   const state$ = new BehaviorSubject<S>(store.getState());
   store.subscribe(() => {
@@ -123,9 +123,9 @@ export const $from = <Item>(observableInput: ObservableInput<Item>) =>
   isStoreLike(observableInput)
     ? $fromStore(observableInput)
     : isAsyncIterable(observableInput)
-    ? $fromAsyncIterable(observableInput)
-    : // isPromise(observableInput) ? $fromPromise(observableInput) :
-      rxFrom(observableInput);
+      ? $fromAsyncIterable(observableInput)
+      : // isPromise(observableInput) ? $fromPromise(observableInput) :
+        rxFrom(observableInput);
 
 /**
  * $toMiddleware creates a Redux Middleware that pipes all dispatched actions through the given Subject.
@@ -141,6 +141,6 @@ export const $toMiddleware =
   (next) =>
   (action) => {
     const result = next(action);
-    action$.next(action);
+    action$.next(action as Action);
     return result;
   };

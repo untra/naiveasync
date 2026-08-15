@@ -1,10 +1,9 @@
 /* eslint-disable unused-imports/no-unused-vars */
-import { Store } from "redux";
 import { asyncLifecycle } from ".";
 import { quickReject, quickResolve, slowResolve } from "../utils/promise";
 import { createConnectedStore } from "../utils/store";
 import { asyncableEmoji } from "./actions";
-import { v4 } from "uuid";
+import { randomUUID as v4 } from "node:crypto";
 import {
   mockDoneAsyncState,
   mockErrorAsyncState,
@@ -25,7 +24,7 @@ describe("store", () => {
 });
 
 describe("lifecycle", () => {
-  let store: Store = createConnectedStore();
+  let store = createConnectedStore();
   beforeAll(() => {
     store = createConnectedStore();
   });
@@ -91,7 +90,7 @@ describe("lifecycle", () => {
   it(`should call the promise when .call()`, async () => {
     const paramz = v4();
     const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     );
     const opSpy = jest.spyOn(lc, "operation");
 
@@ -118,7 +117,7 @@ describe("lifecycle", () => {
   it(`should call the promise when .sync() with lastParams`, async () => {
     const paramz = v4();
     const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     );
     const opSpy = jest.spyOn(lc, "operation");
 
@@ -150,7 +149,7 @@ describe("lifecycle", () => {
     const paramz = v4();
     const err = "mock err";
     const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     );
     const opSpy = jest.spyOn(lc, "operation");
 
@@ -181,13 +180,13 @@ describe("lifecycle", () => {
 
   it(`should .onData and .onError with params to boot`, async () => {
     const lcRejects = asyncLifecycle(v4(), async () =>
-      quickReject(new Error(err))
+      quickReject(new Error(err)),
     ).onError((data, params, dispatch) => {
       // heck ya
     });
 
     const lcResolves = asyncLifecycle(v4(), async () =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     ).onData((data, params, dispatch) => {
       dispatch(lcRejects.sync({}));
     });
@@ -208,7 +207,7 @@ describe("lifecycle", () => {
   it(`should not invoke the asyncOperation until dataDependsOn resolve`, async () => {
     const lcRequired = asyncLifecycle(v4(), async () => quickResolve(dataz));
     const lcDepends = asyncLifecycle(v4(), async () =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     ).dataDepends([lcRequired.id]);
     const opSpy = jest.spyOn(lcDepends, "operation");
     store.dispatch(lcDepends.sync({}));
@@ -253,7 +252,7 @@ describe("lifecycle", () => {
     const paramz = v4();
     const dataz = { output: "success" };
     const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     );
     expect(lc.meta().resolveData).toBeFalsy();
     // then
@@ -273,7 +272,7 @@ describe("lifecycle", () => {
 
   it("accepts options and will apply them", () => {
     const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     );
     const timeout = 10000;
     const debounce = 600;
@@ -287,7 +286,7 @@ describe("lifecycle", () => {
 
   it("will invalidate the cache when needed", () => {
     const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     );
     const paramz = v4();
     store.dispatch(lc.sync({ paramz }));
@@ -302,15 +301,15 @@ describe("lifecycle", () => {
     const name = v4();
     const expectedType = `${asyncableEmoji}/${name}/call`;
     let lc = asyncLifecycle(name, ({ paramz }: { paramz: string }) =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     );
     const spied = jest.spyOn(lc, "call");
     const paramz = v4();
     store.dispatch(lc.call({ paramz }));
-    expect(spied).toBeCalledTimes(1);
+    expect(spied).toHaveBeenCalledTimes(1);
     lc = lc.invalidate();
     expect(lc.call({ paramz }).type).toEqual(expectedType);
-    expect(spied).toBeCalledTimes(1);
+    expect(spied).toHaveBeenCalledTimes(1);
   });
 
   it("abortController can cancel the operation", async () => {
@@ -350,7 +349,7 @@ describe("lifecycle", () => {
     store.dispatch(lc.call({ paramz }));
     store.dispatch(lc.subscribe(20));
     // pardon the intentionally repetitive
-    // eslint-disable-next-line no-console
+
     for (let i = 1; i <= 10; i++) {
       expect(abortcontroller.signal.aborted).toBeFalsy();
       const v = await lc.awaitResolve();
@@ -364,7 +363,7 @@ describe("lifecycle", () => {
     const expectedErr = `Error: ${err}`;
     const paramz = v4();
     const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
-      quickReject(new Error(err))
+      quickReject(new Error(err)),
     );
     expect(lc.meta().rejectError).toBeFalsy();
     // then
@@ -379,7 +378,7 @@ describe("lifecycle", () => {
 
   it("debounce works on the first try", async () => {
     const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     ).debounce(200);
     const paramz = v4();
     store.dispatch(lc.sync({ paramz }));
@@ -389,7 +388,7 @@ describe("lifecycle", () => {
 
   it("throttle works on the first try", async () => {
     const lc = asyncLifecycle(v4(), ({ paramz }: { paramz: string }) =>
-      quickResolve(dataz)
+      quickResolve(dataz),
     ).throttle(200);
     const paramz = v4();
     store.dispatch(lc.sync({ paramz }));

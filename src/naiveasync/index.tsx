@@ -1,10 +1,8 @@
 export {
-  naiveAsyncEmoji,
   naiveAsyncInitialState,
   asyncableEmoji,
 } from "./actions";
 export {
-  naiveAsyncLifecycle,
   naiveAsyncMiddleware,
   naiveAsyncReducer,
   naiveAsyncInitialSlice,
@@ -12,10 +10,9 @@ export {
   findLifecycleById,
 } from "./controllable";
 export type {
-  NaiveAsyncSlice,
-  NaiveAsyncState,
-  NaiveAsyncFunction,
+  AnyAction,
   AsyncState,
+  AsyncFunction,
   AsyncableOptions,
   AsyncableSlice,
   InitialAsyncState,

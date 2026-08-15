@@ -15,7 +15,7 @@ export const mockInitialAsyncState: () => AsyncState<any, any> = () => ({
  * @param {P} params - params provided to function
  */
 export const mockInflightAsyncState: <P extends {}>(
-  mockParams: P
+  mockParams: P,
 ) => AsyncState<any, P> = (params) => ({
   ...naiveAsyncInitialState,
   status: "inflight",
@@ -27,7 +27,7 @@ export const mockInflightAsyncState: <P extends {}>(
  * @param {string} error - error string returned to the function
  */
 export const mockErrorAsyncState: (error: string) => AsyncState<any, any> = (
-  error
+  error,
 ) => ({
   ...naiveAsyncInitialState,
   status: "error",
@@ -41,7 +41,7 @@ export const mockErrorAsyncState: (error: string) => AsyncState<any, any> = (
  */
 export const mockDoneAsyncState: <D, P extends {}>(
   data: D,
-  params: P
+  params: P,
 ) => AsyncState<D, P> = (data, params) => ({
   ...naiveAsyncInitialState,
   status: "done",
@@ -58,7 +58,7 @@ export const mockDoneAsyncState: <D, P extends {}>(
 export const mockedAsyncStates: <D, P extends {}>(
   data: D,
   params: P,
-  error: string
+  error: string,
 ) => Array<AsyncState<D, P>> = (data, params, error) => [
   mockInitialAsyncState(),
   mockInflightAsyncState(params),
