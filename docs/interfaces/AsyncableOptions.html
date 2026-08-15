@@ -26,7 +26,7 @@ This selection is contextual from the instance when .meta() is called on the lif
 <h4 class="tsd-anchor-link" id="template-params">Template: Params<a href="#template-params" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4></div></div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">AsyncableOptions</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#datadepends">dataDepends</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#debounce">debounce</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#throttle">throttle</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#timeout">timeout</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#tracedispatch">traceDispatch</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/untra/naiveasync/blob/c818b987676903cadae73773dc53d24a09a17034/src/naiveasync/actions.ts#L338">actions.ts:338</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/untra/naiveasync/blob/6eca30a0d5e752466ff9e91d7c7a91b2c9f2b7cb/src/naiveasync/actions.ts#L338">actions.ts:338</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -49,35 +49,35 @@ This selection is contextual from the instance when .meta() is called on the lif
 <div class="tsd-comment tsd-typography"><p>modifies dispatched actions to pause Invocations of the Asyncfunction until the lifecycle with the given id. (experimental)</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/untra/naiveasync/blob/c818b987676903cadae73773dc53d24a09a17034/src/naiveasync/actions.ts#L348">actions.ts:348</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/untra/naiveasync/blob/6eca30a0d5e752466ff9e91d7c7a91b2c9f2b7cb/src/naiveasync/actions.ts#L348">actions.ts:348</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="debounce"><code class="tsd-tag">Optional</code> <code class="tsd-tag">Readonly</code><span>debounce</span><a href="#debounce" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">debounce</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>'debounce' assignment. Meta toggle to debounce the promise for N milliseconds (execute this function only if N milliseconds have passed without it being called.) (good for search)</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/untra/naiveasync/blob/c818b987676903cadae73773dc53d24a09a17034/src/naiveasync/actions.ts#L340">actions.ts:340</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/untra/naiveasync/blob/6eca30a0d5e752466ff9e91d7c7a91b2c9f2b7cb/src/naiveasync/actions.ts#L340">actions.ts:340</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="throttle"><code class="tsd-tag">Optional</code> <code class="tsd-tag">Readonly</code><span>throttle</span><a href="#throttle" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">throttle</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>'throttle' assignment. Meta toggle to throttle the promise for N milliseconds (execute this function at most once every N milliseconds.) (a small throttle is good if the lifecycle is widely used)</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/untra/naiveasync/blob/c818b987676903cadae73773dc53d24a09a17034/src/naiveasync/actions.ts#L342">actions.ts:342</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/untra/naiveasync/blob/6eca30a0d5e752466ff9e91d7c7a91b2c9f2b7cb/src/naiveasync/actions.ts#L342">actions.ts:342</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="timeout"><code class="tsd-tag">Optional</code> <code class="tsd-tag">Readonly</code><span>timeout</span><a href="#timeout" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">timeout</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>'timeout' assignment. Meta toggle to enable an N millisecond timeout of the promise, dispatching 'error' timeout if the request takes too long. (0 will disable)</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/untra/naiveasync/blob/c818b987676903cadae73773dc53d24a09a17034/src/naiveasync/actions.ts#L344">actions.ts:344</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/untra/naiveasync/blob/6eca30a0d5e752466ff9e91d7c7a91b2c9f2b7cb/src/naiveasync/actions.ts#L344">actions.ts:344</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="tracedispatch"><code class="tsd-tag">Optional</code> <code class="tsd-tag">Readonly</code><span>trace<wbr/>Dispatch</span><a href="#tracedispatch" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">traceDispatch</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>modifies dispatched actions to invoke console.trace when dispatched. (experimental)</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/untra/naiveasync/blob/c818b987676903cadae73773dc53d24a09a17034/src/naiveasync/actions.ts#L346">actions.ts:346</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/untra/naiveasync/blob/6eca30a0d5e752466ff9e91d7c7a91b2c9f2b7cb/src/naiveasync/actions.ts#L346">actions.ts:346</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
