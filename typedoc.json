@@ -1,15 +1,8 @@
 {
-    "name": "NaiveAsync",
-    "readme": "./README.md",
-    "out": "docs",
-    "theme": "default",
-    "excludeExternals": "true",
-    "exclude": [
-      "**/node_modules/**",
-      "**/dist/**",
-      "**/mocha.config.ts",
-      "**/*.spec.*"
-    ],
-    "includes": "src/naiveasync",
-    "cleanOutputDir": "true"
-  }
+  "name": "NaiveAsync",
+  "readme": "./README.md",
+  "out": "docs",
+  "excludeExternals": true,
+  "exclude": ["**/node_modules/**", "**/dist/**", "**/*.spec.*", "**/*.test.*"],
+  "cleanOutputDir": true
+}

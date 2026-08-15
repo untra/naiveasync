@@ -14,7 +14,7 @@ const slowIconToName = (params: {}) =>
   });
 const subscriptionTestLifecycle = asyncLifecycle(
   "22_SUBSCRIBE_TEST",
-  slowIconToName
+  slowIconToName,
 );
 
 interface IconResp {
@@ -38,7 +38,7 @@ const SubscribeComponent: React.FC<Props> = ({ state, select }) => {
     const icon = "🦅";
     const name = "assigned!";
     dispatch(
-      subscriptionTestLifecycle.assign(mockDoneAsyncState({ icon, name }, {}))
+      subscriptionTestLifecycle.assign(mockDoneAsyncState({ icon, name }, {})),
     );
   }, [dispatch]);
   const sync = (params: any) =>

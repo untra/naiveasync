@@ -11,7 +11,7 @@ import {
 
 const callReducer: Reducer<AsyncState<any, any>, AnyAction> = (
   state: AsyncState<any, any> = naiveAsyncInitialState,
-  action: AnyAction
+  action: AnyAction,
 ) =>
   isAsyncAction(action) && action[asyncableEmoji].phase === "call"
     ? {
@@ -25,7 +25,7 @@ const callReducer: Reducer<AsyncState<any, any>, AnyAction> = (
 
 const syncReducer: Reducer<AsyncState<any, any>, AnyAction> = (
   state: AsyncState<any, any> = naiveAsyncInitialState,
-  action: AnyAction
+  action: AnyAction,
 ) => {
   if (isAsyncAction(action) && action[asyncableEmoji].phase === "sync") {
     const params = action.payload === undefined ? state.params : action.payload;
@@ -40,7 +40,7 @@ const syncReducer: Reducer<AsyncState<any, any>, AnyAction> = (
 
 const dataReducer: Reducer<AsyncState<any, any>, AnyAction> = (
   state: AsyncState<any, any> = naiveAsyncInitialState,
-  action: AnyAction
+  action: AnyAction,
 ) =>
   isAsyncAction(action) && action[asyncableEmoji].phase === "data"
     ? {
@@ -52,15 +52,15 @@ const dataReducer: Reducer<AsyncState<any, any>, AnyAction> = (
 
 const errorReducer: Reducer<AsyncState<any, any>, AnyAction> = (
   state: AsyncState<any, any> = naiveAsyncInitialState,
-  action: AnyAction
+  action: AnyAction,
 ) => {
   if (isAsyncAction(action) && action[asyncableEmoji].phase === "error") {
     const isError = (a: Error | any): a is Error => a instanceof Error;
     const error: string = isError(action.payload)
       ? action.payload.message
       : typeof action.payload === "object"
-      ? JSON.stringify(action.payload)
-      : action.payload;
+        ? JSON.stringify(action.payload)
+        : action.payload;
     return {
       ...state,
       status: "error",
@@ -72,7 +72,7 @@ const errorReducer: Reducer<AsyncState<any, any>, AnyAction> = (
 
 const doneReducer: Reducer<AsyncState<any, any>, AnyAction> = (
   state: AsyncState<any, any> = naiveAsyncInitialState,
-  action: AnyAction
+  action: AnyAction,
 ) =>
   isAsyncAction(action) && action[asyncableEmoji].phase === "done"
     ? {
@@ -84,23 +84,26 @@ const doneReducer: Reducer<AsyncState<any, any>, AnyAction> = (
 
 const resetReducer: Reducer<AsyncState<any, any>, AnyAction> = (
   state: AsyncState<any, any> = naiveAsyncInitialState,
-  action: AnyAction
+  action: AnyAction,
 ) =>
   isAsyncAction(action) && action[asyncableEmoji].phase === "reset"
     ? naiveAsyncInitialState
     : state;
 
 export const chain =
-  <S>(firstReducer: Reducer<S>, ...reducers: Array<Reducer<S>>): Reducer<S> =>
+  <S>(
+    firstReducer: Reducer<S, AnyAction>,
+    ...reducers: Array<Reducer<S, AnyAction>>
+  ): Reducer<S, AnyAction> =>
   (state: any, action: any) =>
     reducers.reduce(
       (accumulatedState, nextReducer) => nextReducer(accumulatedState, action),
-      firstReducer(state, action)
+      firstReducer(state, action),
     );
 
 const assignReducer: Reducer<AsyncState<any, any>, AnyAction> = (
   state: AsyncState<any, any> = naiveAsyncInitialState,
-  action: AnyAction
+  action: AnyAction,
 ) =>
   isAsyncAction(action) &&
   action[asyncableEmoji].phase === "assign" &&
@@ -115,5 +118,5 @@ export const asyncStateReducer = chain(
   errorReducer,
   doneReducer,
   resetReducer,
-  assignReducer
+  assignReducer,
 );

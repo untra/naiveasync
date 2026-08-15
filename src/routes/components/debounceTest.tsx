@@ -7,7 +7,6 @@ import { NaiveAsyncState } from "../../naiveasync/actions";
 import { slowResolve } from "../../utils/promise";
 
 const slowIconToName = (params: {}) => {
-  // eslint-disable-next-line no-console
   console.log("debounce called!");
   return slowResolve({
     icon: "",
@@ -16,7 +15,7 @@ const slowIconToName = (params: {}) => {
 };
 const debounceLifecycle = asyncLifecycle(
   "DEBOUNCE_SELECTABLE",
-  slowIconToName
+  slowIconToName,
 ).debounce(2000);
 
 interface IconResp {

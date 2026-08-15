@@ -60,17 +60,14 @@ const MemoizedComponent: React.FC<Props> = ({ state, select }) => {
     }
   };
   const simple = () => {
-    // eslint-disable-next-line no-console
     console.log("onData received!");
   };
   const cb = (data: IconResp) => {
-    // eslint-disable-next-line no-console
     console.log("fresh data!", data);
   };
   const dispatched = (data: IconResp, dispatch: Dispatch<AnyAction>) => {
-    // eslint-disable-next-line no-console
     console.log("dispatched data!", data);
-    // eslint-disable-next-line no-console
+
     setTimeout(() => dispatch && dispatch(ondataLifecycle.reset()), 2000);
   };
 

@@ -8,7 +8,7 @@ const resolveMedium = <T extends {}>(val: T): Promise<T> =>
   new Promise((resolve) => {
     const rand = Math.random();
     const timeMS = rand * 5000;
-    // eslint-disable-next-line no-console
+
     console.log(`Chosen random value: ${rand}`);
 
     setTimeout(() => {
@@ -18,17 +18,17 @@ const resolveMedium = <T extends {}>(val: T): Promise<T> =>
 
 const requiredLifecycle: AsyncLifecycle<{}, {}> = asyncLifecycle(
   "25_REQUIRED_TEST",
-  resolveMedium
+  resolveMedium,
 );
 
 const dependsLifecycle: AsyncLifecycle<{}, {}> = asyncLifecycle(
   "25_DEPENDS_TEST",
-  resolveMedium
+  resolveMedium,
 ).dataDepends([requiredLifecycle.id]);
 
 const dependsDoubleLifecycle: AsyncLifecycle<{}, {}> = asyncLifecycle(
   "25_DOUBLE_DEPENDS_TEST",
-  resolveMedium
+  resolveMedium,
 ).dataDepends([requiredLifecycle.id, dependsLifecycle.id]);
 
 interface MP {
@@ -143,5 +143,5 @@ const mapDispatchToProps = (dispatch: Dispatch<AnyAction>): DP => ({
 
 export default connect(
   mapStateToProps,
-  mapDispatchToProps
+  mapDispatchToProps,
 )(DependsTestComponent);
