@@ -5,7 +5,7 @@
  * ---
  */
 import React from "react";
-/* eslint-disable prefer-promise-reject-errors */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Provider } from "react-redux";
 import packagejson from "../../package.json";
@@ -34,24 +34,23 @@ const emojiView = (state: AsyncState<any, {}>) => (
     {state.status === "inflight"
       ? "💬"
       : state.error
-      ? "💥"
-      : state.data
-      ? "✔️"
-      : "❌"}{" "}
+        ? "💥"
+        : state.data
+          ? "✔️"
+          : "❌"}{" "}
     {`${state.data}`} {`${state.status}`} {`${state.error}`}{" "}
   </p>
 );
 
-// eslint-disable-next-line
 const callableView = (state: AsyncState<any, {}>, call: ({}) => any) => (
   <button onClick={call}>
     {state.status === "inflight"
       ? "💬"
       : state.error
-      ? "💥"
-      : state.data
-      ? "✔️"
-      : "❌"}{" "}
+        ? "💥"
+        : state.data
+          ? "✔️"
+          : "❌"}{" "}
     {`${state.status}`}{" "}
   </button>
 );
@@ -103,12 +102,12 @@ const lifeCycleInput = asyncLifecycle("17_LIFECYCLE_INPUT", autoParamsOp);
 
 const asyncInputLifecycle = asyncLifecycle(
   "19_ASYNC_OPERATION",
-  unreliableAsyncOperation
+  unreliableAsyncOperation,
 );
 
 const subscribeLifecycle = asyncLifecycle(
   "21_SUBSCRIBE_OPERATION",
-  unreliableAsyncOperation
+  unreliableAsyncOperation,
 );
 
 const store = createConnectedStore();

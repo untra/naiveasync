@@ -9,7 +9,7 @@ const randomNumberFn = (params: RandomNumberSyncParams) =>
   slowResolve(Math.floor(Math.random() * 100) * params.multiplier);
 const randomNumberLifecycle = asyncLifecycle(
   "RANDOM_SELECTABLE",
-  randomNumberFn
+  randomNumberFn,
 );
 
 interface RandomNumberSyncParams {

@@ -6,7 +6,6 @@ import { asyncLifecycle, AsyncState } from "../../naiveasync";
 import { slowResolve } from "../../utils/promise";
 
 const slowIconToName = (params: {}) => {
-  // eslint-disable-next-line no-console
   console.log("throttle called!");
   return slowResolve({
     icon: "",
@@ -15,7 +14,7 @@ const slowIconToName = (params: {}) => {
 };
 const throttleLifecycle = asyncLifecycle(
   "throttle_SELECTABLE",
-  slowIconToName
+  slowIconToName,
 ).throttle(2000);
 
 interface IconResp {

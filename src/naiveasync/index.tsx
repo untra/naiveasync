@@ -1,28 +1,25 @@
-export {
-  naiveAsyncInitialState,
-  asyncableEmoji,
-} from "./actions";
-export {
-  naiveAsyncMiddleware,
-  naiveAsyncReducer,
-  naiveAsyncInitialSlice,
-  asyncLifecycle,
-  findLifecycleById,
-} from "./controllable";
+export { asyncableEmoji, naiveAsyncInitialState } from "./actions";
 export type {
   AnyAction,
-  AsyncState,
-  AsyncFunction,
   AsyncableOptions,
   AsyncableSlice,
+  AsyncFunction,
+  AsyncState,
   InitialAsyncState,
 } from "./actions";
-export type { AsyncLifecycle } from "./controllable";
 export {
-  mockInitialAsyncState,
-  mockInflightAsyncState,
-  mockErrorAsyncState,
+  asyncLifecycle,
+  findLifecycleById,
+  naiveAsyncInitialSlice,
+  naiveAsyncMiddleware,
+  naiveAsyncReducer,
+} from "./controllable";
+export type { AsyncLifecycle } from "./controllable";
+export { Async, NaiveAsync } from "./naiveasync";
+export {
   mockDoneAsyncState,
   mockedAsyncStates,
+  mockErrorAsyncState,
+  mockInflightAsyncState,
+  mockInitialAsyncState,
 } from "./utils";
-export { NaiveAsync, Async } from "./naiveasync";

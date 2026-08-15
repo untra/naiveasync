@@ -38,7 +38,7 @@ const AssignedComponent: React.FC<Props> = ({ state, select }) => {
     const icon = "🦅";
     const name = "assigned!";
     dispatch(
-      assignTestLifecycle.assign(mockDoneAsyncState({ icon, name }, {}))
+      assignTestLifecycle.assign(mockDoneAsyncState({ icon, name }, {})),
     );
   }, [dispatch]);
 

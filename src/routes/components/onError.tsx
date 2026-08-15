@@ -13,7 +13,7 @@ const slowIconToName = (params: IconParams) =>
   });
 const onErrorLifecycle = asyncLifecycle(
   "ONERROR_SELECTABLE",
-  slowIconToName
+  slowIconToName,
 ).timeout(2000);
 
 const iconToName = {
@@ -63,21 +63,18 @@ const MemoizedComponent: React.FC<Props> = ({ state, select }) => {
     }
   };
   const simple = () => {
-    // eslint-disable-next-line no-console
     console.error("onError received!");
   };
   const cb: OnError<never, IconParams> = (error: string) => {
-    // eslint-disable-next-line no-console
     console.error("an error was thrown", error);
   };
   const dispatched = (
     error: string,
     params: IconParams,
-    dispatch: Dispatch<AnyAction>
+    dispatch: Dispatch<AnyAction>,
   ) => {
-    // eslint-disable-next-line no-console
     console.error("very bad error!", error);
-    // eslint-disable-next-line no-console
+
     setTimeout(() => dispatch && dispatch(onErrorLifecycle.reset()), 2000);
   };
 

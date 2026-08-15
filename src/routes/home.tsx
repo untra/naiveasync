@@ -1,16 +1,17 @@
 import React, { useState } from "react";
-// tslint:disable-next-line: no-implicit-dependencies
-import Highlight from "react-highlight";
-// tslint:disable-next-line: no-implicit-dependencies
+import HighlightImport from "react-highlight";
 import { Provider } from "react-redux";
-// tslint:disable-next-line: no-implicit-dependencies
 import { Link } from "react-router-dom";
 import packageJSON from "../../package.json";
-// tslint:disable-next-line: ordered-imports no-implicit-dependencies
 import { Async, asyncLifecycle, naiveAsyncInitialState } from "../naiveasync";
 import { AsyncComponentChildrenProps } from "../naiveasync/naiveasync";
 import { handleChangeEvent } from "../naiveasync/utils";
 import { createConnectedStore } from "../utils/store";
+
+// react-highlight's CJS default export may arrive double-wrapped depending on bundler interop
+const Highlight =
+  (HighlightImport as unknown as { default?: typeof HighlightImport })
+    .default ?? HighlightImport;
 
 interface DataValue {
   value: string;
@@ -59,50 +60,58 @@ const asyncOperation = (params: ParamsValue): Promise<DataValue> =>
 
 const asyncInputLifecycle = asyncLifecycle(
   "asyncInputOperation",
-  asyncOperation
+  asyncOperation,
 );
+
+const AsyncableInput = (props: {
+  initialKey: string;
+  initialValue: string;
+  lcProps: AsyncComponentChildrenProps<DataValue, ParamsValue>;
+}) => {
+  const { state, call, sync, reset } = props.lcProps;
+  const { initialValue, initialKey } = props;
+  const [key, setKey] = useState(initialKey);
+  const [value, setValue] = useState(initialValue);
+  const params = { [key]: value };
+  return (
+    <div>
+      <h2>status: {state.status}</h2>
+      <h2>params: {JSON.stringify(state.params)}</h2>
+      <h2>error: {state.error}</h2>
+      <h2>data: {JSON.stringify(state.data)}</h2>
+      <div>
+        <input
+          type="text"
+          name="key"
+          value={key}
+          onChange={handleChangeEvent(setKey)}
+        />
+        :
+        <input
+          type="text"
+          name="value"
+          value={value}
+          onChange={handleChangeEvent(setValue)}
+        />
+      </div>
+      <button onClick={() => call(params)}>
+        <p>call</p>
+      </button>
+      <button onClick={() => sync(params)}>
+        <p>sync</p>
+      </button>
+      <button onClick={() => reset()}>
+        <p>reset</p>
+      </button>
+    </div>
+  );
+};
 
 const AsyncableView =
   (props: { initialKey: string; initialValue: string }) =>
-  (lcProps: AsyncComponentChildrenProps<DataValue, ParamsValue>) => {
-    const { state, call, sync, reset } = lcProps;
-    const { initialValue, initialKey } = props;
-    const [key, setKey] = useState(initialKey);
-    const [value, setValue] = useState(initialValue);
-    const params = { [key]: value };
-    return (
-      <div>
-        <h2>status: {state.status}</h2>
-        <h2>params: {JSON.stringify(state.params)}</h2>
-        <h2>error: {state.error}</h2>
-        <h2>data: {JSON.stringify(state.data)}</h2>
-        <div>
-          <input
-            type="text"
-            name="key"
-            value={key}
-            onChange={handleChangeEvent(setKey)}
-          />
-          :
-          <input
-            type="text"
-            name="value"
-            value={value}
-            onChange={handleChangeEvent(setValue)}
-          />
-        </div>
-        <button onClick={() => call(params)}>
-          <p>call</p>
-        </button>
-        <button onClick={() => sync(params)}>
-          <p>sync</p>
-        </button>
-        <button onClick={() => reset()}>
-          <p>reset</p>
-        </button>
-      </div>
-    );
-  };
+  (lcProps: AsyncComponentChildrenProps<DataValue, ParamsValue>) => (
+    <AsyncableInput {...props} lcProps={lcProps} />
+  );
 
 const lifecycleflowimage =
   "https://naiveasync.untra.io/images/naiveasync-flow.png";

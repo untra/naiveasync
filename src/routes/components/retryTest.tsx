@@ -13,7 +13,7 @@ const riskyResolve = <T extends {}>(val: T): Promise<T> =>
   new Promise((resolve, reject) => {
     const rand = Math.random();
     const timeMS = rand * 100;
-    // eslint-disable-next-line no-console
+
     console.log(`Chosen random value: ${rand}`);
 
     setTimeout(() => {
@@ -26,12 +26,11 @@ const riskyResolve = <T extends {}>(val: T): Promise<T> =>
   });
 
 const handleErr = (err: string) => {
-  // eslint-disable-next-line no-console
   console.debug(`retried err: `, err);
 };
 const retryTestLifecycle: AsyncLifecycle<{}, {}> = asyncLifecycle(
   "23_RETRY_TEST",
-  riskyResolve
+  riskyResolve,
 ).retries(3, handleErr);
 
 interface MP {
