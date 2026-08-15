@@ -1,5 +1,4 @@
-/* tslint:disable */
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import routes from "./routes";
 // the naiveAsyncReducer maintains the redux state
 // the naiveAsyncMiddleware employs rxjs observables to fulfill promises
@@ -9,4 +8,8 @@ import routes from "./routes";
 // use the <NaiveAsync>(state, call) => react component and callback
 // to render your asynchronous state with ease and splendor
 
-ReactDOM.render(routes(), document.getElementById("root"));
+const container = document.getElementById("root");
+if (!container) {
+  throw new Error("missing #root element");
+}
+createRoot(container).render(routes());
