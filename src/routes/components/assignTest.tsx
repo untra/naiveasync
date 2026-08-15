@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { connect, useDispatch } from "react-redux";
 import { AnyAction, Dispatch } from "redux";
 import { asyncLifecycle, mockDoneAsyncState } from "../../naiveasync";
-import { NaiveAsyncState } from "../../naiveasync/actions";
+import { AsyncState } from "../../naiveasync/actions";
 import { slowResolve } from "../../utils/promise";
 
 const slowIconToName = (params: {}) =>
@@ -19,7 +19,7 @@ interface IconResp {
 }
 
 interface MP {
-  state: NaiveAsyncState<IconResp, {}>;
+  state: AsyncState<IconResp, {}>;
 }
 
 interface DP {
